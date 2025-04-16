@@ -1,0 +1,39 @@
+<div class="login-container">
+    <!-- Background Elements -->
+    <div class="bg-circle bg-circle-1"></div>
+    <div class="bg-circle bg-circle-2"></div>
+    <div class="dot-pattern"></div>
+
+    <!-- Warning Message Card -->
+    <div *ngIf="errorMessage" id="warningCard" class="warning-card show">
+        {{errorMessage}}
+    </div>
+
+    <div class="card">
+        <div class="image-side" [style.background-image]="'url(https://img.freepik.com/free-photo/cyber-monday-shopping-sales_23-2148688502.jpg)'"></div>
+        <div class="form-side">
+            <div class="logo">
+                <span class="logo-icon">🛍️</span>
+                ClickShop
+            </div>
+            <h2>Welcome Back</h2>
+            <p class="welcome-text">Log in to access your account and continue your shopping experience</p>
+            <form (ngSubmit)="onSubmit()">
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="text" id="username" name="username" [(ngModel)]="credentials.username" 
+                           placeholder="Enter your email" required>
+                    <span class="input-icon">✉️</span>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" [(ngModel)]="credentials.password"
+                           placeholder="Enter your password" required>
+                    <span class="input-icon">🔒</span>
+                </div>
+                <button type="submit" class="btn">Sign In</button>
+                <a routerLink="/register" class="link">Don't have an account? Register now</a>
+            </form>
+        </div>
+    </div>
+</div>
