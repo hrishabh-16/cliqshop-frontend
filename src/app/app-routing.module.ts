@@ -35,14 +35,12 @@ const routes: Routes = [
   { 
     path: 'admin/products', 
     component: ProductsComponent, 
-    canActivate: [AuthGuard, AdminGuard],
-    data: { view: 'list' } 
+    canActivate: [AuthGuard, AdminGuard]
   },
   { 
     path: 'admin/categories', 
     component: CategoriesComponent, 
-    canActivate: [AuthGuard, AdminGuard],
-    data: { view: 'list' } 
+    canActivate: [AuthGuard, AdminGuard]
   },
   { 
     path: 'admin/orders', 
@@ -52,8 +50,7 @@ const routes: Routes = [
   { 
     path: 'admin/reports', 
     component: ReportsComponent, 
-    canActivate: [AuthGuard, AdminGuard],
-    data: { type: 'sales' } 
+    canActivate: [AuthGuard, AdminGuard]
   },
   
   { path: '', redirectTo: '/home', pathMatch: 'full' },

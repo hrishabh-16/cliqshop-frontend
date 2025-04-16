@@ -10,9 +10,9 @@
   --info-color: #4fc3f7; /* Light Blue */
   --dark-color: #006064; /* Dark Cyan */
   --light-color: #e0f7fa; /* Cyan 50 */
-  --white: #ffffff;
+  --white: #000000;
   --body-bg: rgb(0, 156, 217); /* Cyan 50 */
-  --sidebar-bg: linear-gradient(180deg, #00838f 0%, #006064 100%); /* Cyan 800 to Cyan 900 */
+  --sidebar-bg: linear-gradient(180deg, #086400 0%, #086400 100%); /* Cyan 800 to Cyan 900 */
   --card-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   --transition-speed: 0.3s;
   --card-gradient-1: linear-gradient(45deg, #4dd0e1, #26c6da); /* Cyan 300 to Cyan 400 */
