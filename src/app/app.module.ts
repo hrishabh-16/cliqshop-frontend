@@ -23,15 +23,20 @@ import { CartComponent } from './components/cart/cart.component';
 import { HeaderComponent } from './shared/header/header.component';
 import { FooterComponent } from './shared/footer/footer.component';
 import { LoadingSpinnerComponent } from './shared/loading-spinner/loading-spinner.component';
-
 import { AuthGuard } from './guards/auth/auth.guard';
 import { AdminGuard } from './guards/admin/admin.guard';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { fas } from '@fortawesome/free-solid-svg-icons';
 
 export function tokenGetter() {
   return localStorage.getItem('token');
 }
+
+// Add icons to the library
+library.add(fas);
 
 @NgModule({
   declarations: [
@@ -59,6 +64,7 @@ export function tokenGetter() {
     RouterModule,
     CommonModule,
     FormsModule,
+    FontAwesomeModule,
     SocialLoginModule,
     JwtModule.forRoot({
       config: {
