@@ -1,4 +1,4 @@
-import { NgModule } from '@angular/core';
+import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { ReactiveFormsModule } from '@angular/forms';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -32,12 +32,33 @@ import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { TruncatePipe } from './shared/pipes/truncate.pipe';
 
+import { CategoryService } from './services/category/category.service';
+
 export function tokenGetter() {
   return localStorage.getItem('token');
 }
 
 // Add icons to the library
 library.add(fas);
+// Function that returns a function that returns a promise
+export function preloadCategories(categoryService: CategoryService) {
+  return () => {
+    console.log('Preloading categories at app startup...');
+    return new Promise((resolve) => {
+      categoryService.getAllCategories().subscribe({
+        next: (categories) => {
+          console.log('Categories preloaded successfully:', categories);
+          resolve(true);
+        },
+        error: (error) => {
+          console.error('Failed to preload categories:', error);
+          // Resolve anyway to not block app startup
+          resolve(false);
+        }
+      });
+    });
+  };
+}
 
 @NgModule({
   declarations: [
@@ -85,6 +106,12 @@ library.add(fas);
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
+      multi: true
+    },
+    {
+      provide: APP_INITIALIZER,
+      useFactory: preloadCategories,
+      deps: [CategoryService],
       multi: true
     },
     {

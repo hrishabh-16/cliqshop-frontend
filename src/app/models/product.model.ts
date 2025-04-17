@@ -1,3 +1,4 @@
+// cliqshop-frontend\src\app\models\product.model.ts
 export class Product {
   productId: number;
   name: string;
@@ -5,8 +6,13 @@ export class Product {
   price: number;
   imageUrl: string;
   categoryId: number;
+  categoryName?: string;
   stockQuantity?: number;
   selected?: boolean;
+  createdAt?: Date;  // Added datetime fields
+  updatedAt?: Date;
+  sku?: string;     // Added Stock Keeping Unit
+  isActive?: boolean; // Added status flag
 
   constructor(
     productId: number,
@@ -14,9 +20,14 @@ export class Product {
     description: string,
     price: number,
     imageUrl: string,
-    categoryId: number ,
+    categoryId: number,
+    categoryName?: string,
     stockQuantity?: number,
     selected?: boolean,
+    createdAt?: Date,
+    updatedAt?: Date,
+    sku?: string,
+    isActive?: boolean
   ) {
     this.productId = productId;
     this.name = name;
@@ -24,7 +35,12 @@ export class Product {
     this.price = price;
     this.imageUrl = imageUrl;
     this.categoryId = categoryId;
+    this.categoryName = categoryName;
     this.stockQuantity = stockQuantity;
     this.selected = selected;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
+    this.sku = sku;
+    this.isActive = isActive !== undefined ? isActive : true; // Default to active if not specified
   }
 }

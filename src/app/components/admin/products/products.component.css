@@ -1,350 +1,377 @@
-.product-container {
-    padding: 20px;
-    background-color: #006dda;
-    min-height: 100%;
+/* Products Component Styles */
+
+/* Animation for modal transitions */
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
   }
   
-  .product-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
+  @keyframes modalFadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.95); }
   }
   
-  .title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #33ff00;
-    margin: 0;
+  /* Animation for table rows */
+  @keyframes rowFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
   
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-  }
-  
-  .btn-add {
-    background-color: #77eb25;
-    color: rgb(40, 32, 32);
-    border: none;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-weight: 500;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .btn-add:hover {
-    background-color: #1d4ed8;
-  }
-  
-  .filter-select {
-    padding: 8px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    background-color: white;
-    color: #4b5563;
-    font-size: 0.875rem;
-    cursor: pointer;
-  }
-  
-  .table-container {
-    background-color: rgb(255, 255, 255);
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    overflow-x: auto;
-  }
-  
-  .product-table {
-    width: 100%;
-    border-collapse: collapse;
-  }
-  
-  th, td {
-    padding: 12px 16px;
-    text-align: left;
-    border-bottom: 1px solid #2865dd;
-  }
-  
-  th {
-    background-color: #f8fafc;
-    font-weight: 600;
-    color: #4b5563;
-    white-space: nowrap;
-  }
-  
-  .checkbox-column {
-    width: 40px;
-  }
-  
-  .name-column {
-    min-width: 250px;
-  }
-  
-  .price-column, .stock-column, .category-column, .rating-column {
-    white-space: nowrap;
-  }
-  
-  .action-column {
-    width: 120px;
-  }
-  
-  .product-info {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  
-  .product-image {
-    width: 50px;
-    height: 50px;
-    object-fit: cover;
-    border-radius: 4px;
-    border: 1px solid #0550e5;
-  }
-  
-  .product-details {
-    display: flex;
-    flex-direction: column;
-  }
-  
-  .product-name {
-    font-weight: 500;
-    color: #1e293b;
-  }
-  
-  .product-size {
-    font-size: 0.75rem;
-    color: #64748b;
-    margin-top: 2px;
-  }
-  
-  .items-left {
-    display: block;
-    color: #1e293b;
-    font-weight: 500;
-  }
-  
-  .items-sold {
-    display: block;
-    font-size: 0.75rem;
-    color: #64748b;
-    margin-top: 2px;
-  }
-  
-  .rating {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-  }
-  
-  .star {
-    color: #f59e0b;
-  }
-  
-  .rating-value {
-    font-weight: 500;
-    color: #1e293b;
-  }
-  
-  .review-count {
-    font-size: 0.75rem;
-    color: #64748b;
-    margin-left: 5px;
-  }
-  
-  .action-buttons {
-    display: flex;
-    gap: 8px;
-  }
-  
-  .btn-view, .btn-edit, .btn-delete {
-    width: 30px;
-    height: 30px;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: none;
-    cursor: pointer;
-    color: white;
-    transition: opacity 0.2s;
-  }
-  
-  .btn-view {
-    background-color: #6b7280;
-  }
-  
-  .btn-edit {
-    background-color: #3b82f6;
-  }
-  
-  .btn-delete {
-    background-color: #f87171;
-  }
-  
-  .btn-view:hover, .btn-edit:hover, .btn-delete:hover {
-    opacity: 0.8;
-  }
-  
-  .pagination-container {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
-  }
-  
-  .pagination {
-    display: flex;
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    gap: 5px;
-  }
-  
-  .page-item {
-    border-radius: 6px;
+  /* Button hover effects */
+  .btn-hover-effect {
+    position: relative;
     overflow: hidden;
   }
   
-  .page-link {
-    padding: 6px 12px;
-    background-color: white;
-    border: 1px solid #d1d5db;
-    color: #4b5563;
-    cursor: pointer;
-    transition: background-color 0.2s;
+  .btn-hover-effect::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+  }
+  
+  .btn-hover-effect:hover::after {
+    left: 100%;
+  }
+  
+  /* Card hover effects */
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Custom scrollbar for tables */
+  .overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 3px;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+  }
+  
+  /* Status badge colors */
+  .status-pending {
+    background-color: rgba(251, 191, 36, 0.1);
+    color: #d97706;
+  }
+  
+  .status-delivered {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #059669;
+  }
+  
+  .status-cancelled {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+  }
+  
+  /* Dark mode overrides */
+  .dark .status-pending {
+    background-color: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+  }
+  
+  .dark .status-delivered {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+  }
+  
+  .dark .status-cancelled {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+  }
+  
+  /* Image preview hover effect */
+  img.rounded-md {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  img.rounded-md:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Form field focus effects */
+  input:focus, textarea:focus, select:focus {
+    transition: all 0.3s ease;
+    box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.2);
+  }
+  
+  /* Pagination styles */
+  .pagination .page-item button {
+    transition: all 0.2s ease;
+  }
+  
+  .pagination .page-item button:hover:not([disabled]) {
+    transform: translateY(-2px);
+  }
+  
+  /* Animate table rows */
+  tbody tr {
+    animation: rowFadeIn 0.3s ease-out forwards;
+    opacity: 0;
+  }
+  
+  tbody tr:nth-child(1) { animation-delay: 0.05s; }
+  tbody tr:nth-child(2) { animation-delay: 0.1s; }
+  tbody tr:nth-child(3) { animation-delay: 0.15s; }
+  tbody tr:nth-child(4) { animation-delay: 0.2s; }
+  tbody tr:nth-child(5) { animation-delay: 0.25s; }
+  tbody tr:nth-child(6) { animation-delay: 0.3s; }
+  tbody tr:nth-child(7) { animation-delay: 0.35s; }
+  tbody tr:nth-child(8) { animation-delay: 0.4s; }
+  tbody tr:nth-child(9) { animation-delay: 0.45s; }
+  tbody tr:nth-child(10) { animation-delay: 0.5s; }
+  
+  /* Animate action icons */
+  td button i {
+    transition: transform 0.2s ease;
+  }
+  
+  td button:hover i {
+    transform: scale(1.2);
+  }
+  
+  /* Modal animations */
+  .animate-modal-in {
+    animation: modalFadeIn 0.3s ease-out forwards;
+  }
+  
+  /* Back button animation */
+  button i.fa-arrow-left {
+    transition: transform 0.2s ease;
+  }
+  
+  button:hover i.fa-arrow-left {
+    transform: translateX(-3px);
+  }
+  
+  /* Colors from CliqShop design */
+  .bg-primary {
+    background-color: #4a6fa5;
+  }
+  
+  .text-primary {
+    color: #4a6fa5;
+  }
+  
+  .border-primary {
+    border-color: #4a6fa5;
+  }
+  
+  .bg-accent {
+    background-color: #5d7b9e;
+  }
+  
+  .text-accent {
+    color: #5d7b9e;
+  }
+  
+  .border-accent {
+    border-color: #5d7b9e;
+  }
+  
+  .bg-ivory {
+    background-color: #FFFFF0;
+  }
+  
+  /* View modal product image container */
+  .relative.pb-\[100\%\] {
+    position: relative;
+    padding-bottom: 100%;
+  }
+  
+  /* Product image hover effect in view modal */
+  .view-product-image {
+    transition: transform 0.3s ease;
+  }
+  
+  .view-product-image:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Button ripple effect */
+  .ripple {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .ripple:after {
+    content: "";
     display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    transform: scale(10, 10);
+    opacity: 0;
+    transition: transform 0.5s, opacity 1s;
   }
   
-  .page-item.active .page-link {
-    background-color: #2563eb;
+  .ripple:active:after {
+    transform: scale(0, 0);
+    opacity: 0.3;
+    transition: 0s;
+  }
+  
+  /* Product category badge */
+  .category-badge {
+    transition: all 0.3s ease;
+  }
+  
+  .category-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Improved focus outlines for accessibility */
+  button:focus, 
+  a:focus,
+  input:focus, 
+  select:focus, 
+  textarea:focus {
+    outline: 2px solid rgba(74, 111, 165, 0.5);
+    outline-offset: 2px;
+  }
+  
+  .dark button:focus,
+  .dark a:focus,
+  .dark input:focus, 
+  .dark select:focus, 
+  .dark textarea:focus {
+    outline-color: rgba(56, 189, 248, 0.5);
+  }
+  
+  /* Product table row hover effect */
+  .product-row {
+    transition: background-color 0.2s ease, transform 0.2s ease;
+  }
+  
+  .product-row:hover {
+    transform: translateX(5px);
+  }
+  
+  /* Action button tooltips */
+  .tooltip {
+    position: relative;
+  }
+  
+  .tooltip:before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    background-color: rgba(0, 0, 0, 0.8);
     color: white;
-    border-color: #2563eb;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 12px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
   }
   
-  .page-item.disabled .page-link {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .tooltip:hover:before {
+    opacity: 1;
+    visibility: visible;
+    bottom: calc(100% + 5px);
   }
   
-  /* Modal Styles */
-  .modal {
-    position: fixed;
+  /* Loading spinner animation */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  /* Empty state animation */
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+  }
+  
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Fast zoom animation for view button */
+  @keyframes quickZoom {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+  
+  .action-icon-view:hover {
+    animation: quickZoom 0.3s ease;
+  }
+  
+  /* Custom animation for the pagination active state */
+  .page-item button.active {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .page-item button.active:after {
+    content: '';
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple 0.6s linear;
   }
   
-  .modal-content {
-    background-color: white;
-    border-radius: 8px;
-    width: 90%;
-    max-width: 600px;
-    max-height: 90vh;
-    overflow-y: auto;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  @keyframes ripple {
+    to {
+      transform: scale(2.5);
+      opacity: 0;
+    }
   }
   
-  .modal-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid #e5e7eb;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  /* Smooth transition for modal background overlay */
+  .fixed.inset-0.bg-gray-500.bg-opacity-75 {
+    transition: opacity 0.3s ease;
   }
   
-  .modal-header h2 {
-    margin: 0;
-    font-size: 1.25rem;
-    font-weight: 600;
-    color: #1e293b;
+  /* Add a subtle bounce effect to the modal */
+  @keyframes modalBounce {
+    0% { transform: scale(0.9); opacity: 0; }
+    70% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
   }
   
-  .close-btn {
-    background: none;
-    border: none;
-    font-size: 1.5rem;
-    cursor: pointer;
-    color: #64748b;
-  }
-  
-  .modal-body {
-    padding: 20px;
-  }
-  
-  .form-group {
-    margin-bottom: 16px;
-  }
-  
-  .form-group label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 500;
-    color: #4b5563;
-  }
-  
-  .form-control {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    font-size: 0.875rem;
-  }
-  
-  textarea.form-control {
-    min-height: 100px;
-    resize: vertical;
-  }
-  
-  .error-message {
-    color: #ef4444;
-    font-size: 0.75rem;
-    margin-top: 4px;
-  }
-  
-  .modal-footer {
-    padding-top: 16px;
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-  }
-  
-  .btn-cancel {
-    padding: 8px 16px;
-    background-color: white;
-    border: 1px solid #d1d5db;
-    border-radius: 6px;
-    color: #4b5563;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .btn-save {
-    padding: 8px 16px;
-    background-color: #2563eb;
-    border: none;
-    border-radius: 6px;
-    color: white;
-    cursor: pointer;
-    transition: background-color 0.2s;
-  }
-  
-  .btn-cancel:hover {
-    background-color: #f3f4f6;
-  }
-  
-  .btn-save:hover {
-    background-color: #1d4ed8;
-  }
-  
-  .btn-save:disabled {
-    background-color: #93c5fd;
-    cursor: not-allowed;
+  .modal-bounce {
+    animation: modalBounce 0.4s ease-out forwards;
   }

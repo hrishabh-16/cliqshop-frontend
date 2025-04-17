@@ -1,237 +1,488 @@
-import { Component, OnInit } from '@angular/core';
+// cliqshop-frontend\src\app\components\admin\products\products.component.ts
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Product } from '../../../models/product.model';
 import { Category } from '../../../models/category.model';
+import { Product } from '../../../models/product.model';
 import { ProductService } from '../../../services/product/product.service';
 import { CategoryService } from '../../../services/category/category.service';
-import { InventoryService } from '../../../services/inventory/inventory.service';
+import { forkJoin, Subscription, of, timer } from 'rxjs';
+import { catchError, switchMap, finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'app-products',
-  standalone: false,
   templateUrl: './products.component.html',
+  standalone: false,
   styleUrls: ['./products.component.css']
 })
-export class ProductsComponent implements OnInit {
+export class ProductsComponent implements OnInit, OnDestroy {
+  currentView: string = 'list';
   products: Product[] = [];
+  selectedProduct: Product | null = null;
   categories: Category[] = [];
-  selectedFilter: string = 'all';
-  showModal: boolean = false;
-  isEditing: boolean = false;
-  productForm: FormGroup;
+  loading = true;
+  error: string | null = null;
   
-  // Pagination variables
-  currentPage: number = 0;
-  pageSize: number = 10;
-  totalItems: number = 0;
-  totalPages: number = 0;
+  productForm: FormGroup;
+  isSubmitting = false;
+
+  showAddModal = false;
+  showEditModal = false;
+  showViewModal = false;
+  showDeleteModal = false;
+  
+  // Pagination properties
+  totalProducts = 0;
+  currentPage = 1;
+  itemsPerPage = 10;
+  totalPages = 1;
+  pages: number[] = [];
+  
+  searchQuery = '';
+  categoriesLoaded = false;
+  loadingTimeout: any = null;
+  loadRetries = 0;
+  private subscriptions = new Subscription();
 
   constructor(
     private productService: ProductService,
     private categoryService: CategoryService,
-    private inventoryService: InventoryService,
+    private fb: FormBuilder,
     private route: ActivatedRoute,
-    private router: Router,
-    private fb: FormBuilder
+    private router: Router
   ) {
     this.productForm = this.fb.group({
-      productId: [null],
-      name: ['', [Validators.required, Validators.minLength(3)]],
-      description: [''],
-      price: [0, [Validators.required, Validators.min(0)]],
-      categoryId: ['', [Validators.required]],
-      imageUrl: [''],
-      stockQuantity: [0, [Validators.min(0)]]
+      name: ['', [Validators.required]],
+      description: ['', [Validators.required]],
+      imageUrl: ['', [Validators.required]],
+      price: ['', [Validators.required, Validators.min(0)]],
+      categoryId: ['', [Validators.required]]
     });
   }
 
   ngOnInit(): void {
-    this.loadProducts();
-    this.loadCategories();
+    // Set a hard timeout to force the loading state to complete
+    this.loadingTimeout = setTimeout(() => {
+      if (this.loading) {
+        console.warn('Force stopping loading after 30 seconds');
+        this.loading = false;
+        this.error = 'Loading timed out. Please refresh to try again.';
+      }
+    }, 30000); // 30 seconds absolute maximum loading time
+    
+    // Load categories first, then handle route parameters and load products
+    const categorySubscription = this.categoryService.getAllCategories().pipe(
+      catchError(error => {
+        console.error('Failed to load categories:', error);
+        return of([]);
+      })
+    ).subscribe({
+      next: (categories) => {
+        console.log('Categories loaded:', categories);
+        this.categories = categories;
+        this.categoriesLoaded = true;
+        
+        // Now subscribe to route params and load products
+        this.subscriptions.add(
+          this.route.queryParams.subscribe(params => {
+            this.currentView = params['view'] || 'list';
+            this.currentPage = parseInt(params['page'] || '1', 10);
+            this.loadProducts();
+          })
+        );
+      },
+      error: (error) => {
+        console.error('Error loading categories:', error);
+        this.categories = [];
+        this.categoriesLoaded = true; // Consider the process completed even with error
+        
+        // Still continue to load products
+        this.subscriptions.add(
+          this.route.queryParams.subscribe(params => {
+            this.currentView = params['view'] || 'list';
+            this.currentPage = parseInt(params['page'] || '1', 10);
+            this.loadProducts();
+          })
+        );
+      }
+    });
+    
+    this.subscriptions.add(categorySubscription);
+  }
+
+  ngOnDestroy(): void {
+    // Clear timeout if component is destroyed
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+    }
+    
+    // Unsubscribe from all subscriptions
+    this.subscriptions.unsubscribe();
   }
 
   loadProducts(): void {
-    this.productService.getAllProducts().subscribe(
-      (products: Product[]) => {
-        this.products = products;
-        this.totalItems = products.length;
-        this.totalPages = Math.ceil(this.totalItems / this.pageSize);
-        
-        // Fetch inventory data for each product
-        this.products.forEach(product => {
-          this.inventoryService.getInventoryByProductId(product.productId).subscribe(
-            inventory => {
-              product.stockQuantity = inventory?.quantity || 0;
-            }
-          );
-        });
-      },
-      error => {
-        console.error('Error loading products:', error);
-      }
-    );
-  }
-  selectAllProducts(event: Event): void {
-    const isChecked = (event.target as HTMLInputElement).checked;
-    this.products.forEach(product => {
-      product.selected = isChecked;
-    });
-  }
-  
-
-  loadCategories(): void {
-    this.categoryService.getAllCategories().subscribe(
-      (categories: Category[]) => {
-        this.categories = categories;
-      },
-      error => {
-        console.error('Error loading categories:', error);
-      }
-    );
-  }
-
-  getCategoryName(categoryId: number): string {
-    const category = this.categories.find(c => c.id === categoryId);
-    return category ? category.name : 'Unknown';
-  }
-
-  applyFilter(): void {
-    // Implement filtering logic based on selectedFilter
-    // You might need to modify your backend API to support filtering
-    this.loadProducts();
-  }
-
-  openAddProductModal(): void {
-    this.isEditing = false;
-    this.productForm.reset({
-      price: 0,
-      stockQuantity: 0
-    });
-    this.showModal = true;
-  }
-
-  editProduct(productId: number): void {
-    this.productService.getProductById(productId).subscribe(
-      (product: Product) => {
-        this.isEditing = true;
-        this.productForm.patchValue({
-          productId: product.productId,
-          name: product.name,
-          description: product.description,
-          price: product.price,
-          categoryId: product.categoryId,
-          imageUrl: product.imageUrl
-        });
-        
-        // Get stock quantity from inventory
-        this.inventoryService.getInventoryByProductId(productId).subscribe(
-          inventory => {
-            this.productForm.patchValue({
-              stockQuantity: inventory?.quantity || 0
-            });
-            this.showModal = true;
-          }
-        );
-      },
-      error => {
-        console.error('Error loading product:', error);
-      }
-    );
-  }
-
-  deleteProduct(productId: number): void {
-    if (confirm('Are you sure you want to delete this product?')) {
-      this.productService.deleteProduct(productId).subscribe(
-        () => {
-          this.loadProducts();
-        },
-        error => {
-          console.error('Error deleting product:', error);
-        }
-      );
-    }
-  }
-
-  saveProduct(): void {
-    if (this.productForm.invalid) {
-      return;
-    }
-
-    const productData = this.productForm.value;
+    console.log('Loading products for view:', this.currentView);
+    this.loading = true;
+    this.error = null;
     
-    if (this.isEditing) {
-      this.productService.updateProduct(productData.productId, productData).subscribe(
-        (updatedProduct: Product) => {
-          // Update inventory
-          this.inventoryService.updateStock(updatedProduct.productId, productData.stockQuantity).subscribe(
-            () => {
-              this.closeModal();
-              this.loadProducts();
-            }
+    // Clear any previous timeout
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+    }
+    
+    // Set a fresh timeout for this loading operation
+    this.loadingTimeout = setTimeout(() => {
+      if (this.loading) {
+        console.warn('Loading products operation timed out');
+        this.loading = false;
+        this.error = 'Loading products timed out. Please try again.';
+      }
+    }, 15000); // 15 second timeout
+    
+    // Different loading logic based on view type
+    if (this.isListView) {
+      // Attempt to load products with retries if needed
+      const productSubscription = timer(0).pipe(
+        switchMap(() => {
+          console.log('Fetching products from API, attempt:', this.loadRetries + 1);
+          return this.productService.getAllProducts(this.currentPage, this.itemsPerPage).pipe(
+            catchError(error => {
+              console.error('Error loading products:', error);
+              if (this.loadRetries < 2) {
+                this.loadRetries++;
+                console.log('Retrying product load, attempt:', this.loadRetries + 1);
+                return timer(1000).pipe(
+                  switchMap(() => this.productService.getAllProducts(this.currentPage, this.itemsPerPage))
+                );
+              }
+              throw error;
+            }),
+            finalize(() => {
+              clearTimeout(this.loadingTimeout);
+              this.loadingTimeout = null;
+              this.loading = false;
+              this.loadRetries = 0;
+            })
           );
+        })
+      ).subscribe({
+        next: (data) => {
+          console.log('Products successfully loaded:', data);
+          this.products = data.products;
+          this.totalProducts = data.total || data.products.length;
+          this.calculateTotalPages();
+          this.generatePagesArray();
         },
-        error => {
-          console.error('Error updating product:', error);
+        error: (error) => {
+          console.error('All attempts to load products failed:', error);
+          this.error = 'Failed to load products. API might be unavailable.';
+          this.products = [];
         }
-      );
+      });
+      
+      this.subscriptions.add(productSubscription);
+    } else if (this.isOutOfStockView) {
+      const outOfStockSubscription = this.productService.getOutOfStockProducts().pipe(
+        finalize(() => {
+          clearTimeout(this.loadingTimeout);
+          this.loadingTimeout = null;
+          this.loading = false;
+        })
+      ).subscribe({
+        next: (products) => {
+          console.log('Out of stock products loaded:', products);
+          this.products = products;
+          this.totalProducts = products.length;
+        },
+        error: (error) => {
+          console.error('Error loading out of stock products:', error);
+          this.error = 'Failed to load out of stock products.';
+          this.products = [];
+        }
+      });
+      
+      this.subscriptions.add(outOfStockSubscription);
     } else {
-      this.productService.createProduct(productData).subscribe(
-        (newProduct: Product) => {
-          // Create inventory record
-          const inventoryData = {
-            productId: newProduct.productId,
-            quantity: productData.stockQuantity,
-            lowStockThreshold: 10
-          };
-          
-          this.inventoryService.createInventory(inventoryData).subscribe(
-            () => {
-              this.closeModal();
-              this.loadProducts();
-            }
-          );
-        },
-        error => {
-          console.error('Error creating product:', error);
-        }
-      );
+      // For add view, just stop loading
+      clearTimeout(this.loadingTimeout);
+      this.loadingTimeout = null;
+      this.loading = false;
     }
   }
 
-  closeModal(): void {
-    this.showModal = false;
-    this.productForm.reset();
+  calculateTotalPages(): void {
+    this.totalPages = Math.max(1, Math.ceil(this.totalProducts / this.itemsPerPage));
+  }
+
+  generatePagesArray(): void {
+    this.pages = [];
+    const startPage = Math.max(1, this.currentPage - 1);
+    const endPage = Math.min(this.totalPages, this.currentPage + 1);
+    
+    for (let i = startPage; i <= endPage; i++) {
+      this.pages.push(i);
+    }
   }
 
   goToPage(page: number): void {
-    if (page >= 0 && page < this.totalPages) {
-      this.currentPage = page;
-      this.loadProducts();
+    if (page < 1 || page > this.totalPages) {
+      return;
+    }
+    
+    this.router.navigate(['/admin/products'], { 
+      queryParams: { 
+        view: this.currentView,
+        page: page 
+      } 
+    });
+  }
+
+  previousPage(): void {
+    if (this.currentPage > 1) {
+      this.goToPage(this.currentPage - 1);
     }
   }
 
-  getPageNumbers(): number[] {
-    const pages: number[] = [];
-    const maxPages = 5;
+  nextPage(): void {
+    if (this.currentPage < this.totalPages) {
+      this.goToPage(this.currentPage + 1);
+    }
+  }
 
-    if (this.totalPages <= maxPages) {
-      for (let i = 0; i < this.totalPages; i++) {
-        pages.push(i);
+  changeView(view: string): void {
+    this.router.navigate(['/admin/products'], { 
+      queryParams: { 
+        view,
+        page: 1 // Reset to first page when changing views
+      } 
+    });
+  }
+
+  navigateBack(): void {
+    this.router.navigate(['/admin/dashboard']);
+  }
+
+  // Force refresh products list
+  refreshProducts(): void {
+    this.loadProducts();
+  }
+
+  // Open product detail view modal
+  viewProduct(product: Product): void {
+    this.loading = true;
+    
+    // Get complete product details including inventory information
+    this.productService.getProductById(product.productId).subscribe({
+      next: (detailedProduct) => {
+        console.log('Detailed product loaded:', detailedProduct);
+        this.selectedProduct = detailedProduct;
+        this.showViewModal = true;
+        this.loading = false;
+      },
+      error: (error) => {
+        console.error('Error loading product details:', error);
+        // Fallback to using the product we already have if detail fetch fails
+        this.selectedProduct = product;
+        this.showViewModal = true;
+        this.loading = false;
       }
+    });
+  }
+  formatDate(date: Date | string | undefined): string {
+    if (!date) return 'N/A';
+    
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      return dateObj.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return 'Invalid Date';
+    }
+  }
+  getStockStatusClass(quantity: number | undefined): string {
+    if (!quantity || quantity <= 0) {
+      return 'text-red-600';
+    } else if (quantity <= 10) {
+      return 'text-yellow-600';
     } else {
-      let startPage = Math.max(0, this.currentPage - Math.floor(maxPages / 2));
-      let endPage = Math.min(this.totalPages - 1, startPage + maxPages - 1);
+      return 'text-green-600';
+    }
+  }
+  getStockStatusText(quantity: number | undefined): string {
+    if (!quantity || quantity <= 0) {
+      return 'Out of Stock';
+    } else if (quantity <= 10) {
+      return 'Low Stock';
+    } else {
+      return 'In Stock';
+    }
+  }
 
-      if (endPage - startPage < maxPages - 1) {
-        startPage = Math.max(0, endPage - maxPages + 1);
-      }
+  // Open edit product modal
+  editProduct(product: Product): void {
+    this.selectedProduct = product;
+    this.productForm.patchValue({
+      name: product.name,
+      description: product.description,
+      imageUrl: product.imageUrl,
+      price: product.price,
+      categoryId: product.categoryId
+    });
+    this.showEditModal = true;
+  }
 
-      for (let i = startPage; i <= endPage; i++) {
-        pages.push(i);
+  // Open delete confirmation modal
+  confirmDelete(product: Product): void {
+    this.selectedProduct = product;
+    this.showDeleteModal = true;
+  }
+
+  // Delete a product
+  deleteProduct(): void {
+    if (!this.selectedProduct) return;
+    
+    this.isSubmitting = true;
+    this.productService.deleteProduct(this.selectedProduct.productId).subscribe({
+      next: () => {
+        // Remove the deleted product from the current list
+        this.products = this.products.filter(p => p.productId !== this.selectedProduct?.productId);
+        this.showDeleteModal = false;
+        this.isSubmitting = false;
+        this.selectedProduct = null;
+        
+        // Reload the data if the page is now empty (except for the first page)
+        if (this.products.length === 0 && this.currentPage > 1) {
+          this.goToPage(this.currentPage - 1);
+        }
+      },
+      error: (error) => {
+        console.error('Error deleting product:', error);
+        this.isSubmitting = false;
       }
+    });
+  }
+
+  // Create a new product
+  addProduct(): void {
+    if (this.productForm.invalid) {
+      this.markFormGroupTouched(this.productForm);
+      return;
     }
 
-    return pages;
+    this.isSubmitting = true;
+    const productData = this.productForm.value;
+    
+    this.productService.createProduct(productData).subscribe({
+      next: (newProduct) => {
+        this.resetForm();
+        this.isSubmitting = false;
+        this.showAddModal = false;
+        this.changeView('list'); // Navigate back to list view
+      },
+      error: (error) => {
+        console.error('Error creating product:', error);
+        this.isSubmitting = false;
+      }
+    });
+  }
+
+  // Update an existing product
+  updateProduct(): void {
+    if (this.productForm.invalid || !this.selectedProduct) {
+      this.markFormGroupTouched(this.productForm);
+      return;
+    }
+
+    this.isSubmitting = true;
+    const productData = this.productForm.value;
+    
+    this.productService.updateProduct(this.selectedProduct.productId, productData).subscribe({
+      next: (updatedProduct) => {
+        // Update the product in the current list
+        const index = this.products.findIndex(p => p.productId === this.selectedProduct?.productId);
+        if (index !== -1) {
+          this.products[index] = updatedProduct;
+        }
+        this.resetForm();
+        this.isSubmitting = false;
+        this.showEditModal = false;
+        this.selectedProduct = null;
+      },
+      error: (error) => {
+        console.error('Error updating product:', error);
+        this.isSubmitting = false;
+      }
+    });
+  }
+
+  // Helper method to mark all form controls as touched
+  markFormGroupTouched(formGroup: FormGroup): void {
+    Object.values(formGroup.controls).forEach(control => {
+      control.markAsTouched();
+      
+      if ((control as any).controls) {
+        this.markFormGroupTouched(control as FormGroup);
+      }
+    });
+  }
+
+  // Reset form and selected product
+  resetForm(): void {
+    this.productForm.reset();
+    this.selectedProduct = null;
+  }
+
+  // Open add product form
+  openAddForm(): void {
+    this.resetForm();
+    this.changeView('add');
+  }
+
+  // Close any modal
+  closeModal(): void {
+    this.showAddModal = false;
+    this.showEditModal = false;
+    this.showViewModal = false;
+    this.showDeleteModal = false;
+    this.selectedProduct = null;
+    this.resetForm();
+  }
+
+  // Helper method to find category name by ID
+  getCategoryName(categoryId: number): string {
+    if (!categoryId) return 'Unknown';
+    
+    // First check if the product has categoryName property
+    if (this.selectedProduct && this.selectedProduct.categoryName) {
+      return this.selectedProduct.categoryName;
+    }
+    
+    // Then try to find category by ID
+    const category = this.categories.find(c => 
+      c.categoryId === categoryId || c.id === categoryId
+    );
+    
+    return category ? category.name : 'Unknown';
+  }
+
+  // Format price with currency
+  formatPrice(price: number): string {
+    return this.productService.formatPrice(price);
+  }
+
+  get isListView(): boolean {
+    return this.currentView === 'list';
+  }
+
+  get isAddView(): boolean {
+    return this.currentView === 'add';
+  }
+
+  get isOutOfStockView(): boolean {
+    return this.currentView === 'outOfStock';
   }
 }

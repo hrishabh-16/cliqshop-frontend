@@ -1,144 +1,673 @@
-<div class="product-container">
-  <div class="product-header">
-    <h1 class="title">All Product List</h1>
-    <div class="header-actions">
-      <button class="btn-add" (click)="openAddProductModal()">Add Product</button>
-      <div class="filter-dropdown">
-        <select [(ngModel)]="selectedFilter" class="filter-select" (change)="applyFilter()">
-          <option value="all">All Products</option>
-          <option value="lowStock">Low Stock</option>
-          <option value="outOfStock">Out of Stock</option>
-        </select>
+<!-- Products Management Component -->
+<div class="min-h-screen bg-ivory-50 dark:bg-slate-800 transition-colors duration-300">
+  <!-- Container -->
+  <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <!-- Page Header -->
+    <div class="mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="flex items-center">
+            <button (click)="navigateBack()" class="mr-3 text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-500 transition-colors">
+              <i class="fas fa-arrow-left"></i>
+            </button>
+            <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">
+              {{ isListView ? 'Product List' : isAddView ? 'Create Product' : 'Out of Stock Products' }}
+            </h2>
+          </div>
+          <nav class="mt-2">
+            <ol class="flex text-sm text-gray-500 dark:text-gray-400">
+              <li><a routerLink="/admin/dashboard" class="hover:text-sky-600 dark:hover:text-sky-400">Product</a></li>
+              <li class="mx-2">&rsaquo;</li>
+              <li class="text-gray-700 dark:text-gray-200">
+                {{ isListView ? 'Product List' : isAddView ? 'Create Product' : 'Out of Stock Products' }}
+              </li>
+            </ol>
+          </nav>
+        </div>
+        <!-- Actions Buttons -->
+        <div class="mt-4 sm:mt-0 flex space-x-3">
+          <button *ngIf="!isAddView" 
+                  (click)="changeView('add')"
+                  class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg flex items-center text-sm transition-colors duration-200">
+            <i class="fas fa-plus mr-2"></i> Add Product
+          </button>
+          <div class="relative ml-2">
+            <select [(ngModel)]="currentView" (change)="changeView(currentView)" 
+                    class="bg-white dark:bg-slate-700 text-gray-700 dark:text-white border border-gray-300 dark:border-slate-600 rounded-lg py-2 pl-3 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
+              <option value="list">All Products</option>
+              <option value="add">Add New</option>
+              <option value="outOfStock">Out of Stock</option>
+            </select>
+            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
+              <i class="fas fa-chevron-down"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div *ngIf="loading" class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600"></div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="text-center text-red-600 my-8">
+      {{ error }}
+    </div>
+    <!-- Debug Info Section - Only visible when loading or error occurs -->
+<div *ngIf="loading || error" class="bg-white dark:bg-slate-700 rounded-lg p-4 mt-4 shadow-sm border border-gray-200 dark:border-slate-600">
+  <h3 class="text-gray-800 dark:text-white font-medium mb-2">Connection Status:</h3>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+    <div>
+      <p class="text-gray-700 dark:text-gray-300">
+        <span class="font-medium">Loading:</span> 
+        <span [ngClass]="{'text-yellow-500': loading, 'text-green-500': !loading}">
+          {{ loading ? 'Active' : 'Complete' }}
+        </span>
+      </p>
+      <p class="text-gray-700 dark:text-gray-300">
+        <span class="font-medium">View:</span> {{ currentView }}
+      </p>
+      <p class="text-gray-700 dark:text-gray-300">
+        <span class="font-medium">Categories Loaded:</span> {{ categories.length }}
+      </p>
+      <p class="text-gray-700 dark:text-gray-300">
+        <span class="font-medium">Products Loaded:</span> {{ products.length }}
+      </p>
+    </div>
+    
+    <div>
+      <p *ngIf="error" class="text-red-500 mb-2">
+        <span class="font-medium">Error:</span> {{ error }}
+      </p>
+      
+      <div class="mt-2">
+        <button (click)="refreshProducts()" 
+                class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-md mr-2 text-sm transition-colors">
+          <i class="fas fa-sync-alt mr-1"></i> Refresh Data
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    <!-- Product List View -->
+    <div *ngIf="isListView && !loading && !error" class="bg-white dark:bg-slate-700 rounded-xl shadow overflow-hidden">
+      <div class="px-6 py-5 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">All Product List</h3>
+        <div class="flex items-center space-x-3">
+        
+        </div>
+      </div>
+
+      <!-- Products Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-600">
+          <thead class="bg-gray-50 dark:bg-slate-800">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <div class="flex items-center">
+                  <input type="checkbox" class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded">
+                </div>
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Product Name
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Price
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Category
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white dark:bg-slate-700 divide-y divide-gray-200 dark:divide-slate-600">
+            <tr *ngFor="let product of products" class="hover:bg-gray-50 dark:hover:bg-slate-600/50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <input type="checkbox" class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded">
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-12 w-12">
+                    <img [src]="product.imageUrl || 'assets/images/product-placeholder.jpg'" class="h-12 w-12 rounded-md object-cover" alt="{{ product.name }}">
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{ product.name }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 dark:text-white">{{ formatPrice(product.price) }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                  <!-- Debug info (remove in production) -->
+                  <!-- <span class="hidden">Debug - CategoryId: {{product.categoryId}}</span> -->
+                  
+                  <!-- Use ternary operator for better control over category display -->
+                  {{ product.categoryName ? product.categoryName : getCategoryName(product.categoryId) }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap flex items-center space-x-2">
+                <button (click)="viewProduct(product)" class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button (click)="editProduct(product)" class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button (click)="confirmDelete(product)" class="text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 p-1">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            
+            <!-- Empty state -->
+            <tr *ngIf="products.length === 0">
+              <td colspan="5" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+                <div class="flex flex-col items-center">
+                  <i class="fas fa-box-open text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                  <p>No products found.</p>
+                  <button (click)="openAddForm()" class="mt-4 text-sm text-sky-600 dark:text-sky-400 hover:underline">Add your first product</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination -->
+      <div *ngIf="products.length > 0" class="px-6 py-4 flex items-center justify-between border-t border-gray-200 dark:border-slate-600">
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ (currentPage - 1) * itemsPerPage + products.length }} of {{ totalProducts }} products
+        </div>
+        
+        <nav aria-label="Page navigation">
+          <ul class="pagination pagination-rounded flex items-center space-x-1">
+            <li class="page-item">
+              <button (click)="previousPage()" [disabled]="currentPage === 1"
+                      class="page-link flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 dark:border-slate-600 
+                             text-gray-600 dark:text-gray-300 bg-white dark:bg-slate-700 
+                             hover:bg-gray-100 dark:hover:bg-slate-600 
+                             disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-left text-xs"></i>
+              </button>
+            </li>
+            
+            <ng-container *ngFor="let page of pages">
+              <li class="page-item">
+                <button (click)="goToPage(page)" 
+                        [ngClass]="page === currentPage ? 
+                                  'bg-sky-600 text-white hover:bg-sky-700' : 
+                                  'bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 border border-gray-300 dark:border-slate-600'"
+                        class="page-link flex items-center justify-center w-8 h-8 rounded-full font-medium text-sm transition-colors">
+                  {{ page }}
+                </button>
+              </li>
+            </ng-container>
+            
+            <li class="page-item">
+              <button (click)="nextPage()" [disabled]="currentPage === totalPages"
+                      class="page-link flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 dark:border-slate-600 
+                             text-gray-600 dark:text-gray-300 bg-white dark:bg-slate-700 
+                             hover:bg-gray-100 dark:hover:bg-slate-600 
+                             disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-right text-xs"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Add Product Form View -->
+    <div *ngIf="isAddView && !loading && !error" class="bg-white dark:bg-slate-700 rounded-xl shadow-sm overflow-hidden">
+      <div class="px-6 py-5 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Add Product</h3>
+      </div>
+      
+      <div class="p-6">
+        <form [formGroup]="productForm" (ngSubmit)="addProduct()">
+          <div class="grid grid-cols-1 gap-6">
+            <!-- Product Information -->
+            <div class="bg-white dark:bg-slate-700 p-6 rounded-lg border border-gray-200 dark:border-slate-600">
+              <h4 class="text-lg font-medium text-gray-800 dark:text-white mb-4">Product Information</h4>
+              
+              <div class="space-y-6">
+                <!-- Product Name -->
+                <div>
+                  <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Product Name</label>
+                  <input type="text" id="name" formControlName="name" placeholder="Product Name" 
+                         class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20">
+                  <div *ngIf="productForm.get('name')?.invalid && productForm.get('name')?.touched" class="text-red-500 text-sm mt-1">
+                    Product name is required
+                  </div>
+                </div>
+                
+                <!-- Product Description -->
+                <div>
+                  <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                  <textarea id="description" formControlName="description" rows="4" placeholder="Product Description" 
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20"></textarea>
+                  <div *ngIf="productForm.get('description')?.invalid && productForm.get('description')?.touched" class="text-red-500 text-sm mt-1">
+                    Description is required
+                  </div>
+                </div>
+                
+                <!-- Product Image URL -->
+                <div>
+                  <label for="imageUrl" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URL</label>
+                  <input type="text" id="imageUrl" formControlName="imageUrl" placeholder="https://example.com/image.jpg" 
+                         class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20">
+                  <div *ngIf="productForm.get('imageUrl')?.invalid && productForm.get('imageUrl')?.touched" class="text-red-500 text-sm mt-1">
+                    Image URL is required
+                  </div>
+                </div>
+                
+                <!-- Product Price -->
+                <div>
+                  <label for="price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price (₹)</label>
+                  <input type="number" id="price" formControlName="price" placeholder="0.00" min="0" step="0.01"
+                         class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20">
+                  <div *ngIf="productForm.get('price')?.invalid && productForm.get('price')?.touched" class="text-red-500 text-sm mt-1">
+                    <span *ngIf="productForm.get('price')?.errors?.['required']">Price is required</span>
+                    <span *ngIf="productForm.get('price')?.errors?.['min']">Price must be positive</span>
+                  </div>
+                </div>
+                
+                <!-- Product Category -->
+                <div>
+                  <label for="categoryId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                  <select id="categoryId" formControlName="categoryId" 
+                          class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20">
+                    <option value="" disabled>Select Category</option>
+                    <!-- Fix for category dropdown -->
+                    <option *ngFor="let category of categories" [value]="category.categoryId || category.id">
+                      {{ category.name }}
+                    </option>
+                  </select>
+                  <div *ngIf="productForm.get('categoryId')?.invalid && productForm.get('categoryId')?.touched" class="text-red-500 text-sm mt-1">
+                    Category is required
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-4">
+              <button type="button" (click)="changeView('list')" 
+                      class="px-6 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600">
+                Cancel
+              </button>
+              <button type="submit" 
+                      [disabled]="isSubmitting" 
+                      class="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors">
+                <span *ngIf="isSubmitting" class="inline-block mr-2">
+                  <i class="fas fa-spinner fa-spin"></i>
+                </span>
+                Save Product
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Out of Stock Products View -->
+    <div *ngIf="isOutOfStockView && !loading && !error" class="bg-white dark:bg-slate-700 rounded-xl shadow overflow-hidden">
+      <div class="px-6 py-5 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Out of Stock Products</h3>
+        <div class="flex items-center space-x-3">
+          <button (click)="openAddForm()" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg text-sm transition-colors duration-200">
+            Add Product
+          </button>
+        </div>
+      </div>
+
+      <!-- Out of Stock Products Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-600">
+          <thead class="bg-gray-50 dark:bg-slate-800">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <div class="flex items-center">
+                  <input type="checkbox" class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded">
+                </div>
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Product Name
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Price
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Category
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white dark:bg-slate-700 divide-y divide-gray-200 dark:divide-slate-600">
+            <tr *ngFor="let product of products" class="hover:bg-gray-50 dark:hover:bg-slate-600/50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <input type="checkbox" class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded">
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-12 w-12">
+                    <img [src]="product.imageUrl || 'assets/images/product-placeholder.jpg'" class="h-12 w-12 rounded-md object-cover" alt="{{ product.name }}">
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{ product.name }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 dark:text-white">{{ formatPrice(product.price) }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                  <!-- Debug info (remove in production) -->
+                  <!-- <span class="hidden">Debug - CategoryId: {{product.categoryId}}</span> -->
+                  
+                  <!-- Use ternary operator for better control over category display -->
+                  {{ product.categoryName ? product.categoryName : getCategoryName(product.categoryId) }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap flex items-center space-x-2">
+                <button (click)="viewProduct(product)" class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1">
+                  <i class="fas fa-eye"></i>
+                </button>
+                <button (click)="editProduct(product)" class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1">
+                  <i class="fas fa-edit"></i>
+                </button>
+                <button (click)="confirmDelete(product)" class="text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 p-1">
+                  <i class="fas fa-trash"></i>
+                </button>
+              </td>
+            </tr>
+            
+            <!-- Empty state -->
+            <tr *ngIf="products.length === 0">
+              <td colspan="5" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+                <div class="flex flex-col items-center">
+                  <i class="fas fa-box-open text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                  <p>No out of stock products found.</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
   </div>
 
-  <div class="table-container">
-    <table class="product-table">
-      <thead>
-        <tr>
-          <th class="checkbox-column">
-            <input type="checkbox" (change)="selectAllProducts($event)">
-          </th>
-          <th class="name-column">Product Name</th>
-          <th class="price-column">Price</th>
-          <th class="stock-column">Stock</th>
-          <th class="category-column">Category</th>
-          <th class="action-column">Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let product of products">
-          <td class="checkbox-column">
-            <input type="checkbox" [(ngModel)]="product.selected">
-          </td>
-          <td class="name-column">
-            <div class="product-info">
-              <img [src]="product.imageUrl || 'assets/images/placeholder.png'" alt="{{ product.name }}" class="product-image">
-              <div class="product-details">
-                <div class="product-name">{{ product.name }}</div>
-                <div class="product-description">{{ product.description | truncate:50 }}</div>
-              </div>
-            </div>
-          </td>
-          <td class="price-column">₹{{ product.price | number:'1.2-2' }}</td>
-          <td class="stock-column">
-            <div>
-              <span class="items-left" [class.low-stock]="(product.stockQuantity ?? 0) <= 10">
-                {{ product.stockQuantity ?? 0 }} Items
-              </span>
-              
-            </div>
-          </td>
-          <td class="category-column">{{ getCategoryName(product.categoryId) }}</td>
-          <td class="action-column">
-            <div class="action-buttons">
-              <button class="btn-edit" (click)="editProduct(product.productId)">
-                <i class="fa fa-pencil"></i>
-              </button>
-              <button class="btn-delete" (click)="deleteProduct(product.productId)">
-                <i class="fa fa-trash"></i>
-              </button>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <nav class="pagination-container" *ngIf="totalPages > 1">
-    <ul class="pagination">
-      <li class="page-item" [class.disabled]="currentPage === 0">
-        <a class="page-link" (click)="goToPage(currentPage - 1)">Previous</a>
-      </li>
-      <li class="page-item" *ngFor="let page of getPageNumbers()" [class.active]="page === currentPage">
-        <a class="page-link" (click)="goToPage(page)">{{ page + 1 }}</a>
-      </li>
-      <li class="page-item" [class.disabled]="currentPage === totalPages - 1">
-        <a class="page-link" (click)="goToPage(currentPage + 1)">Next</a>
-      </li>
-    </ul>
-  </nav>
-</div>
-
-<!-- Add/Edit Product Modal -->
-<div class="modal" *ngIf="showModal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>{{ isEditing ? 'Edit Product' : 'Add New Product' }}</h2>
-      <button class="close-btn" (click)="closeModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <form [formGroup]="productForm" (ngSubmit)="saveProduct()">
-        <div class="form-group">
-          <label for="name">Product Name</label>
-          <input type="text" id="name" formControlName="name" class="form-control">
-          <div *ngIf="productForm.get('name')?.invalid && productForm.get('name')?.touched" class="error-message">
-            Product name is required
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="description">Description</label>
-          <textarea id="description" formControlName="description" class="form-control"></textarea>
-        </div>
-        
-        <div class="form-group">
-          <label for="price">Price</label>
-          <input type="number" id="price" formControlName="price" class="form-control" step="0.01" min="0">
-          <div *ngIf="productForm.get('price')?.invalid && productForm.get('price')?.touched" class="error-message">
-            Valid price is required (minimum 0)
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="categoryId">Category</label>
-          <select id="categoryId" formControlName="categoryId" class="form-control">
-            <option value="">Select a category</option>
-            <option *ngFor="let category of categories" [value]="category.id">{{ category.name }}</option>
-          </select>
-          <div *ngIf="productForm.get('categoryId')?.invalid && productForm.get('categoryId')?.touched" class="error-message">
-            Category is required
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="imageUrl">Image URL</label>
-          <input type="text" id="imageUrl" formControlName="imageUrl" class="form-control">
-        </div>
-        
-        <div class="form-group">
-          <label for="stockQuantity">Stock Quantity</label>
-          <input type="number" id="stockQuantity" formControlName="stockQuantity" class="form-control" min="0">
-        </div>
-        
-        <div class="modal-footer">
-          <button type="button" class="btn-cancel" (click)="closeModal()">Cancel</button>
-          <button type="submit" class="btn-save" [disabled]="productForm.invalid">
-            {{ isEditing ? 'Update' : 'Save' }}
+  <!-- View Product Modal -->
+<div *ngIf="showViewModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Background overlay -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
+    
+    <!-- Modal panel -->
+    <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full animate-modal-in">
+      <div *ngIf="selectedProduct" class="bg-white dark:bg-slate-800">
+        <!-- Modal Header with close button -->
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
+          <h3 class="text-xl font-semibold text-gray-800 dark:text-white" id="modal-title">
+            Product Details
+          </h3>
+          <button (click)="closeModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+            <i class="fas fa-times"></i>
           </button>
         </div>
-      </form>
+        
+        <!-- Modal Body -->
+        <div class="px-6 py-5">
+          <div class="flex flex-col md:flex-row">
+            <!-- Product Image -->
+            <div class="w-full md:w-1/3 mb-4 md:mb-0 md:pr-4">
+              <div class="relative pb-[100%]">
+                <img [src]="selectedProduct.imageUrl || 'assets/images/product-placeholder.jpg'" 
+                     class="absolute inset-0 w-full h-full object-contain rounded-lg border border-gray-200 dark:border-slate-600" 
+                     alt="{{ selectedProduct.name }}">
+              </div>
+            </div>
+            
+            <!-- Product Info -->
+            <div class="w-full md:w-2/3">
+              <h4 class="text-xl font-bold text-gray-800 dark:text-white mb-2">
+                {{ selectedProduct.name }}
+              </h4>
+              
+              <!-- Price and Stock Info -->
+              <div class="flex flex-wrap gap-x-6 gap-y-3 mb-4">
+                <!-- Price -->
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Price</p>
+                  <p class="text-2xl font-bold text-sky-600 dark:text-sky-400">
+                    {{ formatPrice(selectedProduct.price) }}
+                  </p>
+                </div>
+                
+                <!-- Stock Quantity -->
+                
+              </div>
+              
+              <!-- Category -->
+              <div class="mb-4">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Category</p>
+                <span class="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm font-medium">
+                  {{ selectedProduct.categoryName ? selectedProduct.categoryName : getCategoryName(selectedProduct.categoryId) }}
+                </span>
+              </div>
+              
+              <!-- Product ID -->
+              <div class="mb-4">
+                <p class="text-sm text-gray-500 dark:text-gray-400">Product ID</p>
+                <p class="text-gray-700 dark:text-gray-300 font-mono">{{ selectedProduct.productId }}</p>
+              </div>
+              
+              <!-- Description -->
+              <div class="mb-4">
+                <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</h5>
+                <div class="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg text-gray-700 dark:text-gray-300 text-sm">
+                  {{ selectedProduct.description }}
+                </div>
+              </div>
+              
+           
+              
+              <!-- Action Buttons -->
+              <div class="flex space-x-3 mt-6">
+                <button (click)="editProduct(selectedProduct); closeModal()" 
+                        class="flex-1 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors flex items-center justify-center">
+                  <i class="fas fa-edit mr-2"></i> Edit
+                </button>
+                <button (click)="confirmDelete(selectedProduct); closeModal()" 
+                        class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center">
+                  <i class="fas fa-trash mr-2"></i> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
+
+ <!-- Edit Product Modal -->
+<div *ngIf="showEditModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Background overlay -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
+    
+    <!-- Modal panel -->
+    <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full animate-modal-in">
+      <div class="bg-white dark:bg-slate-800">
+        <!-- Modal Header with close button -->
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
+          <h3 class="text-xl font-semibold text-gray-800 dark:text-white" id="modal-title">
+            Edit Product
+          </h3>
+          <button (click)="closeModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        
+        <!-- Modal Body -->
+        <div class="px-6 py-5">
+          <form [formGroup]="productForm" (ngSubmit)="updateProduct()">
+            <div class="space-y-4">
+              <!-- Product Name -->
+              <div>
+                <label for="edit-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Product Name</label>
+                <input type="text" id="edit-name" formControlName="name" placeholder="Product Name" 
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20">
+                <div *ngIf="productForm.get('name')?.invalid && productForm.get('name')?.touched" class="text-red-500 text-sm mt-1">
+                  Product name is required
+                </div>
+              </div>
+              
+              <!-- Product Description -->
+              <div>
+                <label for="edit-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                <textarea id="edit-description" formControlName="description" rows="4" placeholder="Product Description" 
+                          class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20"></textarea>
+                <div *ngIf="productForm.get('description')?.invalid && productForm.get('description')?.touched" class="text-red-500 text-sm mt-1">
+                  Description is required
+                </div>
+              </div>
+              
+              <!-- Product Image URL -->
+              <div>
+                <label for="edit-imageUrl" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URL</label>
+                <input type="text" id="edit-imageUrl" formControlName="imageUrl" placeholder="https://example.com/image.jpg" 
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20">
+                <div *ngIf="productForm.get('imageUrl')?.invalid && productForm.get('imageUrl')?.touched" class="text-red-500 text-sm mt-1">
+                  Image URL is required
+                </div>
+              </div>
+              
+              <!-- Product Price -->
+              <div>
+                <label for="edit-price" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Price (₹)</label>
+                <input type="number" id="edit-price" formControlName="price" placeholder="0.00" min="0" step="0.01"
+                       class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20">
+                <div *ngIf="productForm.get('price')?.invalid && productForm.get('price')?.touched" class="text-red-500 text-sm mt-1">
+                  <span *ngIf="productForm.get('price')?.errors?.['required']">Price is required</span>
+                  <span *ngIf="productForm.get('price')?.errors?.['min']">Price must be positive</span>
+                </div>
+              </div>
+              
+              <!-- Product Category -->
+              <div>
+                <label for="edit-categoryId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category</label>
+                <select id="edit-categoryId" formControlName="categoryId" 
+                        class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20">
+                  <option value="" disabled>Select Category</option>
+                  <!-- Fix for category dropdown -->
+                  <option *ngFor="let category of categories" [value]="category.categoryId || category.id">
+                    {{ category.name }}
+                  </option>
+                </select>
+                <div *ngIf="productForm.get('categoryId')?.invalid && productForm.get('categoryId')?.touched" class="text-red-500 text-sm mt-1">
+                  Category is required
+                </div>
+              </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-3 mt-6">
+              <button type="button" (click)="closeModal()" 
+                      class="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600">
+                Cancel
+              </button>
+              <button type="submit" 
+                      [disabled]="isSubmitting || productForm.invalid" 
+                      class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors">
+                <span *ngIf="isSubmitting" class="inline-block mr-2">
+                  <i class="fas fa-spinner fa-spin"></i>
+                </span>
+                Update Product
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div *ngIf="showDeleteModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Background overlay -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
+    
+    <!-- Modal panel -->
+    <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full animate-modal-in">
+      <div class="bg-white dark:bg-slate-800 px-6 py-6">
+        <div class="flex items-start">
+          <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
+            <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400"></i>
+          </div>
+          <div class="ml-4 flex-1">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+              Delete Product
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                Are you sure you want to delete <span class="font-semibold">{{ selectedProduct?.name }}</span>? This action cannot be undone.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gray-50 dark:bg-slate-700 px-6 py-4 flex justify-end space-x-3">
+        <button type="button" (click)="closeModal()" 
+                class="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600">
+          Cancel
+        </button>
+        <button type="button" (click)="deleteProduct()" 
+                [disabled]="isSubmitting"
+                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors">
+          <span *ngIf="isSubmitting" class="inline-block mr-2">
+            <i class="fas fa-spinner fa-spin"></i>
+          </span>
+          Delete
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Additional CSS for animations -->
+<style>
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  .animate-modal-in {
+    animation: modalIn 0.3s ease-out forwards;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+</style>

@@ -1,212 +1,703 @@
-<div class="admin-container">
-  <!-- Sidebar -->
-  <div class="sidebar" [class.hidden]="!sidebarOpen">
-    <div class="sidebar-header">
-      <h1 class="title">Admin Panel</h1>
-      <button (click)="toggleSidebar()" class="sidebar-toggle">
-        <svg class="icon-close" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
+<!-- Dashboard Container with Dark Mode Support -->
+<div class="min-h-screen bg-ivory-50 dark:bg-slate-800 transition-colors duration-300">
+  <div class="flex h-screen overflow-hidden">
+    <!-- Hamburger Menu Button (Outside Sidebar) -->
+<button *ngIf="!sidebarOpen" 
+(click)="toggleSidebar()" 
+class="fixed top-4 left-4 z-30 p-2 rounded-lg bg-sky-600 text-white shadow-lg hover:bg-sky-700 focus:outline-none lg:hidden transition-all duration-300 animate-pulse">
+<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+</svg>
+</button>
+
+<!-- Sidebar -->
+<div class="sidebar-container fixed inset-y-0 left-0 z-20 flex-shrink-0 w-64 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0"
+[ngClass]="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+
+<div class="flex flex-col h-full bg-white dark:bg-slate-700 shadow-lg sidebar-gradient">
+<!-- Sidebar Header -->
+<div class="bg-sky-600 dark:bg-sky-800 py-4 px-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center space-x-2">
+  <span class="text-2xl text-white">🛍️</span>
+  <h1 class="text-xl font-bold text-white tracking-wider">CliQShop</h1>
+</div>
+<button (click)="toggleSidebar()" class="text-white hover:bg-sky-700 p-1 rounded-md transition-colors focus:outline-none">
+  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+  </svg>
+</button>
+</div>
+</div>
+        
+        <!-- Sidebar Menu -->
+        <div class="py-4 px-4 space-y-1.5 flex-grow overflow-y-auto scrollbar-thin">
+          <!-- Dashboard Link -->
+          <a routerLink="/admin/dashboard" routerLinkActive="bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-300"
+             class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-sky-50 dark:hover:bg-sky-900 transition-colors group">
+            <span class="flex items-center justify-center w-7 h-7 text-sky-600 dark:text-sky-400">
+              <i class="fas fa-tachometer-alt"></i>
+            </span>
+            <span class="ml-3 font-medium">Dashboard</span>
+          </a>
+          
+          <!-- Products Menu -->
+          <div class="space-y-1">
+            <button (click)="toggleMenu('products')" 
+                    class="w-full flex items-center justify-between px-4 py-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-sky-50 dark:hover:bg-sky-900 transition-colors">
+              <div class="flex items-center">
+                <span class="flex items-center justify-center w-7 h-7 text-green-600 dark:text-green-400">
+                  <i class="fas fa-box"></i>
+                </span>
+                <span class="ml-3 font-medium">Products</span>
+              </div>
+              <span class="transform transition-transform duration-200" [ngClass]="menus.products ? 'rotate-180' : ''">
+                <i class="fas fa-chevron-down text-sm"></i>
+              </span>
+            </button>
+            
+            <!-- Submenu -->
+            <div *ngIf="menus.products" 
+                 class="pl-12 space-y-1 animate-slideDown overflow-hidden">
+              <a routerLink="/admin/products" [queryParams]="{view: 'list'}" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                All Products
+              </a>
+              <a routerLink="/admin/products" [queryParams]="{view: 'add'}" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                Add New
+              </a>
+              <a routerLink="/admin/products" [queryParams]="{view: 'outOfStock'}" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                Out of Stock
+              </a>
+            </div>
+          </div>
+          
+          <!-- Categories Menu -->
+          <div class="space-y-1">
+            <button (click)="toggleMenu('categories')" 
+                    class="w-full flex items-center justify-between px-4 py-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-sky-50 dark:hover:bg-sky-900 transition-colors">
+              <div class="flex items-center">
+                <span class="flex items-center justify-center w-7 h-7 text-blue-600 dark:text-blue-400">
+                  <i class="fas fa-tags"></i>
+                </span>
+                <span class="ml-3 font-medium">Categories</span>
+              </div>
+              <span class="transform transition-transform duration-200" [ngClass]="menus.categories ? 'rotate-180' : ''">
+                <i class="fas fa-chevron-down text-sm"></i>
+              </span>
+            </button>
+            
+            <!-- Submenu -->
+            <div *ngIf="menus.categories" 
+                 class="pl-12 space-y-1 animate-slideDown overflow-hidden">
+              <a routerLink="/admin/categories" [queryParams]="{view: 'list'}" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                All Categories
+              </a>
+              <a routerLink="/admin/categories" [queryParams]="{view: 'add'}" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                Add New
+              </a>
+            </div>
+          </div>
+          
+          <!-- Orders Menu -->
+          <div class="space-y-1">
+            <button (click)="toggleMenu('orders')" 
+                    class="w-full flex items-center justify-between px-4 py-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-sky-50 dark:hover:bg-sky-900 transition-colors">
+              <div class="flex items-center">
+                <span class="flex items-center justify-center w-7 h-7 text-amber-600 dark:text-amber-400">
+                  <i class="fas fa-shopping-cart"></i>
+                </span>
+                <span class="ml-3 font-medium">Orders</span>
+              </div>
+              <span class="transform transition-transform duration-200" [ngClass]="menus.orders ? 'rotate-180' : ''">
+                <i class="fas fa-chevron-down text-sm"></i>
+              </span>
+            </button>
+            
+            <!-- Submenu -->
+            <div *ngIf="menus.orders" 
+                 class="pl-12 space-y-1 animate-slideDown overflow-hidden">
+              <a routerLink="/admin/orders" [queryParams]="{status: 'all'}" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                All Orders
+              </a>
+              <a routerLink="/admin/orders" [queryParams]="{status: 'pending'}" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                Pending
+              </a>
+              <a routerLink="/admin/orders" [queryParams]="{status: 'processing'}" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                Processing
+              </a>
+              <a routerLink="/admin/orders" [queryParams]="{status: 'completed'}" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                Completed
+              </a>
+            </div>
+          </div>
+          
+          <!-- Users Link -->
+          <div class="space-y-1">
+            <button (click)="toggleMenu('users')" 
+                    class="w-full flex items-center justify-between px-4 py-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-sky-50 dark:hover:bg-sky-900 transition-colors">
+              <div class="flex items-center">
+                <span class="flex items-center justify-center w-7 h-7 text-indigo-600 dark:text-indigo-400">
+                  <i class="fas fa-users"></i>
+                </span>
+                <span class="ml-3 font-medium">Users</span>
+              </div>
+              <span class="transform transition-transform duration-200" [ngClass]="menus.users ? 'rotate-180' : ''">
+                <i class="fas fa-chevron-down text-sm"></i>
+              </span>
+            </button>
+            
+            <!-- Submenu -->
+            <div *ngIf="menus.users" 
+                 class="pl-12 space-y-1 animate-slideDown overflow-hidden">
+              <a routerLink="/admin/users" [queryParams]="{role: 'all'}" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                All Users
+              </a>
+              <a routerLink="/admin/users" [queryParams]="{role: 'admin'}" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                Admins
+              </a>
+              <a routerLink="/admin/users" [queryParams]="{role: 'customer'}" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                Customers
+              </a>
+            </div>
+          </div>
+          
+          <!-- Reports Link -->
+          <a routerLink="/admin/reports" routerLinkActive="bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-300"
+             class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-sky-50 dark:hover:bg-sky-900 transition-colors">
+            <span class="flex items-center justify-center w-7 h-7 text-purple-600 dark:text-purple-400">
+              <i class="fas fa-chart-bar"></i>
+            </span>
+            <span class="ml-3 font-medium">Reports</span>
+          </a>
+          
+          <!-- Settings Menu -->
+          <div class="space-y-1">
+            <button (click)="toggleMenu('settings')" 
+                    class="w-full flex items-center justify-between px-4 py-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-sky-50 dark:hover:bg-sky-900 transition-colors">
+              <div class="flex items-center">
+                <span class="flex items-center justify-center w-7 h-7 text-gray-600 dark:text-gray-400">
+                  <i class="fas fa-cog"></i>
+                </span>
+                <span class="ml-3 font-medium">Settings</span>
+              </div>
+              <span class="transform transition-transform duration-200" [ngClass]="menus.settings ? 'rotate-180' : ''">
+                <i class="fas fa-chevron-down text-sm"></i>
+              </span>
+            </button>
+            
+            <!-- Submenu -->
+            <div *ngIf="menus.settings" 
+                 class="pl-12 space-y-1 animate-slideDown overflow-hidden">
+              <a routerLink="/admin/settings/profile" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                Profile
+              </a>
+              <a routerLink="/admin/settings/store" 
+                 class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                Store Settings
+              </a>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Sidebar Footer -->
+        <div class="p-4 border-t border-gray-200 dark:border-slate-600">
+          <button (click)="logout()" 
+                  class="w-full flex items-center px-4 py-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+            <i class="fas fa-sign-out-alt"></i>
+            <span class="ml-3 font-medium">Logout</span>
+          </button>
+        </div>
+      </div>
     </div>
-
-    <nav class="sidebar-nav">
-      <!-- Dashboard -->
-      <div class="nav-item">
-        <a routerLink="/admin/dashboard" routerLinkActive="active-link" class="nav-link">Dashboard</a>
-      </div>
-
-      <!-- Products Dropdown -->
-      <div class="nav-item">
-        <div (click)="toggleMenu('products')" class="nav-dropdown">
-          <span>Products</span>
-          <i class="icon-chevron" [class.rotate]="menus.products"></i>
-        </div>
-        <div class="dropdown-menu" *ngIf="menus.products">
-          <a routerLink="/admin/products" [queryParams]="{view: 'list'}" class="dropdown-link">List</a>
-          <a routerLink="/admin/products" [queryParams]="{view: 'edit'}" class="dropdown-link">Edit</a>
-          <a routerLink="/admin/products" [queryParams]="{view: 'add'}" class="dropdown-link">Add</a>
-        </div>
-      </div>
-
-      <!-- Categories Dropdown -->
-      <div class="nav-item">
-        <div (click)="toggleMenu('categories')" class="nav-dropdown">
-          <span>Categories</span>
-          <i class="icon-chevron" [class.rotate]="menus.categories"></i>
-        </div>
-        <div class="dropdown-menu" *ngIf="menus.categories">
-          <a routerLink="/admin/categories" [queryParams]="{view: 'list'}" class="dropdown-link">List</a>
-          <a routerLink="/admin/categories" [queryParams]="{view: 'edit'}" class="dropdown-link">Edit</a>
-          <a routerLink="/admin/categories" [queryParams]="{view: 'add'}" class="dropdown-link">Add</a>
-        </div>
-      </div>
-
-      <!-- Inventory Dropdown -->
-      <div class="nav-item">
-        <div (click)="toggleMenu('inventory')" class="nav-dropdown">
-          <span>Inventory</span>
-          <i class="icon-chevron" [class.rotate]="menus.inventory"></i>
-        </div>
-        <div class="dropdown-menu" *ngIf="menus.inventory">
-          <a routerLink="/admin/reports" [queryParams]="{type: 'sales'}" class="dropdown-link">Sales Report</a>
-          <a routerLink="/admin/reports" [queryParams]="{type: 'inventory'}" class="dropdown-link">Inventory Report</a>
-        </div>
-      </div>
-
-      <!-- Profile -->
-      <div class="nav-item">
-        <a routerLink="/admin/profile" routerLinkActive="active-link" class="nav-link">My Profile</a>
-      </div>
-
-      <!-- Settings Dropdown -->
-      <div class="nav-item">
-        <div (click)="toggleMenu('settings')" class="nav-dropdown">
-          <span>Settings</span>
-          <i class="icon-chevron" [class.rotate]="menus.settings"></i>
-        </div>
-        <div class="dropdown-menu" *ngIf="menus.settings">
-          <a routerLink="/admin/settings/profile" class="dropdown-link">Update Profile</a>
-          <a routerLink="/admin/settings/password" class="dropdown-link">Change Password</a>
-        </div>
-      </div>
-    </nav>
-  </div>
-
-  <!-- Main Content -->
-  <div class="main-content">
-    <!-- Header -->
-    <header class="header">
-      <button (click)="toggleSidebar()" class="sidebar-toggle">
-        <svg class="icon-menu" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-        </svg>
-      </button>
-      <div class="header-items">
-        <div class="search-box">
-          <input type="text" placeholder="Search..." class="search-input">
-          <i class="icon-search"></i>
-        </div>
-        <div class="notifications">
-          <i class="icon-bell"></i>
-          <span *ngIf="notificationsCount > 0" class="notification-count">{{notificationsCount}}</span>
-        </div>
-        <div class="user-profile">
-          <img [src]="userProfile.imageUrl || 'https://via.placeholder.com/40'" alt="Profile" class="profile-image">
-          <span class="profile-name">{{userProfile.name || 'Admin'}}</span>
-        </div>
-      </div>
-    </header>
-
-    <!-- Dashboard Content -->
-    <main class="dashboard-content">
-      <!-- Quick Stats -->
-      <div class="stats-grid">
-        <div *ngFor="let stat of quickStats" class="stat-card">
-         
-          <div class="stat-info">
-            <p class="stat-title">{{ stat.title }}</p>
-            <h3 class="stat-value">{{ stat.value }}</h3>
+    
+    <!-- Main Content Area -->
+    <div class="relative flex flex-col flex-1 overflow-y-auto overflow-x-hidden">
+      <!-- Top Navigation -->
+      <header class="sticky top-0 z-10 bg-white dark:bg-slate-700 border-b border-gray-200 dark:border-slate-600 shadow-sm">
+        <div class="px-4 sm:px-6 lg:px-8">
+          <div class="flex items-center justify-between h-16">
+            <!-- Left Side - Menu Button & Page Title -->
+            <div class="flex items-center">
+              <button (click)="toggleSidebar()" 
+                      class="text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 p-2 rounded-lg transition-colors focus:outline-none lg:hidden">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                </svg>
+              </button>
+              <h1 class="ml-4 text-xl font-semibold text-gray-800 dark:text-white">Admin Dashboard</h1>
+            </div>
+            
+            <!-- Right Side - Search, Theme Toggle, Notifications, User -->
+            <div class="flex items-center space-x-4">
+              <!-- Search -->
+              <div class="relative hidden md:block">
+                <input type="text" [(ngModel)]="searchQuery" (input)="search()" placeholder="Search..." 
+                       class="w-full sm:w-64 pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-slate-600 border border-transparent
+                              focus:bg-white dark:focus:bg-slate-700 focus:border-sky-500 text-sm text-gray-900 dark:text-gray-100
+                              transition-colors duration-200">
+                <span class="absolute left-3 top-2.5 text-gray-400 dark:text-gray-500">
+                  <i class="fas fa-search"></i>
+                </span>
+                
+                <!-- Search Results Dropdown -->
+                <div *ngIf="searchQuery && searchResults.length > 0" 
+                     class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-700 shadow-lg rounded-lg py-2 z-20 max-h-72 overflow-y-auto animate-fadeIn">
+                  <div *ngFor="let result of searchResults" class="px-4 py-2 hover:bg-sky-50 dark:hover:bg-slate-600 cursor-pointer">
+                    <p class="font-medium text-gray-700 dark:text-gray-200">{{result.name || result.title}}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{result.type}}</p>
+                  </div>
+                </div>
+                
+                <!-- No Results Message -->
+                <div *ngIf="searchQuery && searchResults.length === 0 && !isSearching" 
+                     class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-700 shadow-lg rounded-lg py-4 px-4 z-20 animate-fadeIn">
+                  <p class="text-gray-500 dark:text-gray-400 text-center">No results found</p>
+                </div>
+                
+                <!-- Loading Indicator -->
+                <div *ngIf="isSearching" 
+                     class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-700 shadow-lg rounded-lg py-4 px-4 z-20 animate-fadeIn">
+                  <div class="flex justify-center">
+                    <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-sky-500"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Theme Toggle -->
+              <button (click)="toggleDarkMode()" class="p-2 rounded-lg text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 focus:outline-none">
+                <i class="fas" [ngClass]="isDarkMode ? 'fa-sun' : 'fa-moon'"></i>
+              </button>
+              
+              <!-- Notifications -->
+              <div class="relative">
+                <button class="p-2 rounded-lg text-gray-500 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 focus:outline-none">
+                  <i class="fas fa-bell"></i>
+                  <span *ngIf="notificationsCount > 0" 
+                        class="absolute top-0 right-0 transform translate-x-1/4 -translate-y-1/4 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                    {{notificationsCount}}
+                  </span>
+                </button>
+              </div>
+              
+              <!-- User Profile Dropdown -->
+              <div class="relative">
+                <button (click)="toggleProfileDropdown()" class="flex items-center space-x-2 focus:outline-none">
+                  <img [src]="userProfile.imageUrl" alt="Profile" 
+                       class="w-8 h-8 rounded-full object-cover border-2 border-sky-500">
+                  <span class="hidden md:block text-sm font-medium text-gray-700 dark:text-white">{{userProfile.name}}</span>
+                  <i class="fas fa-chevron-down text-xs text-gray-500 dark:text-gray-400"></i>
+                </button>
+                
+                <!-- Dropdown Menu -->
+                <div *ngIf="showProfileDropdown" 
+                     class="absolute right-0 mt-2 w-48 bg-white dark:bg-slate-700 rounded-lg shadow-lg py-2 z-20 animate-slideDown">
+                  <a routerLink="/admin/profile" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-sky-50 dark:hover:bg-slate-600">
+                    <i class="fas fa-user mr-2"></i> My Profile
+                  </a>
+                  <a routerLink="/admin/settings" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-sky-50 dark:hover:bg-slate-600">
+                    <i class="fas fa-cog mr-2"></i> Settings
+                  </a>
+                  <div class="border-t border-gray-200 dark:border-slate-600 my-1"></div>
+                  <button (click)="logout()" class="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                    <i class="fas fa-sign-out-alt mr-2"></i> Logout
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-
-      <!-- Recent Activity -->
-      <div class="activity-grid">
-        <!-- Recent Products -->
-        <div class="activity-card">
-          <div class="card-header">
-            <h2 class="card-title">Recent Products</h2>
-            <a routerLink="/admin/products" class="view-all-link">View All</a>
+      </header>
+      
+      <!-- Main Dashboard Content -->
+      <main class="flex-1 overflow-x-hidden p-4 sm:p-6 lg:p-8">
+        <!-- Page Title & Date -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Dashboard Overview</h2>
+            <p class="mt-1 text-sm text-gray-600 dark:text-gray-400">Welcome back, {{userProfile.name}}! Here's what's happening today.</p>
           </div>
-          <div class="table-container">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Product</th>
-                  <th>Price</th>
-                  <th>Category</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let product of recentProducts">
-                  <td>
-                    <div class="product-info">
-                      <img [src]="product.imageUrl || 'https://via.placeholder.com/40'" class="product-image">
-                      <div class="product-details">
-                        <div class="product-name">{{ product.name }}</div>
-                        <div class="product-desc">{{ (product.description || '').slice(0, 30) }}...</div>
+          <div class="mt-3 sm:mt-0 text-sm font-medium text-gray-600 dark:text-gray-400">
+            {{ currentDate | date:'longDate' }}
+          </div>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8">
+          <div *ngFor="let stat of quickStats; let i = index" 
+               class="bg-white dark:bg-slate-700 rounded-xl shadow-sm p-6 border-l-4 transition-all duration-300 hover:shadow-md hover:translate-y-[-5px]"
+               [ngClass]="{
+                 'border-blue-500': i === 0,
+                 'border-green-500': i === 1,
+                 'border-purple-500': i === 2,
+                 'border-amber-500': i === 3,
+                 'border-red-500': i === 4
+               }">
+            <div class="flex justify-between items-center">
+              <div>
+                <p class="text-sm font-medium text-gray-500 dark:text-gray-400">{{ stat.title }}</p>
+                <h3 class="mt-1 text-2xl font-bold text-gray-800 dark:text-white animate-count">{{ stat.value }}</h3>
+              </div>
+              <div [ngClass]="{
+                'text-blue-500 bg-blue-100 dark:bg-blue-900/30': i === 0,
+                'text-green-500 bg-green-100 dark:bg-green-900/30': i === 1,
+                'text-purple-500 bg-purple-100 dark:bg-purple-900/30': i === 2,
+                'text-amber-500 bg-amber-100 dark:bg-amber-900/30': i === 3,
+                'text-red-500 bg-red-100 dark:bg-red-900/30': i === 4
+              }" class="flex items-center justify-center w-12 h-12 rounded-full">
+                <i [class]="'fas ' + stat.icon + ' text-xl'"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Main Content Panels -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          <!-- Recent Products Card -->
+          <div class="bg-white dark:bg-slate-700 rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+            <div class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-slate-600">
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Recent Products</h3>
+              <a routerLink="/admin/products" class="text-sm text-sky-600 dark:text-sky-400 hover:underline">View All</a>
+            </div>
+            
+            <!-- Loading Indicator -->
+            <div *ngIf="isLoading.products" class="p-10 flex justify-center">
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-sky-500"></div>
+            </div>
+            
+            <!-- Products Table -->
+            <div *ngIf="!isLoading.products && recentProducts.length > 0" class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-slate-600">
+                    <th class="px-5 py-3">Product</th>
+                    <th class="px-5 py-3">Price</th>
+                    <th class="px-5 py-3">Category</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-slate-600">
+                  <tr *ngFor="let product of recentProducts" class="hover:bg-gray-50 dark:hover:bg-slate-600/50 transition-colors">
+                    <td class="px-5 py-4">
+                      <div class="flex items-center">
+                        <div class="flex-shrink-0 h-10 w-10">
+                          <img [src]="product.imageUrl || 'assets/images/product-placeholder.jpg'" alt="Product" 
+                               class="h-10 w-10 rounded-md object-cover">
+                        </div>
+                        <div class="ml-3">
+                          <p class="text-sm font-medium text-gray-800 dark:text-white">{{product.name}}</p>
+                          <p class="text-xs text-gray-500 dark:text-gray-400">{{(product.description || '').slice(0, 30)}}...</p>
+                        </div>
                       </div>
+                    </td>
+                    <td class="px-5 py-4">
+                      <p class="text-sm text-gray-700 dark:text-gray-300">₹{{product.price}}</p>
+                    </td>
+                    <td class="px-5 py-4">
+                      <span class="px-2 py-1 text-xs rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
+                        {{product.categoryName || 'Category ' + product.categoryId}}
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Empty State -->
+            <div *ngIf="!isLoading.products && recentProducts.length === 0" class="p-10 text-center">
+              <p class="text-gray-500 dark:text-gray-400">No products found.</p>
+              <a routerLink="/admin/products" [queryParams]="{view: 'add'}" class="mt-2 inline-block text-sm text-sky-600 dark:text-sky-400 hover:underline">
+                Add your first product
+              </a>
+            </div>
+            
+            <!-- Pagination -->
+            <div *ngIf="!isLoading.products && recentProducts.length > 0" class="px-5 py-3 border-t border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-600 dark:text-gray-400">
+                  Showing {{recentProducts.length}} of {{totalProducts}} products
+                </span>
+                <div class="flex items-center space-x-1">
+                  <button *ngFor="let page of productPages" 
+                          (click)="goToPage('products', page)" 
+                          class="px-3 py-1 rounded" 
+                          [ngClass]="page === currentProductPage ? 'bg-sky-600 text-white' : 'bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-500'">
+                    {{page}}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Recent Orders Card -->
+          <div class="bg-white dark:bg-slate-700 rounded-xl shadow-sm overflow-hidden transition-all duration-300 hover:shadow-md">
+            <div class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-slate-600">
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Recent Orders</h3>
+              <a routerLink="/admin/orders" class="text-sm text-sky-600 dark:text-sky-400 hover:underline">View All</a>
+            </div>
+            
+            <!-- Loading Indicator -->
+            <div *ngIf="isLoading.orders" class="p-10 flex justify-center">
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-sky-500"></div>
+            </div>
+            
+            <!-- Orders Table -->
+            <div *ngIf="!isLoading.orders && recentOrders.length > 0" class="overflow-x-auto">
+              <table class="w-full">
+                <thead>
+                  <tr class="text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider border-b border-gray-200 dark:border-slate-600">
+                    <th class="px-5 py-3">Order ID</th>
+                    <th class="px-5 py-3">Date</th>
+                    <th class="px-5 py-3">Status</th>
+                    <th class="px-5 py-3">Amount</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200 dark:divide-slate-600">
+                  <tr *ngFor="let order of recentOrders" class="hover:bg-gray-50 dark:hover:bg-slate-600/50 transition-colors">
+                    <td class="px-5 py-4">
+                      <p class="text-sm font-medium text-gray-800 dark:text-white">#{{order.orderId}}</p>
+                    </td>
+                    <td class="px-5 py-4">
+                      <p class="text-sm text-gray-700 dark:text-gray-300">{{order.orderDate | date:'mediumDate'}}</p>
+                    </td>
+                    <td class="px-5 py-4">
+                      <span class="px-2 py-1 text-xs rounded-full" [ngClass]="{
+                        'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300': order.status === 'PENDING',
+                        'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300': order.status === 'PROCESSING',
+                        'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300': order.status === 'SHIPPED',
+                        'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300': order.status === 'DELIVERED',
+                        'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300': order.status === 'CANCELLED'
+                      }">
+                        {{order.status}}
+                      </span>
+                    </td>
+                    <td class="px-5 py-4">
+                      <p class="text-sm text-gray-700 dark:text-gray-300">₹{{order.totalPrice}}</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            
+            <!-- Empty State -->
+            <div *ngIf="!isLoading.orders && recentOrders.length === 0" class="p-10 text-center">
+              <p class="text-gray-500 dark:text-gray-400">No orders found.</p>
+            </div>
+            
+            <!-- Pagination -->
+            <div *ngIf="!isLoading.orders && recentOrders.length > 0" class="px-5 py-3 border-t border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-600 dark:text-gray-400">
+                  Showing {{recentOrders.length}} of {{totalOrders}} orders
+                </span>
+                <div class="flex items-center space-x-1">
+                  <button *ngFor="let page of orderPages" 
+                          (click)="goToPage('orders', page)" 
+                          class="px-3 py-1 rounded" 
+                          [ngClass]="page === currentOrderPage ? 'bg-sky-600 text-white' : 'bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-500'">
+                    {{page}}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Bottom Panels Row -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Recent Categories -->
+          <div class="bg-white dark:bg-slate-700 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md">
+            <div class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-slate-600">
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Categories</h3>
+              <a routerLink="/admin/categories" class="text-sm text-sky-600 dark:text-sky-400 hover:underline">View All</a>
+            </div>
+            
+            <!-- Loading Indicator -->
+            <div *ngIf="isLoading.categories" class="p-10 flex justify-center">
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-sky-500"></div>
+            </div>
+            
+            <!-- Categories List -->
+            <div *ngIf="!isLoading.categories && recentCategories.length > 0" class="p-5">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div *ngFor="let category of recentCategories" class="p-4 border border-gray-200 dark:border-slate-600 rounded-lg transition-all hover:border-sky-500 dark:hover:border-sky-500 hover:shadow-md">
+                  <h4 class="font-medium text-gray-800 dark:text-white">{{category.name}}</h4>
+                  <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">{{(category.description || '').slice(0, 60)}}...</p>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Empty State -->
+            <div *ngIf="!isLoading.categories && recentCategories.length === 0" class="p-10 text-center">
+              <p class="text-gray-500 dark:text-gray-400">No categories found.</p>
+              <a routerLink="/admin/categories" [queryParams]="{view: 'add'}" class="mt-2 inline-block text-sm text-sky-600 dark:text-sky-400 hover:underline">
+                Add your first category
+              </a>
+            </div>
+          </div>
+          
+          <!-- Recent Users -->
+          <div class="bg-white dark:bg-slate-700 rounded-xl shadow-sm transition-all duration-300 hover:shadow-md">
+            <div class="flex justify-between items-center p-5 border-b border-gray-200 dark:border-slate-600">
+              <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Recent Users</h3>
+              <a routerLink="/admin/users" class="text-sm text-sky-600 dark:text-sky-400 hover:underline">View All</a>
+            </div>
+            
+            <!-- Loading Indicator -->
+            <div *ngIf="isLoading.users" class="p-10 flex justify-center">
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-sky-500"></div>
+            </div>
+            
+            <!-- Users List -->
+            <div *ngIf="!isLoading.users && recentUsers.length > 0" class="p-5">
+              <div class="space-y-4">
+                <div *ngFor="let user of recentUsers" class="flex items-center p-3 border-b border-gray-200 dark:border-slate-600 last:border-0 hover:bg-gray-50 dark:hover:bg-slate-600/50 transition-colors rounded-lg">
+                  <div class="flex-shrink-0 w-10 h-10">
+                    <img [src]="'https://ui-avatars.com/api/?name=' + user.name + '&background=random'" alt="{{user.name}}" class="w-10 h-10 rounded-full">
+                  </div>
+                  <div class="ml-4 flex-1">
+                    <div class="flex items-center justify-between">
+                      <p class="text-sm font-medium text-gray-800 dark:text-white">{{user.name}}</p>
+                      <span class="px-2 py-1 text-xs rounded-full" [ngClass]="user.role === 'ADMIN' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'">
+                        {{user.role}}
+                      </span>
                     </div>
-                  </td>
-                  <td>₹{{ product.price }}</td>
-                  <td>{{ product.categoryId }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="pagination-container">
-            <nav class="pagination">
-              <div class="pagination-info">
-                Showing <span>{{ recentProducts.length }}</span> of <span>{{ totalProducts }}</span> results
+                    <p class="text-xs text-gray-500 dark:text-gray-400">{{user.email}}</p>
+                  </div>
+                </div>
               </div>
-              <ul class="pagination-list">
-                <li *ngFor="let page of productPages" class="pagination-item">
-                  <a (click)="goToPage('products', page)">{{ page }}</a>
-                </li>
-              </ul>
-            </nav>
+            </div>
+            
+            <!-- Empty State -->
+            <div *ngIf="!isLoading.users && recentUsers.length === 0" class="p-10 text-center">
+              <p class="text-gray-500 dark:text-gray-400">No users found.</p>
+            </div>
           </div>
         </div>
-
-        <!-- Recent Orders -->
-        <div class="activity-card">
-          <div class="card-header">
-            <h2 class="card-title">Recent Orders</h2>
-            <a routerLink="/admin/orders" class="view-all-link">View All</a>
-          </div>
-          <div class="table-container">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Order ID</th>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr *ngFor="let order of recentOrders">
-                  <td>#{{ order.orderId }}</td>
-                  <td>{{ order.orderDate | date:'shortDate' }}</td>
-                  <td>
-                    <span [ngClass]="{
-                      'status-pending': order.status === 'Pending',
-                      'status-completed': order.status === 'Completed',
-                      'status-cancelled': order.status === 'Cancelled'
-                    }" class="status-label">
-                      {{ order.status }}
-                    </span>
-                  </td>
-                  <td>₹{{ order.totalPrice }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div class="pagination-container">
-            <nav class="pagination">
-              <div class="pagination-info">
-                Showing <span>{{ recentOrders.length }}</span> of <span>{{ totalOrders }}</span> results
-              </div>
-              <ul class="pagination-list">
-                <li class="pagination-item" *ngFor="let page of orderPages">
-                  <a (click)="goToPage('orders', page)">{{ page }}</a>
-                </li>
-              </ul>
-            </nav>
-          </div>
-        </div>
-      </div>
-    </main>
+      </main>
+    </div>
   </div>
 </div>
+
+<!-- CSS Animations -->
+<style>
+  /* Sidebar gradient finish */
+  .sidebar-gradient::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50%;
+    background: linear-gradient(to bottom, rgba(74, 111, 165, 0), rgba(74, 111, 165, 0.1));
+    pointer-events: none;
+    z-index: -1;
+  }
+  
+  .dark .sidebar-gradient::before {
+    background: linear-gradient(to bottom, rgba(30, 41, 59, 0), rgba(30, 41, 59, 0.3));
+  }
+  
+  .animate-slideDown {
+    animation: slideDown 0.3s ease-out forwards;
+    transform-origin: top center;
+  }
+  
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: scaleY(0);
+    }
+    to {
+      opacity: 1;
+      transform: scaleY(1);
+    }
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
+  .animate-count {
+    animation: countUp 2s ease-out forwards;
+  }
+  
+  @keyframes countUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  @keyframes pulse {
+    0%, 100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+  }
+  
+  .bg-ivory-50 {
+    background-color: #FFFFF0;
+  }
+  
+  /* Custom scrollbar */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 5px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 10px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.15);
+  }
+
+  /* Dark mode scrollbar */
+  .dark .scrollbar-thin::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+</style>

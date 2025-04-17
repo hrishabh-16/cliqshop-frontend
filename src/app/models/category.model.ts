@@ -1,13 +1,21 @@
+// cliqshop-frontend\src\app\models\category.model.ts
 export class Category {
-    id: number;
+    categoryId: number;  // Main identifier
+    id: number;          // Backup identifier (for API inconsistency)
     name: string;
     description: string;
-    
-    
-    constructor(id: number, name: string, description: string, parentId: number | null, createdAt: Date, updatedAt: Date) {
-        this.id = id;
-        this.name = name;
-        this.description = description;
-    
+  
+    constructor(
+      id: number,
+      name: string,
+      description: string,
+      parentId: number | null = null,
+      createdAt: Date = new Date(),
+      updatedAt: Date = new Date()
+    ) {
+      this.id = id;
+      this.categoryId = id; // Ensure both properties have the same value
+      this.name = name;
+      this.description = description;
     }
-}
+  }

@@ -1,39 +1,139 @@
-<div class="login-container">
-    <!-- Background Elements -->
-    <div class="bg-circle bg-circle-1"></div>
-    <div class="bg-circle bg-circle-2"></div>
-    <div class="dot-pattern"></div>
-
-    <!-- Warning Message Card -->
-    <div *ngIf="errorMessage" id="warningCard" class="warning-card show">
-        {{errorMessage}}
+<!-- Login Page with Tailwind CSS -->
+<div class="min-h-screen w-full bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4 relative overflow-hidden">
+    <!-- Animated background elements -->
+    <div class="absolute rounded-full w-96 h-96 bg-blue-200/20 -top-48 -right-24 blur-3xl animate-float"></div>
+    <div class="absolute rounded-full w-64 h-64 bg-indigo-200/30 -bottom-20 -left-20 blur-3xl animate-float-delayed"></div>
+    
+    <!-- Dot pattern background -->
+    <div class="fixed inset-0 bg-[radial-gradient(#4a6fa520_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
+    
+    <!-- Error Message -->
+    <div *ngIf="errorMessage" class="fixed top-5 right-5 bg-white px-6 py-3 rounded-lg shadow-lg border-l-4 border-red-500 text-red-600 font-medium z-50 animate-slide-in">
+      {{errorMessage}}
     </div>
-
-    <div class="card">
-        <div class="image-side" [style.background-image]="'url(https://img.freepik.com/free-photo/cyber-monday-shopping-sales_23-2148688502.jpg)'"></div>
-        <div class="form-side">
-            <div class="logo">
-                <span class="logo-icon">🛍️</span>
-                ClickShop
-            </div>
-            <h2>Welcome Back</h2>
-            <p class="welcome-text">Log in to access your account and continue your shopping experience</p>
-            <form (ngSubmit)="onSubmit()">
-                <div class="input-group">
-                    <label for="email">Email</label>
-                    <input type="text" id="username" name="username" [(ngModel)]="credentials.username" 
-                           placeholder="Enter your email" required>
-                    <span class="input-icon">✉️</span>
-                </div>
-                <div class="input-group">
-                    <label for="password">Password</label>
-                    <input type="password" id="password" name="password" [(ngModel)]="credentials.password"
-                           placeholder="Enter your password" required>
-                    <span class="input-icon">🔒</span>
-                </div>
-                <button type="submit" class="btn">Sign In</button>
-                <a routerLink="/register" class="link">Don't have an account? Register now</a>
-            </form>
+    
+    <!-- Login Card -->
+    <div class="w-full max-w-4xl bg-white rounded-2xl shadow-2xl overflow-hidden flex animate-fade-in">
+      <!-- Image Side -->
+      <div class="w-2/5 bg-cover bg-center relative hidden md:block" style="background-image: url('https://img.freepik.com/free-photo/cyber-monday-shopping-sales_23-2148688502.jpg')">
+        <div class="absolute inset-0 bg-gradient-to-br from-blue-500/40 to-indigo-600/40"></div>
+        <!-- Shine effect -->
+        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -translate-x-full animate-shine"></div>
+      </div>
+      
+      <!-- Form Side -->
+      <div class="w-full md:w-3/5 py-12 px-8 md:px-12">
+        <!-- Logo -->
+        <div class="flex items-center mb-8 text-blue-600 font-semibold text-lg">
+          <span class="mr-2 text-2xl">🛍️</span>
+          ClickShop
         </div>
+        
+        <h2 class="text-3xl font-bold text-blue-600 mb-2">Welcome Back</h2>
+        <p class="text-gray-500 mb-8">Log in to access your account and continue your shopping experience</p>
+        
+        <form (ngSubmit)="onSubmit()" class="space-y-6">
+          <!-- Username Field -->
+          <div class="relative">
+            <label for="username" class="block text-gray-700 font-medium mb-2 text-sm">Username</label>
+            <div class="relative">
+              <input
+                type="text"
+                id="username"
+                name="username"
+                [(ngModel)]="credentials.username"
+                placeholder="Enter your Username"
+                required
+                class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-gray-700"
+              />
+              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">✉️</span>
+            </div>
+            <!-- Validation message (add *ngIf with your validation) -->
+            <p *ngIf="false" class="mt-1 text-red-500 text-sm animate-fade-in">Please enter a valid Username</p>
+          </div>
+          
+          <!-- Password Field -->
+          <div class="relative">
+            <label for="password" class="block text-gray-700 font-medium mb-2 text-sm">Password</label>
+            <div class="relative">
+              <input
+                type="password"
+                id="password"
+                name="password"
+                [(ngModel)]="credentials.password"
+                placeholder="Enter your password"
+                required
+                class="w-full px-4 py-3 rounded-xl border-2 border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 outline-none transition-all text-gray-700"
+              />
+              <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">🔒</span>
+            </div>
+            <!-- Validation message (add *ngIf with your validation) -->
+            <p *ngIf="false" class="mt-1 text-red-500 text-sm animate-fade-in">Password is required</p>
+          </div>
+          
+          <!-- Submit Button -->
+          <button 
+            type="submit" 
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-xl transition-all duration-300 transform hover:-translate-y-1 hover:shadow-lg relative overflow-hidden"
+          >
+            <span class="relative z-10">Sign In</span>
+            <span class="absolute top-0 -left-full w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-all duration-500 transform group-hover:translate-x-full"></span>
+          </button>
+          
+          <!-- Register Link -->
+          <a routerLink="/register" class="block text-center text-blue-600 hover:text-blue-800 transition-colors duration-300 mt-6">
+            Don't have an account? Register now
+          </a>
+        </form>
+      </div>
     </div>
-</div>
+  </div>
+  
+  <style>
+    @keyframes float {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(30px, 20px) rotate(5deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+    
+    @keyframes float-delayed {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      50% { transform: translate(-20px, 15px) rotate(-3deg); }
+      100% { transform: translate(0, 0) rotate(0deg); }
+    }
+    
+    @keyframes shine {
+      0% { transform: translateX(-100%); }
+      20%, 100% { transform: translateX(100%); }
+    }
+    
+    @keyframes fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    @keyframes slide-in {
+      from { transform: translateX(100px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .animate-float {
+      animation: float 15s infinite ease-in-out;
+    }
+    
+    .animate-float-delayed {
+      animation: float-delayed 12s infinite ease-in-out;
+    }
+    
+    .animate-shine {
+      animation: shine 4s infinite;
+    }
+    
+    .animate-fade-in {
+      animation: fade-in 0.5s forwards;
+    }
+    
+    .animate-slide-in {
+      animation: slide-in 0.4s forwards;
+    }
+  </style>
