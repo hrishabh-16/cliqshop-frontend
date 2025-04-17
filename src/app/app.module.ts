@@ -19,13 +19,14 @@ import { ProductsComponent } from './components/admin/products/products.componen
 import { CategoriesComponent } from './components/admin/categories/categories.component';
 import { OrdersComponent } from './components/admin/orders/orders.component';
 import { ReportsComponent } from './components/admin/reports/reports.component';
+import { AdminProfileComponent } from './components/admin/profile/profile.component';
 import { CartComponent } from './components/cart/cart.component';
 import { HeaderComponent } from './shared/header/header.component';
 import { FooterComponent } from './shared/footer/footer.component';
 import { LoadingSpinnerComponent } from './shared/loading-spinner/loading-spinner.component';
 import { AuthGuard } from './guards/auth/auth.guard';
 import { AdminGuard } from './guards/admin/admin.guard';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common'; // Added DatePipe here
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -33,6 +34,10 @@ import { fas } from '@fortawesome/free-solid-svg-icons';
 import { TruncatePipe } from './shared/pipes/truncate.pipe';
 
 import { CategoryService } from './services/category/category.service';
+import { ReportService } from './services/report/report.service';
+import { InventoryService } from './services/inventory/inventory.service';
+
+
 
 export function tokenGetter() {
   return localStorage.getItem('token');
@@ -40,7 +45,7 @@ export function tokenGetter() {
 
 // Add icons to the library
 library.add(fas);
-// Function that returns a function that returns a promise
+
 export function preloadCategories(categoryService: CategoryService) {
   return () => {
     console.log('Preloading categories at app startup...');
@@ -52,7 +57,6 @@ export function preloadCategories(categoryService: CategoryService) {
         },
         error: (error) => {
           console.error('Failed to preload categories:', error);
-          // Resolve anyway to not block app startup
           resolve(false);
         }
       });
@@ -64,9 +68,11 @@ export function preloadCategories(categoryService: CategoryService) {
   declarations: [
     AppComponent,
     LoginComponent,
+    ProfileComponent,
     RegisterComponent,
     HomeComponent,
     ProfileComponent,
+    AdminProfileComponent, // Added the new AdminProfileComponent
     DashboardComponent,
     UsersComponent,
     ProductsComponent,
@@ -83,10 +89,10 @@ export function preloadCategories(categoryService: CategoryService) {
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    ReactiveFormsModule,
+    ReactiveFormsModule, // This is needed for formGroup
     RouterModule,
-    CommonModule,
-    FormsModule,
+    CommonModule, // This provides DatePipe and other common directives
+    FormsModule, // For template-driven forms
     FontAwesomeModule,
     SocialLoginModule,
     JwtModule.forRoot({
@@ -102,12 +108,21 @@ export function preloadCategories(categoryService: CategoryService) {
     })
   ],
   providers: [
+    ReportService,
+    InventoryService,
+    { 
+      provide: HTTP_INTERCEPTORS, 
+      useClass: AuthInterceptor, 
+      multi: true 
+    },
     JwtHelperService,
+    DatePipe, // Add DatePipe to providers if you want to use it in components
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,
       multi: true
     },
+
     {
       provide: APP_INITIALIZER,
       useFactory: preloadCategories,
@@ -138,4 +153,4 @@ export function preloadCategories(categoryService: CategoryService) {
   ],
   bootstrap: [AppComponent]
 })
-export class AppModule {}
+export class AppModule { }

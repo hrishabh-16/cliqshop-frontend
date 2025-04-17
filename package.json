@@ -12,6 +12,7 @@
   "private": true,
   "dependencies": {
     "@abacritt/angularx-social-login": "^2.3.0",
+    "@angular/animations": "^19.2.6",
     "@angular/common": "^19.2.0",
     "@angular/compiler": "^19.2.0",
     "@angular/core": "^19.2.0",
@@ -24,7 +25,8 @@
     "@fortawesome/fontawesome-svg-core": "^6.7.2",
     "@fortawesome/free-solid-svg-icons": "^6.7.2",
     "@tailwindcss/postcss": "^4.1.4",
-    "chart.js": "^4.4.8",
+    "chart.js": "^4.4.9",
+    "ngx-toastr": "^19.0.0",
     "postcss": "^8.5.3",
     "rxjs": "~7.8.0",
     "tailwindcss": "^4.1.4",

@@ -1,1 +1,521 @@
-<p>categories works!</p>
+<!-- Categories Management Component -->
+<div class="min-h-screen bg-ivory-50 dark:bg-slate-800 transition-colors duration-300">
+  <!-- Container -->
+  <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <!-- Page Header -->
+    <div class="mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="flex items-center">
+            <button (click)="navigateBack()" class="mr-3 text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-500 transition-colors">
+              <i class="fas fa-arrow-left"></i>
+            </button>
+            <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">
+              {{ showAddForm ? 'Add New Category' : 'All Categories List' }}
+            </h2>
+          </div>
+          <nav class="mt-2">
+            <ol class="flex text-sm text-gray-500 dark:text-gray-400">
+              <li><a routerLink="/admin/dashboard" class="hover:text-sky-600 dark:hover:text-sky-400">Dashboard</a></li>
+              <li class="mx-2">&rsaquo;</li>
+              <li class="text-gray-700 dark:text-gray-200">
+                {{ showAddForm ? 'Add New Category' : 'Categories' }}
+              </li>
+            </ol>
+          </nav>
+        </div>
+        
+        <!-- Actions Buttons -->
+        <div class="mt-4 sm:mt-0 flex space-x-3">
+          <button *ngIf="!showAddForm"
+                  (click)="toggleAddForm()"
+                  class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg flex items-center text-sm transition-colors duration-200">
+            <i class="fas fa-plus mr-2"></i> Add Category
+          </button>
+          
+          <button *ngIf="!showAddForm"
+                  (click)="refreshCategories()"
+                  class="bg-gray-200 dark:bg-slate-700 hover:bg-gray-300 dark:hover:bg-slate-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg flex items-center text-sm transition-colors duration-200">
+            <i class="fas fa-sync-alt mr-2"></i> Refresh
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div *ngIf="loading" class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600"></div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="text-center text-red-600 my-8 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg animate-fadeIn">
+      <div class="flex items-center justify-center">
+        <i class="fas fa-exclamation-circle mr-2"></i>
+        <span>{{ error }}</span>
+      </div>
+      <button (click)="error = null" class="mt-2 text-sm text-sky-600 dark:text-sky-400 hover:underline">
+        Dismiss
+      </button>
+    </div>
+
+    <!-- Add Category Form -->
+    <div *ngIf="showAddForm && !loading" class="bg-white dark:bg-slate-700 rounded-xl shadow-sm overflow-hidden animate-slideDown">
+      <div class="px-6 py-5 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Add New Category</h3>
+        <button (click)="toggleAddForm()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
+      <div class="p-6">
+        <form [formGroup]="categoryForm" (ngSubmit)="addCategory()">
+          <div class="grid grid-cols-1 gap-6">
+            <!-- Category Information -->
+            <div class="bg-white dark:bg-slate-700 p-6 rounded-lg border border-gray-200 dark:border-slate-600">
+              <h4 class="text-lg font-medium text-gray-800 dark:text-white mb-4">Category Information</h4>
+              
+              <div class="space-y-6">
+                <!-- Category Name -->
+                <div>
+                  <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category Name</label>
+                  <input type="text" id="name" formControlName="name" placeholder="Category Name" 
+                         class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20">
+                  <div *ngIf="categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched" class="text-red-500 text-sm mt-1">
+                    <span *ngIf="categoryForm.get('name')?.errors?.['required']">Category name is required</span>
+                    <span *ngIf="categoryForm.get('name')?.errors?.['minlength']">Category name must be at least 3 characters</span>
+                  </div>
+                </div>
+                
+                <!-- Category Description -->
+                <div>
+                  <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                  <textarea id="description" formControlName="description" rows="4" placeholder="Category Description" 
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20"></textarea>
+                  <div *ngIf="categoryForm.get('description')?.invalid && categoryForm.get('description')?.touched" class="text-red-500 text-sm mt-1">
+                    Description is required
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-4">
+              <button type="button" (click)="toggleAddForm()" 
+                      class="px-6 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors">
+                Cancel
+              </button>
+              <button type="submit" 
+                      [disabled]="isSubmitting || categoryForm.invalid" 
+                      class="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                <span *ngIf="isSubmitting" class="inline-block mr-2">
+                  <i class="fas fa-spinner fa-spin"></i>
+                </span>
+                Save Category
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Categories List View -->
+    <div *ngIf="!showAddForm && !loading && !error" class="bg-white dark:bg-slate-700 rounded-xl shadow overflow-hidden animate-fadeIn">
+      <div class="px-6 py-5 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">All Categories List</h3>
+      </div>
+
+      <!-- Categories Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-600">
+          <thead class="bg-gray-50 dark:bg-slate-800">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                <div class="flex items-center">
+                  <input type="checkbox" class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded">
+                </div>
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Categories
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Starting Price
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                ID
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Product Stock
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Action
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white dark:bg-slate-700 divide-y divide-gray-200 dark:divide-slate-600">
+            <tr *ngFor="let categoryData of categories" class="hover:bg-gray-50 dark:hover:bg-slate-600/50 transition-colors">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <input type="checkbox" class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded">
+              </td>
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-12 w-12 overflow-hidden rounded-md shadow-sm border border-gray-200 dark:border-slate-600">
+                    <img [src]="categoryData.category.imageUrl || 'assets/images/categories/default0.jpg'" 
+                         class="h-12 w-12 object-cover transition-transform hover:scale-110 duration-300" 
+                         alt="{{ categoryData.category.name }}">
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{ categoryData.category.name }}
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 line-clamp-1">
+                      {{ categoryData.category.description }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 dark:text-white">
+                  <span *ngIf="categoryData.minPrice !== null">{{ formatPrice(categoryData.minPrice) }}</span>
+                  <span *ngIf="categoryData.minPrice === null" class="text-gray-500 dark:text-gray-400">No products</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-mono text-gray-900 dark:text-white">{{ categoryData.category.categoryId }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900 dark:text-white">
+                  {{ categoryData.totalStock }}
+                  <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">units</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center space-x-3">
+                  <button (click)="viewCategory(categoryData)" 
+                          class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1.5 rounded-full hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors duration-200">
+                    <i class="fas fa-eye"></i>
+                  </button>
+                  <button (click)="editCategory(categoryData)" 
+                          class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1.5 rounded-full hover:bg-sky-50 dark:hover:bg-sky-900/20 transition-colors duration-200">
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button (click)="confirmDelete(categoryData)" 
+                          class="text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 p-1.5 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors duration-200">
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            
+            <!-- Empty state -->
+            <tr *ngIf="categories.length === 0">
+              <td colspan="6" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+                <div class="flex flex-col items-center">
+                  <i class="fas fa-folder-open text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                  <p>No categories found.</p>
+                  <button (click)="toggleAddForm()" class="mt-4 text-sm text-sky-600 dark:text-sky-400 hover:underline">Add your first category</button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Category Modal -->
+  <div *ngIf="showViewModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <!-- Background overlay -->
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
+      
+      <!-- Modal panel -->
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full animate-modal-in">
+        <div *ngIf="viewingCategory" class="bg-white dark:bg-slate-800">
+          <!-- Modal Header with close button -->
+          <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white" id="modal-title">
+              Category Details
+            </h3>
+            <button (click)="closeModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <!-- Modal Body -->
+          <div class="px-6 py-5">
+            <div *ngIf="loadingDetails" class="flex justify-center py-10">
+              <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-sky-600"></div>
+            </div>
+            
+            <div *ngIf="!loadingDetails" class="flex flex-col md:flex-row">
+              <!-- Category Image -->
+              <div class="w-full md:w-1/3 mb-4 md:mb-0 md:pr-4">
+                <div class="relative pb-[100%] rounded-lg overflow-hidden border border-gray-200 dark:border-slate-600">
+                  <img [src]="viewingCategory.category.imageUrl || 'assets/images/categories/default0.jpg'" 
+                       class="absolute inset-0 w-full h-full object-cover" 
+                       alt="{{ viewingCategory.category.name }}">
+                </div>
+              </div>
+              
+              <!-- Category Info -->
+              <div class="w-full md:w-2/3">
+                <h4 class="text-xl font-bold text-gray-800 dark:text-white mb-2">
+                  {{ viewingCategory.category.name }}
+                </h4>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div class="bg-gray-50 dark:bg-slate-700/50 p-3 rounded-lg">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Category ID</p>
+                    <p class="font-mono text-gray-800 dark:text-white">{{ viewingCategory.category.categoryId }}</p>
+                  </div>
+                  
+                  <div class="bg-gray-50 dark:bg-slate-700/50 p-3 rounded-lg">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Products Count</p>
+                    <p class="text-gray-800 dark:text-white font-semibold">{{ viewingCategory.products }} items</p>
+                  </div>
+                  
+                  <div class="bg-gray-50 dark:bg-slate-700/50 p-3 rounded-lg">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Starting Price</p>
+                    <p class="text-gray-800 dark:text-white font-semibold">
+                      <span *ngIf="viewingCategory.minPrice !== null">{{ formatPrice(viewingCategory.minPrice) }}</span>
+                      <span *ngIf="viewingCategory.minPrice === null" class="text-gray-500 dark:text-gray-400">No products</span>
+                    </p>
+                  </div>
+                  
+                  <div class="bg-gray-50 dark:bg-slate-700/50 p-3 rounded-lg">
+                    <p class="text-sm text-gray-500 dark:text-gray-400">Total Stock</p>
+                    <p class="text-gray-800 dark:text-white font-semibold">{{ viewingCategory.totalStock }} units</p>
+                  </div>
+                </div>
+                
+                <div class="mb-6">
+                  <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</h5>
+                  <div class="p-4 bg-gray-50 dark:bg-slate-700 rounded-lg text-gray-700 dark:text-gray-300">
+                    {{ viewingCategory.category.description || 'No description available.' }}
+                  </div>
+                </div>
+                
+                <!-- Products in this category section -->
+                <div class="mb-4">
+                  <h5 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Products in this Category</h5>
+                  
+                  <!-- Products list -->
+                  <div class="space-y-2 max-h-60 overflow-y-auto pr-2">
+                    <div *ngIf="categoryProducts.length === 0" class="text-center py-4 text-gray-500 dark:text-gray-400">
+                      No products in this category yet.
+                    </div>
+                    
+                    <div *ngFor="let product of categoryProducts" 
+                         class="flex items-center p-2 hover:bg-gray-50 dark:hover:bg-slate-700 rounded-lg transition-colors">
+                      <div class="w-10 h-10 flex-shrink-0">
+                        <img [src]="product.imageUrl || 'assets/images/product-placeholder.jpg'" 
+                             class="w-10 h-10 object-cover rounded-md" 
+                             alt="{{ product.name }}">
+                      </div>
+                      <div class="ml-3 flex-grow">
+                        <p class="text-sm font-medium text-gray-800 dark:text-white">{{ product.name }}</p>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ formatPrice(product.price) }}</p>
+                      </div>
+                      <div class="text-sm text-gray-500 dark:text-gray-400">
+                        Stock: {{ product.stockQuantity || 0 }}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="flex space-x-3 mt-6">
+                  <button (click)="editCategory(viewingCategory); closeModal()" 
+                          class="flex-1 px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors flex items-center justify-center">
+                    <i class="fas fa-edit mr-2"></i> Edit
+                  </button>
+                  <button (click)="confirmDelete(viewingCategory); closeModal()" 
+                          class="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center justify-center">
+                    <i class="fas fa-trash mr-2"></i> Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Category Modal -->
+  <div *ngIf="showEditModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <!-- Background overlay -->
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
+      
+      <!-- Modal panel -->
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full animate-modal-in">
+        <div class="bg-white dark:bg-slate-800">
+          <!-- Modal Header with close button -->
+          <div class="px-6 py-4 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
+            <h3 class="text-xl font-semibold text-gray-800 dark:text-white" id="modal-title">
+              Edit Category
+            </h3>
+            <button (click)="closeModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+              <i class="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <!-- Modal Body -->
+          <div class="px-6 py-5">
+            <form [formGroup]="categoryForm" (ngSubmit)="updateCategory()">
+              <div class="space-y-4">
+                <!-- Category Name -->
+                <div>
+                  <label for="edit-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Category Name</label>
+                  <input type="text" id="edit-name" formControlName="name" placeholder="Category Name" 
+                         class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20">
+                  <div *ngIf="categoryForm.get('name')?.invalid && categoryForm.get('name')?.touched" class="text-red-500 text-sm mt-1">
+                    <span *ngIf="categoryForm.get('name')?.errors?.['required']">Category name is required</span>
+                    <span *ngIf="categoryForm.get('name')?.errors?.['minlength']">Category name must be at least 3 characters</span>
+                  </div>
+                </div>
+                
+                <!-- Category Description -->
+                <div>
+                  <label for="edit-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+                  <textarea id="edit-description" formControlName="description" rows="4" placeholder="Category Description" 
+                            class="w-full px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-gray-700 dark:text-white focus:outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500 focus:ring-opacity-20"></textarea>
+                  <div *ngIf="categoryForm.get('description')?.invalid && categoryForm.get('description')?.touched" class="text-red-500 text-sm mt-1">
+                    Description is required
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Form Actions -->
+              <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" (click)="closeModal()" 
+                        class="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" 
+                        [disabled]="isSubmitting || categoryForm.invalid" 
+                        class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span *ngIf="isSubmitting" class="inline-block mr-2">
+                    <i class="fas fa-spinner fa-spin"></i>
+                  </span>
+                  Update Category
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Delete Confirmation Modal -->
+  <div *ngIf="showDeleteModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <!-- Background overlay -->
+      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
+      
+      <!-- Modal panel -->
+      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full animate-modal-in">
+        <div class="bg-white dark:bg-slate-800 px-6 py-6">
+          <div class="flex items-start">
+            <div class="flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
+              <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400"></i>
+            </div>
+            <div class="ml-4 flex-1">
+              <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+                Delete Category
+              </h3>
+              <div class="mt-2">
+                <p class="text-sm text-gray-500 dark:text-gray-400">
+                  Are you sure you want to delete <span class="font-semibold">{{ selectedCategory?.name }}</span>? This action cannot be undone.
+                </p>
+                <div class="mt-3 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-md text-yellow-800 dark:text-yellow-300 text-xs">
+                  <i class="fas fa-info-circle mr-1"></i> 
+                  Warning: Deleting this category might affect products assigned to it.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-gray-50 dark:bg-slate-700 px-6 py-4 flex justify-end space-x-3">
+          <button type="button" (click)="closeModal()" 
+                  class="px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors">
+            Cancel
+          </button>
+          <button type="button" (click)="deleteCategory()" 
+                  [disabled]="isSubmitting"
+                  class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+            <span *ngIf="isSubmitting" class="inline-block mr-2">
+              <i class="fas fa-spinner fa-spin"></i>
+            </span>
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Additional CSS for animations -->
+  <style>
+    @keyframes modalIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    
+    .animate-modal-in {
+      animation: modalIn 0.3s ease-out forwards;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .animate-fadeIn {
+      animation: fadeIn 0.3s ease-out forwards;
+    }
+    
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .animate-slideDown {
+      animation: slideDown 0.3s ease-out forwards;
+    }
+    
+    /* Add cool hover effects for table rows */
+    .hover\:bg-gray-50:hover .flex-shrink-0 img {
+      transform: scale(1.05);
+    }
+    
+    /* Custom scrollbar for the products list in view modal */
+    .max-h-60::-webkit-scrollbar {
+      width: 5px;
+    }
+    
+    .max-h-60::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 10px;
+    }
+    
+    .max-h-60::-webkit-scrollbar-thumb {
+      background: #cbd5e0;
+      border-radius: 10px;
+    }
+    
+    .max-h-60::-webkit-scrollbar-thumb:hover {
+      background: #a0aec0;
+    }
+    
+    /* Line clamp for description text */
+    .line-clamp-1 {
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 1;
+      line-clamp: 1;
+    }
+  </style>
+</div>

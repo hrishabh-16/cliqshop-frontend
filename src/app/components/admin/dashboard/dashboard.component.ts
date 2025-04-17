@@ -25,7 +25,8 @@ export class DashboardComponent implements OnInit {
     inventory: false,
     orders: false,
     users: false,
-    settings: false
+    settings: false,
+    reports: false
   };
   
   // Notification counter
@@ -85,6 +86,7 @@ export class DashboardComponent implements OnInit {
     categories: false,
     users: false
   };
+ 
 
   constructor(
     private dashboardService: DashboardService, 
@@ -163,10 +165,10 @@ export class DashboardComponent implements OnInit {
     this.showProfileDropdown = !this.showProfileDropdown;
   }
 
-  toggleMenu(menu: 'products' | 'categories' | 'inventory' | 'orders' | 'users' | 'settings'): void {
+  toggleMenu(menu: 'products' | 'categories' | 'inventory' | 'orders' | 'users' | 'settings' | 'reports'): void {
     this.menus[menu] = !this.menus[menu];
   }
-
+ 
   logout(): void {
     // Clear user data and redirect to login
     localStorage.removeItem('token');

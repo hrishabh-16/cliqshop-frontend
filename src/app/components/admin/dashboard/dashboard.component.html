@@ -173,14 +173,30 @@ class="fixed top-4 left-4 z-30 p-2 rounded-lg bg-sky-600 text-white shadow-lg ho
             </div>
           </div>
           
-          <!-- Reports Link -->
-          <a routerLink="/admin/reports" routerLinkActive="bg-sky-100 text-sky-600 dark:bg-sky-900 dark:text-sky-300"
-             class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-sky-50 dark:hover:bg-sky-900 transition-colors">
-            <span class="flex items-center justify-center w-7 h-7 text-purple-600 dark:text-purple-400">
-              <i class="fas fa-chart-bar"></i>
-            </span>
-            <span class="ml-3 font-medium">Reports</span>
-          </a>
+      <!-- Reports Main Toggle Link -->
+      <a (click)="menus.reports = !menus.reports" [class.bg-sky-100]="menus.reports" [class.text-sky-600]="menus.reports"
+        [class.dark\:bg-sky-900]="menus.reports" [class.dark\:text-sky-300]="menus.reports"
+        class="flex items-center px-4 py-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-sky-50 dark:hover:bg-sky-900 transition-colors cursor-pointer">
+        <span class="flex items-center justify-center w-7 h-7 text-purple-600 dark:text-purple-400">
+          <i class="fas fa-chart-bar"></i>
+        </span>
+        <span class="ml-3 font-medium">Reports</span>
+        <i class="ml-auto fas" [ngClass]="menus.reports ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+      </a>
+      
+      <!-- Reports Submenu -->
+      <div *ngIf="menus.reports" class="pl-12 space-y-1 animate-slideDown overflow-hidden">
+        <a routerLink="/admin/reports/sales"
+          class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+          Sales Report
+        </a>
+        <a routerLink="/admin/reports/inventory"
+          class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+          Inventory Report
+        </a>
+      </div>
+
+
           
           <!-- Settings Menu -->
           <div class="space-y-1">
@@ -204,10 +220,10 @@ class="fixed top-4 left-4 z-30 p-2 rounded-lg bg-sky-600 text-white shadow-lg ho
                  class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
                 Profile
               </a>
-              <a routerLink="/admin/settings/store" 
+              <!-- <a routerLink="/admin/settings/store" 
                  class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
                 Store Settings
-              </a>
+              </a> -->
             </div>
           </div>
         </div>

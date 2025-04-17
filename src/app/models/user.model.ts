@@ -1,11 +1,16 @@
-// Export the User model to make it a module
-export class User {
-    userId: number = 0;
-    name: string = '';
-    username: string = '';
-    email: string = '';
-    password?: string = '';
-    phoneNumber?: string;
-    role: string = '';
-    active: boolean = false;
-  }
+export enum UserRole {
+  USER = 'USER',
+  ADMIN = 'ADMIN'
+}
+
+export interface User {
+  userId: number;
+  username: string;
+  name: string;
+  email: string;
+  phoneNumber: string;
+  password?: string;
+  role: UserRole;
+  enabled: boolean;
+  createdAt: string;
+}

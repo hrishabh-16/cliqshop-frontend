@@ -13,6 +13,7 @@ import { OrdersComponent } from './components/admin/orders/orders.component';
 import { ReportsComponent } from './components/admin/reports/reports.component';
 import { UsersComponent } from './components/admin/users/users.component';
 import { CartComponent } from './components/cart/cart.component';
+import { AdminProfileComponent } from './components/admin/profile/profile.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -47,9 +48,29 @@ const routes: Routes = [
     component: OrdersComponent, 
     canActivate: [AuthGuard, AdminGuard] 
   },
+
+  // Updated Reports Routes
   { 
     path: 'admin/reports', 
     component: ReportsComponent, 
+    canActivate: [AuthGuard, AdminGuard],
+    data: { reportType: 'sales' }
+  },
+  { 
+    path: 'admin/reports/sales', 
+    component: ReportsComponent, 
+    canActivate: [AuthGuard, AdminGuard],
+    data: { reportType: 'sales' }
+  },
+  { 
+    path: 'admin/reports/inventory', 
+    component: ReportsComponent, 
+    canActivate: [AuthGuard, AdminGuard],
+    data: { reportType: 'inventory' }
+  },
+  { 
+    path: 'admin/settings/profile', 
+    component: AdminProfileComponent, 
     canActivate: [AuthGuard, AdminGuard]
   },
   

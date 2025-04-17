@@ -1,0 +1,57 @@
+/* Additional styles beyond Tailwind */
+.form-input:focus {
+  box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.25);
+}
+
+.form-input {
+  transition: all 0.2s ease-in-out;
+}
+
+.form-input:disabled, .form-input:read-only {
+  background-color: #f3f4f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  .form-input:disabled, .form-input:read-only {
+    background-color: #374151;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Toast animation */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Add this class to the toast element */
+.fixed.top-4.right-4 {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+.fixed.top-4.right-4.hide {
+  animation: fadeOut 0.3s ease-in forwards;
+}
