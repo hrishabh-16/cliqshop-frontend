@@ -1,6 +1,7 @@
 // cliqshop-frontend\src\app\components\admin\users\users.component.ts
-import { Component, OnInit, ChangeDetectorRef } from '@angular/core';
-import { UserService, User } from '../../../services/user/user.service';
+import { Component, OnInit, ChangeDetectorRef, NgZone, ApplicationRef, Renderer2, ElementRef, ViewChild } from '@angular/core';
+import { UserService } from '../../../services/user/user.service';
+import { User } from '../../../models/user.model';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
@@ -10,6 +11,9 @@ import { Router } from '@angular/router';
   templateUrl: './users.component.html'
 })
 export class UsersComponent implements OnInit {
+  @ViewChild('editModalElement') editModalElement!: ElementRef;
+  @ViewChild('deleteModalElement') deleteModalElement!: ElementRef;
+
   allUsers: User[] = [];
   adminUsers: User[] = [];
   regularUsers: User[] = [];
@@ -30,11 +34,19 @@ export class UsersComponent implements OnInit {
   userForm: FormGroup;
   searchTerm = '';
   
+  // Store the modal DOM references
+  private editModalDOM: HTMLElement | null = null;
+  private deleteModalDOM: HTMLElement | null = null;
+  
   constructor(
     private userService: UserService,
     private fb: FormBuilder,
     private router: Router,
-    private cdr: ChangeDetectorRef
+    private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
+    private appRef: ApplicationRef,
+    private renderer: Renderer2,
+    private el: ElementRef
   ) {
     this.userForm = this.fb.group({
       name: ['', [Validators.required]],
@@ -47,6 +59,105 @@ export class UsersComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadUsers();
+    
+    // Add global modal styles to document
+    this.addModalStyles();
+    
+    // After the view is initialized, we need to get the modal DOM elements
+    setTimeout(() => {
+      this.initModalElements();
+    }, 500);
+  }
+  
+  ngAfterViewInit(): void {
+    // Get the modal elements from the DOM after view is initialized
+    this.initModalElements();
+  }
+  
+  /**
+   * Initialize modal DOM elements
+   */
+  private initModalElements(): void {
+    try {
+      // Find modal elements
+      this.editModalDOM = document.getElementById('edit-modal');
+      this.deleteModalDOM = document.getElementById('delete-modal');
+      
+      // Log the found elements
+      console.log('Edit modal element:', this.editModalDOM);
+      console.log('Delete modal element:', this.deleteModalDOM);
+    } catch (err) {
+      console.error('Error initializing modal elements:', err);
+    }
+  }
+  
+  /**
+   * Adds CSS styles directly to the document to ensure modals display properly
+   */
+  private addModalStyles(): void {
+    // Create style element for modal fixes
+    const style = this.renderer.createElement('style');
+    style.type = 'text/css';
+    style.innerHTML = `
+      /* Modal force display */
+      .modal-force-display {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        z-index: 2000 !important;
+        position: fixed !important;
+        top: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+      }
+      
+      /* Modal backdrop */
+      .modal-backdrop-force {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background-color: rgba(0, 0, 0, 0.5) !important;
+        z-index: 1999 !important;
+      }
+      
+      /* Modal content */
+      .modal-content-force {
+        position: relative !important;
+        background-color: white !important;
+        border-radius: 0.5rem !important;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+        pointer-events: auto !important;
+        z-index: 2001 !important;
+        max-width: 500px !important;
+        margin: 2rem auto !important;
+      }
+      
+      /* Force higher z-index for all modal related elements */
+      #edit-modal, #delete-modal {
+        z-index: 2000 !important;
+      }
+      
+      /* Make modal dialog centered */
+      .fixed.inset-0 {
+        position: fixed !important;
+        top: 0 !important;
+        right: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+      }
+      
+      /* Toast notifications */
+      .toast-notification {
+        z-index: 2100 !important;
+      }
+    `;
+    
+    // Add style element to document head
+    this.renderer.appendChild(document.head, style);
+    console.log('Modal styles added to document head');
   }
 
   loadUsers(): void {
@@ -60,11 +171,15 @@ export class UsersComponent implements OnInit {
         this.regularUsers = users.filter(user => user.role === 'USER');
         this.applyFilter(this.currentView);
         this.loading = false;
+        this.cdr.detectChanges();
+        this.appRef.tick();
       },
       error: (err) => {
         this.error = 'Failed to load users. Please try again later.';
         console.error('Error loading users:', err);
         this.loading = false;
+        this.cdr.detectChanges();
+        this.appRef.tick();
       }
     });
   }
@@ -123,9 +238,15 @@ export class UsersComponent implements OnInit {
     }
   }
   
-  // Edit user
+  // Edit user - Completely replaced with direct DOM manipulation
   editUser(user: User): void {
     console.log('Edit user clicked:', user);
+    
+    // Re-initialize modal elements if they're not found
+    if (!this.editModalDOM) {
+      this.initModalElements();
+    }
+    
     this.selectedUser = { ...user }; // Create a copy to avoid direct reference modification
     
     // Patch the form values
@@ -137,9 +258,17 @@ export class UsersComponent implements OnInit {
       enabled: user.enabled
     });
     
+    // Set modal state
     this.showEditModal = true;
-    this.cdr.detectChanges();
     console.log('Edit modal state:', this.showEditModal);
+    
+    // Force display immediately for quick response
+    this.displayModalImmediately('edit-modal');
+    
+    // Then use our reliable method with a small delay
+    setTimeout(() => {
+      this.forceModalVisibility('edit-modal');
+    }, 50);
   }
   
   // Update user
@@ -159,8 +288,11 @@ export class UsersComponent implements OnInit {
         
         this.successMessage = `User ${updatedUser.name} has been updated successfully`;
         setTimeout(() => {
-          this.successMessage = '';
-          this.cdr.detectChanges();
+          this.ngZone.run(() => {
+            this.successMessage = '';
+            this.cdr.detectChanges();
+            this.appRef.tick();
+          });
         }, 5000);
         
         this.closeModal();
@@ -169,22 +301,119 @@ export class UsersComponent implements OnInit {
       error: (err) => {
         this.errorMessage = 'Failed to update user. Please try again.';
         setTimeout(() => {
-          this.errorMessage = '';
-          this.cdr.detectChanges();
+          this.ngZone.run(() => {
+            this.errorMessage = '';
+            this.cdr.detectChanges();
+            this.appRef.tick();
+          });
         }, 5000);
         console.error('Error updating user:', err);
         this.submitting = false;
+        this.cdr.detectChanges();
+        this.appRef.tick();
       }
     });
   }
   
-  // Delete user confirmation
+  // Delete user confirmation - Completely replaced with direct DOM manipulation
   confirmDelete(user: User): void {
     console.log('Confirm delete clicked:', user);
+    
+    // Re-initialize modal elements if they're not found
+    if (!this.deleteModalDOM) {
+      this.initModalElements();
+    }
+    
     this.selectedUser = { ...user }; // Create a copy
+    
+    // Set modal state
     this.showDeleteModal = true;
-    this.cdr.detectChanges();
     console.log('Delete modal state:', this.showDeleteModal);
+    
+    // Force display immediately for quick response
+    this.displayModalImmediately('delete-modal');
+    
+    // Then use our reliable method with a small delay
+    setTimeout(() => {
+      this.forceModalVisibility('delete-modal');
+    }, 50);
+  }
+  
+  // Directly manipulate the DOM to display modal immediately
+  private displayModalImmediately(modalId: string): void {
+    try {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        // Apply inline styles directly
+        modal.style.display = 'block';
+        modal.style.visibility = 'visible';
+        modal.style.opacity = '1';
+        modal.style.zIndex = '2000';
+        console.log(`Modal ${modalId} immediate display applied`);
+      }
+    } catch (err) {
+      console.error('Error in displayModalImmediately:', err);
+    }
+  }
+  
+  // Force a modal to be visible using DOM manipulation
+  private forceModalVisibility(modalId: string): void {
+    try {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        // Apply the force display classes
+        modal.classList.add('modal-force-display');
+        
+        // Create a backdrop element if it doesn't exist
+        let backdrop = document.querySelector('.modal-backdrop-force') as HTMLElement;
+        if (!backdrop) {
+          backdrop = document.createElement('div');
+          backdrop.className = 'modal-backdrop-force';
+          document.body.appendChild(backdrop);
+          
+          // Add click event to close on backdrop click
+          backdrop.addEventListener('click', () => {
+            if (modalId === 'edit-modal') {
+              this.closeModal();
+            } else if (modalId === 'delete-modal') {
+              this.closeDeleteModal();
+            }
+          });
+        }
+        
+        // Make sure modal content has the force class
+        const modalContent = modal.querySelector('.modal-content') as HTMLElement;
+        if (modalContent) {
+          modalContent.classList.add('modal-content-force');
+        }
+        
+        // Apply additional styles to modal
+        modal.style.position = 'fixed';
+        modal.style.top = '0';
+        modal.style.left = '0';
+        modal.style.width = '100%';
+        modal.style.height = '100%';
+        modal.style.display = 'block !important';
+        modal.style.zIndex = '2000';
+        
+        // Apply styles to make modal content centered
+        if (modalContent) {
+          modalContent.style.margin = '0 auto';
+          modalContent.style.position = 'relative';
+          modalContent.style.top = '10%';
+          modalContent.style.maxWidth = '500px';
+        }
+        
+        // Disable body scrolling
+        document.body.style.overflow = 'hidden';
+        
+        console.log(`Modal ${modalId} force displayed`);
+      } else {
+        console.error(`Modal element with ID ${modalId} not found in the DOM`);
+      }
+    } catch (err) {
+      console.error('Error forcing modal visibility:', err);
+    }
   }
   
   // Delete user
@@ -203,8 +432,11 @@ export class UsersComponent implements OnInit {
         
         this.successMessage = `User ${userName} has been deleted successfully`;
         setTimeout(() => {
-          this.successMessage = '';
-          this.cdr.detectChanges();
+          this.ngZone.run(() => {
+            this.successMessage = '';
+            this.cdr.detectChanges();
+            this.appRef.tick();
+          });
         }, 5000);
         
         this.closeDeleteModal();
@@ -213,11 +445,16 @@ export class UsersComponent implements OnInit {
       error: (err) => {
         this.errorMessage = 'Failed to delete user. Please try again.';
         setTimeout(() => {
-          this.errorMessage = '';
-          this.cdr.detectChanges();
+          this.ngZone.run(() => {
+            this.errorMessage = '';
+            this.cdr.detectChanges();
+            this.appRef.tick();
+          });
         }, 5000);
         console.error('Error deleting user:', err);
         this.submitting = false;
+        this.cdr.detectChanges();
+        this.appRef.tick();
       }
     });
   }
@@ -234,23 +471,49 @@ export class UsersComponent implements OnInit {
     this.userService.toggleUserStatus(user.userId).subscribe({
       next: () => {
         console.log('Toggle status successful');
-        this.successMessage = `User status has been ${user.enabled ? 'activated' : 'deactivated'} successfully`;
-        setTimeout(() => {
-          this.successMessage = '';
-          this.cdr.detectChanges();
-        }, 5000);
+        this.ngZone.run(() => {
+          this.successMessage = `User status has been ${user.enabled ? 'activated' : 'deactivated'} successfully`;
+          setTimeout(() => {
+            this.ngZone.run(() => {
+              this.successMessage = '';
+              this.cdr.detectChanges();
+              this.appRef.tick();
+            });
+          }, 5000);
+        });
       },
       error: (err) => {
+        // Check if this is a "success error" (HTTP 200 but parser failed)
+        if (err.status === 200 || (err.message && err.message.includes('parsing'))) {
+          console.log('Toggle status successful despite parse error');
+          this.ngZone.run(() => {
+            this.successMessage = `User status has been ${user.enabled ? 'activated' : 'deactivated'} successfully`;
+            setTimeout(() => {
+              this.ngZone.run(() => {
+                this.successMessage = '';
+                this.cdr.detectChanges();
+                this.appRef.tick();
+              });
+            }, 5000);
+          });
+          return;
+        }
+        
         console.error('Error toggling status:', err);
         // Revert the optimistic update
-        user.enabled = previousStatus;
-        this.updateUserStatusInLists(user.userId, previousStatus);
-        
-        this.errorMessage = 'Failed to update user status. Please try again.';
-        setTimeout(() => {
-          this.errorMessage = '';
-          this.cdr.detectChanges();
-        }, 5000);
+        this.ngZone.run(() => {
+          user.enabled = previousStatus;
+          this.updateUserStatusInLists(user.userId, previousStatus);
+          
+          this.errorMessage = 'Failed to update user status. Please try again.';
+          setTimeout(() => {
+            this.ngZone.run(() => {
+              this.errorMessage = '';
+              this.cdr.detectChanges();
+              this.appRef.tick();
+            });
+          }, 5000);
+        });
       }
     });
   }
@@ -283,20 +546,66 @@ export class UsersComponent implements OnInit {
     
     // Force change detection
     this.cdr.detectChanges();
+    this.appRef.tick();
   }
   
-  // Close edit modal
+  // Close edit modal - Completely replaced with direct DOM manipulation
   closeModal(): void {
     this.showEditModal = false;
+    
+    // Remove the force display classes and clean up
+    this.clearModalDisplay('edit-modal');
+    
     this.resetForm();
     this.cdr.detectChanges();
+    this.appRef.tick();
   }
   
-  // Close delete modal
+  // Close delete modal - Completely replaced with direct DOM manipulation
   closeDeleteModal(): void {
     this.showDeleteModal = false;
+    
+    // Remove the force display classes and clean up
+    this.clearModalDisplay('delete-modal');
+    
     this.selectedUser = null;
     this.cdr.detectChanges();
+    this.appRef.tick();
+  }
+  
+  // Remove modal display classes and clean up
+  private clearModalDisplay(modalId: string): void {
+    try {
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        // Remove the force display classes
+        modal.classList.remove('modal-force-display');
+        
+        // Reset inline styles
+        modal.style.display = '';
+        modal.style.visibility = '';
+        modal.style.opacity = '';
+        modal.style.zIndex = '';
+        modal.style.position = '';
+        modal.style.top = '';
+        modal.style.left = '';
+        modal.style.width = '';
+        modal.style.height = '';
+        
+        // Remove the backdrop element if it exists
+        const backdrop = document.querySelector('.modal-backdrop-force');
+        if (backdrop) {
+          backdrop.remove();
+        }
+        
+        // Enable body scrolling
+        document.body.style.overflow = '';
+        
+        console.log(`Modal ${modalId} force hidden`);
+      }
+    } catch (err) {
+      console.error('Error clearing modal display:', err);
+    }
   }
   
   // Reset form
@@ -348,7 +657,7 @@ export class UsersComponent implements OnInit {
       // Add to regular users if not present
       if (!this.regularUsers.some(u => u.userId === updatedUser.userId)) {
         this.regularUsers.push(updatedUser);
-      } else {4
+      } else {
         updateUserInList(this.regularUsers);
       }
     }

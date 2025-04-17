@@ -20,6 +20,27 @@
       </svg>
     </button>
   </div>
+
+  <!-- Back button and breadcrumb navigation -->
+  <div class="flex flex-col space-y-3 mb-6">
+    <div class="flex items-center space-x-4">
+      <a routerLink="/admin/dashboard" class="text-blue-500 hover:text-blue-700 transition-colors">
+        <i class="fas fa-arrow-left"></i> Dashboard
+      </a>
+    </div>
+    
+    <nav class="text-sm text-gray-500 dark:text-gray-400">
+      <ol class="flex items-center space-x-2">
+        <li><a routerLink="/admin/dashboard" class="hover:text-blue-500 transition-colors">Dashboard</a></li>
+        <li><i class="fas fa-chevron-right text-xs mx-1"></i></li>
+        <li><a routerLink="/admin/dashboard" class="hover:text-blue-500 transition-colors">Settings</a></li>
+        <li><i class="fas fa-chevron-right text-xs mx-1"></i></li>
+        <li class="text-blue-500 font-medium">Profile</li>
+      
+      </ol>
+    </nav>
+  </div>
+
   <!-- Loading spinner -->
   <div *ngIf="isLoading" class="flex justify-center items-center h-64">
     <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500"></div>
@@ -214,3 +235,15 @@
     </div>
   </div>
 </div>
+
+<!-- CSS Animations -->
+<style>
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+</style>

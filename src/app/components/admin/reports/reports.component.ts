@@ -216,6 +216,10 @@ export class ReportsComponent implements OnInit, OnDestroy {
   initInventoryCharts(): void {
     if (!this.inventoryReport) return;
     
+    // Ensure the chart container exists
+    const chartContainer = document.getElementById('inventoryValueChart');
+    if (!chartContainer) return;
+    
     // Inventory Value Distribution (Pie Chart)
     const healthyStock = this.inventoryReport.totalProducts - this.lowStockItems.length;
     const lowStock = this.lowStockItems.length;
@@ -223,13 +227,13 @@ export class ReportsComponent implements OnInit, OnDestroy {
     this.createPieChart('inventoryValueChart', 'Inventory Value Distribution', 
       ['Healthy Stock', 'Low Stock', 'Reserved'], 
       [
-        this.inventoryReport.totalValue * (healthyStock / this.inventoryReport.totalProducts), 
-        this.inventoryReport.totalValue * (lowStock / this.inventoryReport.totalProducts), 
+        this.inventoryReport.totalValue * (healthyStock / Math.max(this.inventoryReport.totalProducts, 1)), 
+        this.inventoryReport.totalValue * (lowStock / Math.max(this.inventoryReport.totalProducts, 1)), 
         this.inventoryReport.totalValue * 0.05 // 5% reserved
       ], 
       ['#10B981', '#EF4444', '#8B5CF6']);
   }
-
+  
   createPieChart(id: string, label: string, labels: string[], data: number[], backgroundColor: string[]): void {
     const ctx = document.getElementById(id) as HTMLCanvasElement;
     if (!ctx) return;
@@ -239,7 +243,7 @@ export class ReportsComponent implements OnInit, OnDestroy {
       this.salesCharts[id].destroy();
     }
     
-    // Create new chart
+    // Create new chart with maintained aspect ratio
     this.salesCharts[id] = new Chart(ctx, {
       type: 'pie',
       data: {
@@ -254,13 +258,23 @@ export class ReportsComponent implements OnInit, OnDestroy {
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         plugins: {
           legend: {
             position: 'right',
+            labels: {
+              font: {
+                size: 12
+              },
+              padding: 20
+            }
           },
           title: {
             display: true,
-            text: label
+            text: label,
+            font: {
+              size: 16
+            }
           }
         },
         animation: {

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, forkJoin } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
 
 const API_URL = 'http://localhost:9000/api/inventory';
@@ -40,6 +40,25 @@ export class InventoryService {
           })
         );
       })
+    );
+  }
+
+  getInventoryByProductIds(productIds: number[]): Observable<Inventory[]> {
+    if (productIds.length === 0) {
+      return of([]);
+    }
+
+    const requests = productIds.map(id => 
+      this.getInventoryByProductId(id).pipe(
+        catchError(err => {
+          console.error(`Error fetching inventory for product ${id}:`, err);
+          return of(null);
+        })
+      )
+    );
+
+    return forkJoin(requests).pipe(
+      map(results => results.filter(result => result !== null) as Inventory[])
     );
   }
 

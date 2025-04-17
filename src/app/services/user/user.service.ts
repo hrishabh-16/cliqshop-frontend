@@ -1,19 +1,9 @@
 // cliqshop-frontend\src\app\services\user\user.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { map, catchError } from 'rxjs/operators';
-
-export interface User {
-  userId: number;
-  username: string;
-  name: string;
-  email: string;
-  phoneNumber: string;
-  role: 'USER' | 'ADMIN';
-  enabled: boolean;
-  createdAt: string;
-}
+import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import { Observable, throwError, of } from 'rxjs';
+import { map, catchError, tap } from 'rxjs/operators';
+import { User } from '../../models/user.model';
 
 @Injectable({
   providedIn: 'root'
@@ -34,6 +24,11 @@ export class UserService {
     } else {
       // Server-side error
       errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
+      
+      // If there's a specific message from the server
+      if (error.error && typeof error.error === 'object' && error.error.message) {
+        errorMessage = error.error.message;
+      }
     }
     
     return throwError(() => new Error(errorMessage));
@@ -41,12 +36,17 @@ export class UserService {
 
   // Get all users
   getAllUsers(): Observable<User[]> {
-    return this.http.get<User[]>(this.apiUrl).pipe(
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.get<User[]>(this.apiUrl, { headers }).pipe(
       map(users => {
         // Convert dates to proper format and ensure boolean values are correct
         return users.map(user => ({
           ...user,
-          createdAt: new Date(user.createdAt).toISOString(),
+          createdAt: user.createdAt ? new Date(user.createdAt).toISOString() : new Date().toISOString(),
           enabled: this.normalizeBoolean(user.enabled)
         }));
       }),
@@ -80,7 +80,12 @@ export class UserService {
 
   // Get user by ID
   getUserById(userId: number): Observable<User> {
-    return this.http.get<User>(`${this.apiUrl}/${userId}`).pipe(
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.get<User>(`${this.apiUrl}/${userId}`, { headers }).pipe(
       map(user => ({
         ...user,
         enabled: this.normalizeBoolean(user.enabled)
@@ -91,7 +96,12 @@ export class UserService {
 
   // Create new user
   createUser(user: Omit<User, 'userId' | 'createdAt'>): Observable<User> {
-    return this.http.post<User>(this.apiUrl, user).pipe(
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+    
+    return this.http.post<User>(this.apiUrl, user, { headers }).pipe(
       map(newUser => ({
         ...newUser,
         enabled: this.normalizeBoolean(newUser.enabled)
@@ -102,7 +112,12 @@ export class UserService {
 
   // Update user
   updateUser(userId: number, user: Partial<User>): Observable<User> {
-    return this.http.put<User>(`${this.apiUrl}/${userId}`, user).pipe(
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+    
+    return this.http.put<User>(`${this.apiUrl}/${userId}`, user, { headers }).pipe(
       map(updatedUser => ({
         ...updatedUser,
         enabled: this.normalizeBoolean(updatedUser.enabled)
@@ -111,28 +126,55 @@ export class UserService {
     );
   }
 
-  // Toggle user status
+  // Toggle user status - Fixed to properly handle status toggle and avoid false errors
   toggleUserStatus(userId: number): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/${userId}/status`, {}).pipe(
-      catchError(this.handleError)
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+    
+    // Send empty object as required by some APIs
+    return this.http.put<any>(`${this.apiUrl}/${userId}/status`, {}, { headers }).pipe(
+      tap(response => {
+        console.log('Toggle status response:', response);
+      }),
+      catchError(error => {
+        // Special case: if we get a 200 OK status but with an error in the body
+        // (which is incorrect API behavior but sometimes happens)
+        if (error.status === 200) {
+          console.log('Got 200 status but error in response body, treating as success');
+          return of({ success: true, message: 'User status updated successfully' });
+        }
+        return this.handleError(error);
+      })
     );
   }
 
   // Delete user
   deleteUser(userId: number): Observable<any> {
-    return this.http.delete<any>(`${this.apiUrl}/${userId}`).pipe(
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+
+    return this.http.delete<any>(`${this.apiUrl}/${userId}`, { headers }).pipe(
       catchError(this.handleError)
     );
   }
 
   // Change password
   changePassword(oldPassword: string, newPassword: string): Observable<any> {
-    return this.http.put<any>(`${this.apiUrl}/password`, null, {
-      params: {
-        oldPassword,
-        newPassword
-      }
-    }).pipe(
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Accept': 'application/json'
+    });
+    
+    const body = {
+      oldPassword,
+      newPassword
+    };
+    
+    return this.http.put<any>(`${this.apiUrl}/password`, body, { headers }).pipe(
       catchError(this.handleError)
     );
   }
