@@ -36,6 +36,7 @@ import { TruncatePipe } from './shared/pipes/truncate.pipe';
 import { CategoryService } from './services/category/category.service';
 import { ReportService } from './services/report/report.service';
 import { InventoryService } from './services/inventory/inventory.service';
+import { ProductDetailComponent } from './components/product-detail/product-detail/product-detail.component';
 
 
 
@@ -83,7 +84,8 @@ export function preloadCategories(categoryService: CategoryService) {
     HeaderComponent,
     FooterComponent,
     LoadingSpinnerComponent,
-    TruncatePipe
+    TruncatePipe,
+    ProductDetailComponent
   ],
   imports: [
     BrowserModule,

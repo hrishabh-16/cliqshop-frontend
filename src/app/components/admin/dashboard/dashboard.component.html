@@ -2,33 +2,33 @@
 <div class="min-h-screen bg-ivory-50 dark:bg-slate-800 transition-colors duration-300">
   <div class="flex h-screen overflow-hidden">
     <!-- Hamburger Menu Button (Outside Sidebar) -->
-<button *ngIf="!sidebarOpen" 
-(click)="toggleSidebar()" 
-class="fixed top-4 left-4 z-30 p-2 rounded-lg bg-sky-600 text-white shadow-lg hover:bg-sky-700 focus:outline-none lg:hidden transition-all duration-300 animate-pulse">
-<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-</svg>
-</button>
+    <button *ngIf="!sidebarOpen" 
+            (click)="toggleSidebar()" 
+            class="fixed top-4 left-4 z-30 p-2 rounded-lg bg-sky-600 text-white shadow-lg hover:bg-sky-700 focus:outline-none lg:hidden transition-all duration-300 animate-pulse">
+      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+      </svg>
+    </button>
 
-<!-- Sidebar -->
-<div class="sidebar-container fixed inset-y-0 left-0 z-20 flex-shrink-0 w-64 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0"
-[ngClass]="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
+    <!-- Sidebar -->
+    <div class="sidebar-container fixed inset-y-0 left-0 z-20 flex-shrink-0 w-64 transform transition-transform duration-300 ease-in-out lg:static lg:translate-x-0"
+         [ngClass]="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
 
-<div class="flex flex-col h-full bg-white dark:bg-slate-700 shadow-lg sidebar-gradient">
-<!-- Sidebar Header -->
-<div class="bg-sky-600 dark:bg-sky-800 py-4 px-6">
-<div class="flex items-center justify-between">
-<div class="flex items-center space-x-2">
-  <span class="text-2xl text-white">🛍️</span>
-  <h1 class="text-xl font-bold text-white tracking-wider">CliQShop</h1>
-</div>
-<button (click)="toggleSidebar()" class="text-white hover:bg-sky-700 p-1 rounded-md transition-colors focus:outline-none">
-  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-  </svg>
-</button>
-</div>
-</div>
+      <div class="flex flex-col h-full bg-white dark:bg-slate-700 shadow-lg sidebar-gradient">
+        <!-- Sidebar Header -->
+        <div class="bg-sky-600 dark:bg-sky-800 py-4 px-6">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-2xl text-white">🛍️</span>
+              <h1 class="text-xl font-bold text-white tracking-wider">CliQShop</h1>
+            </div>
+            <button (click)="toggleSidebar()" class="text-white hover:bg-sky-700 p-1 rounded-md transition-colors focus:outline-none">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
         
         <!-- Sidebar Menu -->
         <div class="py-4 px-4 space-y-1.5 flex-grow overflow-y-auto scrollbar-thin">
@@ -259,7 +259,7 @@ class="fixed top-4 left-4 z-30 p-2 rounded-lg bg-sky-600 text-white shadow-lg ho
             <!-- Right Side - Search, Theme Toggle, Notifications, User -->
             <div class="flex items-center space-x-4">
               <!-- Search -->
-              <div class="relative hidden md:block">
+              <div class="relative hidden md:block search-container">
                 <input type="text" [(ngModel)]="searchQuery" (input)="search()" placeholder="Search..." 
                        class="w-full sm:w-64 pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-slate-600 border border-transparent
                               focus:bg-white dark:focus:bg-slate-700 focus:border-sky-500 text-sm text-gray-900 dark:text-gray-100
@@ -271,7 +271,9 @@ class="fixed top-4 left-4 z-30 p-2 rounded-lg bg-sky-600 text-white shadow-lg ho
                 <!-- Search Results Dropdown -->
                 <div *ngIf="searchQuery && searchResults.length > 0" 
                      class="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-slate-700 shadow-lg rounded-lg py-2 z-20 max-h-72 overflow-y-auto animate-fadeIn">
-                  <div *ngFor="let result of searchResults" class="px-4 py-2 hover:bg-sky-50 dark:hover:bg-slate-600 cursor-pointer">
+                  <div *ngFor="let result of searchResults" 
+                       (click)="selectSearchResult(result)"
+                       class="px-4 py-2 hover:bg-sky-50 dark:hover:bg-slate-600 cursor-pointer">
                     <p class="font-medium text-gray-700 dark:text-gray-200">{{result.name || result.title}}</p>
                     <p class="text-xs text-gray-500 dark:text-gray-400">{{result.type}}</p>
                   </div>
@@ -309,7 +311,7 @@ class="fixed top-4 left-4 z-30 p-2 rounded-lg bg-sky-600 text-white shadow-lg ho
               </div>
               
               <!-- User Profile Dropdown -->
-              <div class="relative">
+              <div class="relative profile-dropdown-container">
                 <button (click)="toggleProfileDropdown()" class="flex items-center space-x-2 focus:outline-none">
                   <img [src]="userProfile.imageUrl" alt="Profile" 
                        class="w-8 h-8 rounded-full object-cover border-2 border-sky-500">
@@ -561,6 +563,23 @@ class="fixed top-4 left-4 z-30 p-2 rounded-lg bg-sky-600 text-white shadow-lg ho
                 Add your first category
               </a>
             </div>
+            
+            <!-- Categories Pagination -->
+            <div *ngIf="!isLoading.categories && recentCategories.length > 0 && totalCategories > itemsPerPage" class="px-5 py-3 border-t border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-xs">
+              <div class="flex items-center justify-between">
+                <span class="text-gray-600 dark:text-gray-400">
+                  Showing {{recentCategories.length}} of {{totalCategories}} categories
+                </span>
+                <div class="flex items-center space-x-1">
+                  <button *ngFor="let page of categoryPages" 
+                          (click)="goToPage('categories', page)" 
+                          class="px-3 py-1 rounded" 
+                          [ngClass]="page === currentCategoryPage ? 'bg-sky-600 text-white' : 'bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-500'">
+                    {{page}}
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
           
           <!-- Recent Users -->
@@ -575,145 +594,218 @@ class="fixed top-4 left-4 z-30 p-2 rounded-lg bg-sky-600 text-white shadow-lg ho
               <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-sky-500"></div>
             </div>
             
-            <!-- Users List -->
-            <div *ngIf="!isLoading.users && recentUsers.length > 0" class="p-5">
-              <div class="space-y-4">
-                <div *ngFor="let user of recentUsers" class="flex items-center p-3 border-b border-gray-200 dark:border-slate-600 last:border-0 hover:bg-gray-50 dark:hover:bg-slate-600/50 transition-colors rounded-lg">
-                  <div class="flex-shrink-0 w-10 h-10">
-                    <img [src]="'https://ui-avatars.com/api/?name=' + user.name + '&background=random'" alt="{{user.name}}" class="w-10 h-10 rounded-full">
+           <!-- Users List -->
+           <div *ngIf="!isLoading.users && recentUsers.length > 0" class="p-5">
+            <div class="space-y-4">
+              <div *ngFor="let user of recentUsers" class="flex items-center p-3 border-b border-gray-200 dark:border-slate-600 last:border-0 hover:bg-gray-50 dark:hover:bg-slate-600/50 transition-colors rounded-lg">
+                <div class="flex-shrink-0 w-10 h-10">
+                  <img [src]="user.imageUrl || 'https://ui-avatars.com/api/?name=' + user.name + '&background=random'" alt="{{user.name}}" class="w-10 h-10 rounded-full">
+                </div>
+                <div class="ml-4 flex-1">
+                  <div class="flex items-center justify-between">
+                    <p class="text-sm font-medium text-gray-800 dark:text-white">{{user.name}}</p>
+                    <span class="px-2 py-1 text-xs rounded-full" [ngClass]="user.role === 'ADMIN' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'">
+                      {{user.role}}
+                    </span>
                   </div>
-                  <div class="ml-4 flex-1">
-                    <div class="flex items-center justify-between">
-                      <p class="text-sm font-medium text-gray-800 dark:text-white">{{user.name}}</p>
-                      <span class="px-2 py-1 text-xs rounded-full" [ngClass]="user.role === 'ADMIN' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300' : 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300'">
-                        {{user.role}}
-                      </span>
-                    </div>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{user.email}}</p>
-                  </div>
+                  <p class="text-xs text-gray-500 dark:text-gray-400">{{user.email}}</p>
                 </div>
               </div>
             </div>
-            
-            <!-- Empty State -->
-            <div *ngIf="!isLoading.users && recentUsers.length === 0" class="p-10 text-center">
-              <p class="text-gray-500 dark:text-gray-400">No users found.</p>
+          </div>
+          
+          <!-- Empty State -->
+          <div *ngIf="!isLoading.users && recentUsers.length === 0" class="p-10 text-center">
+            <p class="text-gray-500 dark:text-gray-400">No users found.</p>
+          </div>
+          
+          <!-- Pagination -->
+          <div *ngIf="!isLoading.users && recentUsers.length > 0 && totalUsers > itemsPerPage" class="px-5 py-3 border-t border-gray-200 dark:border-slate-600 bg-gray-50 dark:bg-slate-800 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="text-gray-600 dark:text-gray-400">
+                Showing {{recentUsers.length}} of {{totalUsers}} users
+              </span>
+              <div class="flex items-center space-x-1">
+                <button *ngFor="let page of userPages" 
+                        (click)="goToPage('users', page)" 
+                        class="px-3 py-1 rounded" 
+                        [ngClass]="page === currentUserPage ? 'bg-sky-600 text-white' : 'bg-gray-200 dark:bg-slate-600 text-gray-600 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-slate-500'">
+                  {{page}}
+                </button>
+              </div>
             </div>
           </div>
         </div>
-      </main>
-    </div>
+      </div>
+    </main>
   </div>
+</div>
 </div>
 
 <!-- CSS Animations -->
 <style>
-  /* Sidebar gradient finish */
-  .sidebar-gradient::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 50%;
-    background: linear-gradient(to bottom, rgba(74, 111, 165, 0), rgba(74, 111, 165, 0.1));
-    pointer-events: none;
-    z-index: -1;
-  }
-  
-  .dark .sidebar-gradient::before {
-    background: linear-gradient(to bottom, rgba(30, 41, 59, 0), rgba(30, 41, 59, 0.3));
-  }
-  
-  .animate-slideDown {
-    animation: slideDown 0.3s ease-out forwards;
-    transform-origin: top center;
-  }
-  
-  @keyframes slideDown {
-    from {
-      opacity: 0;
-      transform: scaleY(0);
-    }
-    to {
-      opacity: 1;
-      transform: scaleY(1);
-    }
-  }
-  
-  .animate-fadeIn {
-    animation: fadeIn 0.3s ease-out forwards;
-  }
-  
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-    }
-    to {
-      opacity: 1;
-    }
-  }
-  
-  .animate-count {
-    animation: countUp 2s ease-out forwards;
-  }
-  
-  @keyframes countUp {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  .animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-  }
-  
-  @keyframes pulse {
-    0%, 100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.7;
-    }
-  }
-  
-  .bg-ivory-50 {
-    background-color: #FFFFF0;
-  }
-  
-  /* Custom scrollbar */
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 5px;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: rgba(0, 0, 0, 0.05);
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 10px;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgba(0, 0, 0, 0.15);
-  }
+/* Sidebar gradient finish */
+.sidebar-gradient::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(to bottom, rgba(74, 111, 165, 0), rgba(74, 111, 165, 0.1));
+  pointer-events: none;
+  z-index: -1;
+}
 
-  /* Dark mode scrollbar */
-  .dark .scrollbar-thin::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.05);
+.dark .sidebar-gradient::before {
+  background: linear-gradient(to bottom, rgba(30, 41, 59, 0), rgba(30, 41, 59, 0.3));
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out forwards;
+  transform-origin: top center;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  to {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-count {
+  animation: countUp 2s ease-out forwards;
+}
+
+@keyframes countUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.bg-ivory-50 {
+  background-color: #FFFFF0;
+}
+
+/* Custom scrollbar */
+.scrollbar-thin::-webkit-scrollbar {
+  width: 5px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* Dark mode scrollbar */
+.dark .scrollbar-thin::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Additional styles for sidebar */
+@media (max-width: 1023px) {
+  .sidebar-closed .sidebar-container {
+    transform: translateX(-100%);
+  }
+}
+
+/* Adjust content margin when sidebar is open/closed */
+@media (min-width: 1024px) {
+  .sidebar-closed .relative {
+    margin-left: 0;
   }
   
-  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.1);
+  .sidebar-closed .sidebar-container {
+    width: 0;
+    overflow: hidden;
+  }
+}
+/* Dashboard Sidebar Fixes */
+.sidebar-container {
+  transition: transform 0.3s ease-in-out, width 0.3s ease-in-out;
+}
+
+/* For mobile screens */
+@media (max-width: 1023px) {
+  .sidebar-closed .sidebar-container {
+    transform: translateX(-100%);
   }
   
-  .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.15);
+  html.sidebar-closed body {
+    overflow-x: hidden;
   }
+}
+
+/* For desktop screens */
+@media (min-width: 1024px) {
+  .sidebar-closed .sidebar-container {
+    width: 0;
+    overflow: hidden;
+  }
+  
+  .sidebar-closed .sidebar-container > div {
+    opacity: 0;
+  }
+  
+  .sidebar-container > div {
+    transition: opacity 0.2s ease-in-out;
+    opacity: 1;
+  }
+  
+  /* Adjust main content when sidebar is closed */
+  .sidebar-closed .relative.flex.flex-col.flex-1 {
+    margin-left: 0;
+  }
+}
 </style>

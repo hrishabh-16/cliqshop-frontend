@@ -137,8 +137,12 @@
     getCategoryNameById(id: number): string {
       if (!id) return 'Unknown';
       
+      // Convert id to string for comparison to handle both number and string IDs
+      const idStr = id.toString();
+      
       const category = this.cachedCategories.find(c => 
-        c.categoryId === id || c.id === id
+        (c.categoryId !== undefined && c.categoryId.toString() === idStr) || 
+        (c.id !== undefined && c.id.toString() === idStr)
       );
       return category ? category.name : 'Unknown';
     }

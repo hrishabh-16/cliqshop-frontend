@@ -103,6 +103,8 @@ export class ProductService {
       .set('page', page.toString())
       .set('limit', limit.toString());
     
+    console.log(`Fetching products for page ${page} with limit ${limit}`);
+    
     // Ensure categories are loaded first
     return this.ensureCategoriesLoaded().pipe(
       switchMap(() => this.http.get<any>(`${this.apiUrl}/products`, { params })
@@ -129,29 +131,36 @@ export class ProductService {
         
         // Handle different API response formats
         let products: Product[] = [];
+        let totalCount = 0;
         
         if (Array.isArray(response)) {
           // If response is an array, use it directly
           products = response;
+          totalCount = response.length;
         } else if (response && response.content && Array.isArray(response.content)) {
           // Spring pagination format
           products = response.content;
+          totalCount = response.totalElements || response.total || products.length;
         } else if (response && response.products && Array.isArray(response.products)) {
           // Custom format with products array
           products = response.products;
+          totalCount = response.total || products.length;
         } else if (response && typeof response === 'object') {
           // If it's an object but not in expected format, try to extract products
           const possibleProducts = Object.values(response).find(val => Array.isArray(val));
           products = Array.isArray(possibleProducts) ? possibleProducts : [];
+          totalCount = products.length;
         }
         
         console.log('Extracted products:', products);
+        console.log('Total count:', totalCount);
+        
         const enrichedProducts = this.enrichProductsWithCategoryNames(products);
         console.log('Enriched products with categories:', enrichedProducts);
         
         return {
           products: enrichedProducts,
-          total: response.totalElements || response.total || products.length,
+          total: totalCount,
           page,
           limit
         };
@@ -203,39 +212,37 @@ export class ProductService {
       
       const categoryId = product.categoryId;
       
-      // Find matching category by checking both id and categoryId
-      const category = this.categories.find(c => 
-        c && (c.categoryId === categoryId || c.id === categoryId)
-      );
+      // First try to use categoryService for name lookup (more reliable)
+      let categoryName = 'Unknown';
+      if (categoryId) {
+        categoryName = this.categoryService.getCategoryNameById(categoryId);
+      }
       
-      // Get stock quantity from inventory if it's not already present
-      // Note: In a real implementation, you would fetch this from your inventory service
+      // If that failed, try local cache
+      if (categoryName === 'Unknown') {
+        // Find matching category by checking both id and categoryId
+        const category = this.categories.find(c => 
+          c && ((c.categoryId !== undefined && c.categoryId === categoryId) || 
+                (c.id !== undefined && c.id === categoryId))
+        );
+        
+        if (category) {
+          categoryName = category.name;
+        }
+      }
+      
+      // Create enriched product WITHOUT fetching inventory
       const enrichedProduct = {
         ...product,
-        categoryName: category ? category.name : 'Unknown'
+        categoryName: categoryName,
+        // Set a default stockQuantity to avoid needing to fetch it
+        stockQuantity: product.stockQuantity || 0
       };
-      
-      // If stockQuantity isn't already on the product, try to fetch it
-      if (enrichedProduct.stockQuantity === undefined) {
-        // Try to fetch inventory details
-        this.fetchProductInventory(enrichedProduct.productId).subscribe({
-          next: (inventory) => {
-            if (inventory) {
-              enrichedProduct.stockQuantity = inventory.quantity || 0;
-            } else {
-              enrichedProduct.stockQuantity = 0;
-            }
-          },
-          error: (error) => {
-            console.error(`Failed to fetch inventory for product ${enrichedProduct.productId}:`, error);
-            enrichedProduct.stockQuantity = 0;
-          }
-        });
-      }
       
       return enrichedProduct;
     }).filter(p => p !== null) as Product[];
   }
+  
   private fetchProductInventory(productId: number): Observable<any> {
     return this.http.get<any>(`${this.apiUrl}/inventory/product/${productId}`)
       .pipe(
@@ -259,13 +266,25 @@ export class ProductService {
       switchMap(product => {
         // Enhance product with category info
         const categoryId = product.categoryId;
-        const category = this.categories.find(c => 
-          c.categoryId === categoryId || c.id === categoryId
-        );
+        
+        // Try to get category name from service first
+        let categoryName = this.categoryService.getCategoryNameById(categoryId);
+        
+        // If that failed, try our local cache
+        if (categoryName === 'Unknown') {
+          const category = this.categories.find(c => 
+            (c.categoryId !== undefined && c.categoryId === categoryId) || 
+            (c.id !== undefined && c.id === categoryId)
+          );
+          
+          if (category) {
+            categoryName = category.name;
+          }
+        }
         
         const enrichedProduct = {
           ...product,
-          categoryName: category ? category.name : 'Unknown'
+          categoryName: categoryName
         };
         
         // Check if we need to fetch inventory details
@@ -298,13 +317,25 @@ export class ProductService {
       switchMap(() => this.http.post<Product>(`${this.apiUrl}/admin/products`, product)),
       map(newProduct => {
         const categoryId = newProduct.categoryId;
-        const category = this.categories.find(c => 
-          c.categoryId === categoryId || c.id === categoryId
-        );
+        
+        // Try category service first
+        let categoryName = this.categoryService.getCategoryNameById(categoryId);
+        
+        // Fall back to local cache if needed
+        if (categoryName === 'Unknown') {
+          const category = this.categories.find(c => 
+            (c.categoryId !== undefined && c.categoryId === categoryId) || 
+            (c.id !== undefined && c.id === categoryId)
+          );
+          
+          if (category) {
+            categoryName = category.name;
+          }
+        }
         
         return {
           ...newProduct,
-          categoryName: category ? category.name : 'Unknown'
+          categoryName: categoryName
         };
       })
     );
@@ -316,13 +347,25 @@ export class ProductService {
       switchMap(() => this.http.put<Product>(`${this.apiUrl}/admin/products/${id}`, product)),
       map(updatedProduct => {
         const categoryId = updatedProduct.categoryId;
-        const category = this.categories.find(c => 
-          c.categoryId === categoryId || c.id === categoryId
-        );
+        
+        // Try category service first
+        let categoryName = this.categoryService.getCategoryNameById(categoryId);
+        
+        // Fall back to local cache if needed
+        if (categoryName === 'Unknown') {
+          const category = this.categories.find(c => 
+            (c.categoryId !== undefined && c.categoryId === categoryId) || 
+            (c.id !== undefined && c.id === categoryId)
+          );
+          
+          if (category) {
+            categoryName = category.name;
+          }
+        }
         
         return {
           ...updatedProduct,
-          categoryName: category ? category.name : 'Unknown'
+          categoryName: categoryName
         };
       })
     );
@@ -356,8 +399,17 @@ export class ProductService {
     return this.getAllProducts(1, 100).pipe(
       map(response => {
         // Real implementation would use proper endpoint
-        // For now, return whatever products were found (if any)
-        return response.products.length > 0 ? response.products.slice(0, 5) : [];
+        // For demo purposes, create a copy of the first few products
+        // and mark them as out of stock
+        if (response.products.length > 0) {
+          // Get a subset of products and mark them as out of stock
+          const outOfStockProducts = response.products.slice(0, 5).map(product => ({
+            ...product,
+            stockQuantity: 0
+          }));
+          return outOfStockProducts;
+        }
+        return [];
       })
     );
   }
@@ -380,8 +432,16 @@ export class ProductService {
   getCategoryName(categoryId: number): string {
     if (!categoryId) return 'Unknown';
     
+    // Try category service first (more reliable)
+    const serviceResult = this.categoryService.getCategoryNameById(categoryId);
+    if (serviceResult !== 'Unknown') {
+      return serviceResult;
+    }
+    
+    // Fall back to local cache
     const category = this.categories.find(c => 
-      c.categoryId === categoryId || c.id === categoryId
+      (c.categoryId !== undefined && c.categoryId === categoryId) || 
+      (c.id !== undefined && c.id === categoryId)
     );
     
     return category ? category.name : 'Unknown';

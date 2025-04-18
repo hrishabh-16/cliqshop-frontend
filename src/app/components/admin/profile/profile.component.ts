@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { ProfileService } from '../../../services/admin/profile.service';
+import { ProfileService } from '../../../services/admin/profile/profile.service';
 import { User } from '../../../models/user.model';
 
 @Component({

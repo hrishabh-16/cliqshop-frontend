@@ -55,43 +55,44 @@
     <div *ngIf="error" class="text-center text-red-600 my-8">
       {{ error }}
     </div>
-    <!-- Debug Info Section - Only visible when loading or error occurs -->
-<div *ngIf="loading || error" class="bg-white dark:bg-slate-700 rounded-lg p-4 mt-4 shadow-sm border border-gray-200 dark:border-slate-600">
-  <h3 class="text-gray-800 dark:text-white font-medium mb-2">Connection Status:</h3>
-  
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-    <div>
-      <p class="text-gray-700 dark:text-gray-300">
-        <span class="font-medium">Loading:</span> 
-        <span [ngClass]="{'text-yellow-500': loading, 'text-green-500': !loading}">
-          {{ loading ? 'Active' : 'Complete' }}
-        </span>
-      </p>
-      <p class="text-gray-700 dark:text-gray-300">
-        <span class="font-medium">View:</span> {{ currentView }}
-      </p>
-      <p class="text-gray-700 dark:text-gray-300">
-        <span class="font-medium">Categories Loaded:</span> {{ categories.length }}
-      </p>
-      <p class="text-gray-700 dark:text-gray-300">
-        <span class="font-medium">Products Loaded:</span> {{ products.length }}
-      </p>
-    </div>
     
-    <div>
-      <p *ngIf="error" class="text-red-500 mb-2">
-        <span class="font-medium">Error:</span> {{ error }}
-      </p>
+    <!-- Debug Info Section - Only visible when loading or error occurs -->
+    <!-- <div *ngIf="loading || error" class="bg-white dark:bg-slate-700 rounded-lg p-4 mt-4 shadow-sm border border-gray-200 dark:border-slate-600">
+      <h3 class="text-gray-800 dark:text-white font-medium mb-2">Connection Status:</h3>
       
-      <div class="mt-2">
-        <button (click)="refreshProducts()" 
-                class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-md mr-2 text-sm transition-colors">
-          <i class="fas fa-sync-alt mr-1"></i> Refresh Data
-        </button>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+        <div>
+          <p class="text-gray-700 dark:text-gray-300">
+            <span class="font-medium">Loading:</span> 
+            <span [ngClass]="{'text-yellow-500': loading, 'text-green-500': !loading}">
+              {{ loading ? 'Active' : 'Complete' }}
+            </span>
+          </p>
+          <p class="text-gray-700 dark:text-gray-300">
+            <span class="font-medium">View:</span> {{ currentView }}
+          </p>
+          <p class="text-gray-700 dark:text-gray-300">
+            <span class="font-medium">Categories Loaded:</span> {{ categories.length }}
+          </p>
+          <p class="text-gray-700 dark:text-gray-300">
+            <span class="font-medium">Products Loaded:</span> {{ products.length }}
+          </p>
+        </div>
+        
+        <div>
+          <p *ngIf="error" class="text-red-500 mb-2">
+            <span class="font-medium">Error:</span> {{ error }}
+          </p>
+          
+          <div class="mt-2">
+            <button (click)="refreshProducts()" 
+                    class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-md mr-2 text-sm transition-colors">
+              <i class="fas fa-sync-alt mr-1"></i> Refresh Data
+            </button>
+          </div>
+        </div>
       </div>
-    </div>
-  </div>
-</div>
+    </div> -->
     
     <!-- Product List View -->
     <div *ngIf="isListView && !loading && !error" class="bg-white dark:bg-slate-700 rounded-xl shadow overflow-hidden">
@@ -148,21 +149,17 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                  <!-- Debug info (remove in production) -->
-                  <!-- <span class="hidden">Debug - CategoryId: {{product.categoryId}}</span> -->
-                  
-                  <!-- Use ternary operator for better control over category display -->
-                  {{ product.categoryName ? product.categoryName : getCategoryName(product.categoryId) }}
+                  {{ product.categoryName || getCategoryName(product.categoryId) }}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap flex items-center space-x-2">
-                <button (click)="viewProduct(product)" class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1">
+                <button (click)="viewProduct(product)" class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1" title="View details">
                   <i class="fas fa-eye"></i>
                 </button>
-                <button (click)="editProduct(product)" class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1">
+                <button (click)="editProduct(product)" class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1" title="Edit product">
                   <i class="fas fa-edit"></i>
                 </button>
-                <button (click)="confirmDelete(product)" class="text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 p-1">
+                <button (click)="confirmDelete(product)" class="text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 p-1" title="Delete product">
                   <i class="fas fa-trash"></i>
                 </button>
               </td>
@@ -185,7 +182,7 @@
       <!-- Pagination -->
       <div *ngIf="products.length > 0" class="px-6 py-4 flex items-center justify-between border-t border-gray-200 dark:border-slate-600">
         <div class="text-sm text-gray-500 dark:text-gray-400">
-          Showing {{ (currentPage - 1) * itemsPerPage + 1 }} to {{ (currentPage - 1) * itemsPerPage + products.length }} of {{ totalProducts }} products
+          Showing {{ products.length > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0 }} to {{ (currentPage - 1) * itemsPerPage + products.length }} of {{ totalProducts }} products
         </div>
         
         <nav aria-label="Page navigation">
@@ -376,21 +373,17 @@
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-                  <!-- Debug info (remove in production) -->
-                  <!-- <span class="hidden">Debug - CategoryId: {{product.categoryId}}</span> -->
-                  
-                  <!-- Use ternary operator for better control over category display -->
-                  {{ product.categoryName ? product.categoryName : getCategoryName(product.categoryId) }}
+                  {{ product.categoryName || getCategoryName(product.categoryId) }}
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap flex items-center space-x-2">
-                <button (click)="viewProduct(product)" class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1">
+                <button (click)="viewProduct(product)" class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1" title="View details">
                   <i class="fas fa-eye"></i>
                 </button>
-                <button (click)="editProduct(product)" class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1">
+                <button (click)="editProduct(product)" class="text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 p-1" title="Edit product">
                   <i class="fas fa-edit"></i>
                 </button>
-                <button (click)="confirmDelete(product)" class="text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 p-1">
+                <button (click)="confirmDelete(product)" class="text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 p-1" title="Delete product">
                   <i class="fas fa-trash"></i>
                 </button>
               </td>
@@ -407,6 +400,13 @@
             </tr>
           </tbody>
         </table>
+      </div>
+      
+      <!-- Pagination for out of stock view -->
+      <div *ngIf="products.length > 0" class="px-6 py-4 flex items-center justify-between border-t border-gray-200 dark:border-slate-600">
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          Showing {{ products.length }} out of stock products
+        </div>
       </div>
     </div>
   </div>
@@ -459,14 +459,19 @@
                 </div>
                 
                 <!-- Stock Quantity -->
-                
+                <div>
+                  <p class="text-sm text-gray-500 dark:text-gray-400">Stock Status</p>
+                  <p [ngClass]="getStockStatusClass(selectedProduct.stockQuantity)" class="text-lg font-semibold">
+                    {{ getStockStatusText(selectedProduct.stockQuantity) }}
+                  </p>
+                </div>
               </div>
               
               <!-- Category -->
               <div class="mb-4">
                 <p class="text-sm text-gray-500 dark:text-gray-400">Category</p>
                 <span class="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 rounded-full text-sm font-medium">
-                  {{ selectedProduct.categoryName ? selectedProduct.categoryName : getCategoryName(selectedProduct.categoryId) }}
+                  {{ selectedProduct.categoryName || getCategoryName(selectedProduct.categoryId) }}
                 </span>
               </div>
               
@@ -483,8 +488,6 @@
                   {{ selectedProduct.description }}
                 </div>
               </div>
-              
-           
               
               <!-- Action Buttons -->
               <div class="flex space-x-3 mt-6">
@@ -651,6 +654,7 @@
   </div>
 </div>
 
+
 <!-- Additional CSS for animations -->
 <style>
   @keyframes modalIn {
@@ -669,5 +673,382 @@
   
   .animate-fadeIn {
     animation: fadeIn 0.3s ease-out forwards;
+  }
+  /* Products Component Styles */
+
+/* Animation for modal transitions */
+@keyframes modalFadeIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  @keyframes modalFadeOut {
+    from { opacity: 1; transform: scale(1); }
+    to { opacity: 0; transform: scale(0.95); }
+  }
+  
+  /* Animation for table rows */
+  @keyframes rowFadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  
+  /* Button hover effects */
+  .btn-hover-effect {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .btn-hover-effect::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: 0.5s;
+  }
+  
+  .btn-hover-effect:hover::after {
+    left: 100%;
+  }
+  
+  /* Card hover effects */
+  .card-hover {
+    transition: all 0.3s ease;
+  }
+  
+  .card-hover:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Custom scrollbar for tables */
+  .overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+    width: 6px;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 3px;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+  }
+  
+  /* Status badge colors */
+  .status-pending {
+    background-color: rgba(251, 191, 36, 0.1);
+    color: #d97706;
+  }
+  
+  .status-delivered {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #059669;
+  }
+  
+  .status-cancelled {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+  }
+  
+  /* Dark mode overrides */
+  .dark .status-pending {
+    background-color: rgba(251, 191, 36, 0.2);
+    color: #fbbf24;
+  }
+  
+  .dark .status-delivered {
+    background-color: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+  }
+  
+  .dark .status-cancelled {
+    background-color: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+  }
+  
+  /* Image preview hover effect */
+  img.rounded-md {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  img.rounded-md:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Form field focus effects */
+  input:focus, textarea:focus, select:focus {
+    transition: all 0.3s ease;
+    box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.2);
+  }
+  
+  /* Pagination styles */
+  .pagination .page-item button {
+    transition: all 0.2s ease;
+  }
+  
+  .pagination .page-item button:hover:not([disabled]) {
+    transform: translateY(-2px);
+  }
+  
+  /* Animate table rows */
+  tbody tr {
+    animation: rowFadeIn 0.3s ease-out forwards;
+    opacity: 0;
+  }
+  
+  tbody tr:nth-child(1) { animation-delay: 0.05s; }
+  tbody tr:nth-child(2) { animation-delay: 0.1s; }
+  tbody tr:nth-child(3) { animation-delay: 0.15s; }
+  tbody tr:nth-child(4) { animation-delay: 0.2s; }
+  tbody tr:nth-child(5) { animation-delay: 0.25s; }
+  tbody tr:nth-child(6) { animation-delay: 0.3s; }
+  tbody tr:nth-child(7) { animation-delay: 0.35s; }
+  tbody tr:nth-child(8) { animation-delay: 0.4s; }
+  tbody tr:nth-child(9) { animation-delay: 0.45s; }
+  tbody tr:nth-child(10) { animation-delay: 0.5s; }
+  
+  /* Animate action icons */
+  td button i {
+    transition: transform 0.2s ease;
+  }
+  
+  td button:hover i {
+    transform: scale(1.2);
+  }
+  
+  /* Modal animations */
+  .animate-modal-in {
+    animation: modalFadeIn 0.3s ease-out forwards;
+  }
+  
+  /* Back button animation */
+  button i.fa-arrow-left {
+    transition: transform 0.2s ease;
+  }
+  
+  button:hover i.fa-arrow-left {
+    transform: translateX(-3px);
+  }
+  
+  /* Colors from CliqShop design */
+  .bg-primary {
+    background-color: #4a6fa5;
+  }
+  
+  .text-primary {
+    color: #4a6fa5;
+  }
+  
+  .border-primary {
+    border-color: #4a6fa5;
+  }
+  
+  .bg-accent {
+    background-color: #5d7b9e;
+  }
+  
+  .text-accent {
+    color: #5d7b9e;
+  }
+  
+  .border-accent {
+    border-color: #5d7b9e;
+  }
+  
+  .bg-ivory {
+    background-color: #FFFFF0;
+  }
+  
+  /* View modal product image container */
+  .relative.pb-\[100\%\] {
+    position: relative;
+    padding-bottom: 100%;
+  }
+  
+  /* Product image hover effect in view modal */
+  .view-product-image {
+    transition: transform 0.3s ease;
+  }
+  
+  .view-product-image:hover {
+    transform: scale(1.05);
+  }
+  
+  /* Button ripple effect */
+  .ripple {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .ripple:after {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+    background-repeat: no-repeat;
+    background-position: 50%;
+    transform: scale(10, 10);
+    opacity: 0;
+    transition: transform 0.5s, opacity 1s;
+  }
+  
+  .ripple:active:after {
+    transform: scale(0, 0);
+    opacity: 0.3;
+    transition: 0s;
+  }
+  
+  /* Product category badge */
+  .category-badge {
+    transition: all 0.3s ease;
+  }
+  
+  .category-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Improved focus outlines for accessibility */
+  button:focus, 
+  a:focus,
+  input:focus, 
+  select:focus, 
+  textarea:focus {
+    outline: 2px solid rgba(74, 111, 165, 0.5);
+    outline-offset: 2px;
+  }
+  
+  .dark button:focus,
+  .dark a:focus,
+  .dark input:focus, 
+  .dark select:focus, 
+  .dark textarea:focus {
+    outline-color: rgba(56, 189, 248, 0.5);
+  }
+  
+  /* Product table row hover effect */
+  .product-row {
+    transition: background-color 0.2s ease, transform 0.2s ease;
+  }
+  
+  .product-row:hover {
+    transform: translateX(5px);
+  }
+  
+  /* Action button tooltips */
+  .tooltip {
+    position: relative;
+  }
+  
+  .tooltip:before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 10px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: white;
+    border-radius: 4px;
+    white-space: nowrap;
+    font-size: 12px;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+  }
+  
+  .tooltip:hover:before {
+    opacity: 1;
+    visibility: visible;
+    bottom: calc(100% + 5px);
+  }
+  
+  /* Loading spinner animation */
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  /* Empty state animation */
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+  }
+  
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  /* Fast zoom animation for view button */
+  @keyframes quickZoom {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+  }
+  
+  .action-icon-view:hover {
+    animation: quickZoom 0.3s ease;
+  }
+  
+  /* Custom animation for the pagination active state */
+  .page-item button.active {
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .page-item button.active:after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    transform: scale(0);
+    animation: ripple 0.6s linear;
+  }
+  
+  @keyframes ripple {
+    to {
+      transform: scale(2.5);
+      opacity: 0;
+    }
+  }
+  
+  /* Smooth transition for modal background overlay */
+  .fixed.inset-0.bg-gray-500.bg-opacity-75 {
+    transition: opacity 0.3s ease;
+  }
+  
+  /* Add a subtle bounce effect to the modal */
+  @keyframes modalBounce {
+    0% { transform: scale(0.9); opacity: 0; }
+    70% { transform: scale(1.05); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  
+  .modal-bounce {
+    animation: modalBounce 0.4s ease-out forwards;
   }
 </style>
