@@ -12,12 +12,13 @@ import { LoginComponent } from './components/auth/login/login.component';
 import { RegisterComponent } from './components/auth/register/register.component';
 import { HomeComponent } from './components/home-component/home-component.component'; 
 import { ProductsComponent } from './components/products/products.component';
+import { CategoriesComponent } from './components/categories/categories.component';
 import { AuthInterceptor } from './interceptors/auth/auth.interceptor';
 import { ProfileComponent } from './components/auth/profile/profile.component';
 import { DashboardComponent } from './components/admin/dashboard/dashboard.component';
 import { UsersComponent } from './components/admin/users/users.component';
 import { ProductsComponent as AdminProductsComponent } from './components/admin/products/products.component';
-import { CategoriesComponent } from './components/admin/categories/categories.component';
+import { CategoriesComponent as AdminCategoriesComponent } from './components/admin/categories/categories.component';
 import { OrdersComponent } from './components/admin/orders/orders.component';
 import { ReportsComponent } from './components/admin/reports/reports.component';
 import { AdminProfileComponent } from './components/admin/profile/profile.component';
@@ -74,12 +75,13 @@ export function preloadCategories(categoryService: CategoryService) {
     RegisterComponent,
     HomeComponent,
     ProductsComponent,
+    CategoriesComponent,
     ProfileComponent,
     AdminProfileComponent,
     DashboardComponent,
     UsersComponent,
     AdminProductsComponent,
-    CategoriesComponent,
+    AdminCategoriesComponent,
     OrdersComponent,
     ReportsComponent,
     CartComponent,

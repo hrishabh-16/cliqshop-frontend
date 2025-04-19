@@ -8,13 +8,14 @@ import { HomeComponent } from './components/home-component/home-component.compon
 import { ProfileComponent } from './components/auth/profile/profile.component';
 import { DashboardComponent } from './components/admin/dashboard/dashboard.component';
 import { ProductsComponent as AdminProductsComponent } from './components/admin/products/products.component';
-import { CategoriesComponent } from './components/admin/categories/categories.component';
+import { CategoriesComponent as AdminCategoriesComponent } from './components/admin/categories/categories.component';
 import { OrdersComponent } from './components/admin/orders/orders.component';
 import { ReportsComponent } from './components/admin/reports/reports.component';
 import { UsersComponent } from './components/admin/users/users.component';
 import { CartComponent } from './components/cart/cart.component';
 import { AdminProfileComponent } from './components/admin/profile/profile.component';
 import { ProductsComponent } from './components/products/products.component';
+import { CategoriesComponent } from './components/categories/categories.component';
 
 const routes: Routes = [
   // Public routes that don't require authentication
@@ -22,6 +23,7 @@ const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'home', component: HomeComponent },
   { path: 'products', component: ProductsComponent },
+  { path: 'categories', component: CategoriesComponent },
   
   // Protected routes that require authentication
   { path: 'profile', component: ProfileComponent, canActivate: [AuthGuard] },
@@ -45,7 +47,7 @@ const routes: Routes = [
   },
   {
     path: 'admin/categories',
-    component: CategoriesComponent,
+    component: AdminCategoriesComponent,
     canActivate: [AuthGuard, AdminGuard]
   },
   {

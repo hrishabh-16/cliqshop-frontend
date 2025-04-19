@@ -51,17 +51,19 @@
               </button>
               <div class="absolute left-0 top-full w-48 bg-white shadow-lg rounded-md py-2 z-10 hidden group-hover:block">
                 <a *ngFor="let category of categories" 
-                   [routerLink]="['/products/category', category.categoryId || category.id]"
+                   [routerLink]="['/products']"
+                   [queryParams]="{category: category.categoryId || category.id}"
                    class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600">
                   {{ category.name }}
                 </a>
-                <a routerLink="/products" class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 font-medium">
+                <a routerLink="/categories" class="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 font-medium">
                   View All Categories
                 </a>
               </div>
             </div>
             
             <a routerLink="/products" routerLinkActive="text-blue-600" class="text-gray-700 hover:text-blue-600 font-medium">Products</a>
+            <a routerLink="/categories" routerLinkActive="text-blue-600" class="text-gray-700 hover:text-blue-600 font-medium">Categories</a>
             <a routerLink="/contact" routerLinkActive="text-blue-600" class="text-gray-700 hover:text-blue-600 font-medium">Contact</a>
           </nav>
           
@@ -141,17 +143,19 @@
         <nav class="flex flex-col space-y-3">
           <a routerLink="/home" routerLinkActive="text-blue-600" [routerLinkActiveOptions]="{exact: true}" class="text-gray-700 py-2 border-b border-gray-100">Home</a>
           <a routerLink="/products" routerLinkActive="text-blue-600" class="text-gray-700 py-2 border-b border-gray-100">Products</a>
+          <a routerLink="/categories" routerLinkActive="text-blue-600" class="text-gray-700 py-2 border-b border-gray-100">Categories</a>
           
           <!-- Categories in mobile view -->
           <div class="py-2 border-b border-gray-100">
-            <span class="font-medium text-gray-700">Categories</span>
+            <span class="font-medium text-gray-700">Popular Categories</span>
             <div class="mt-2 pl-4 flex flex-col space-y-2">
-              <a *ngFor="let category of categories" 
-                 [routerLink]="['/products/category', category.categoryId || category.id]"
+              <a *ngFor="let category of categories.slice(0, 5)" 
+                 [routerLink]="['/products']"
+                 [queryParams]="{category: category.categoryId || category.id}"
                  class="text-gray-600 hover:text-blue-600">
                 {{ category.name }}
               </a>
-              <a routerLink="/products" class="text-gray-600 hover:text-blue-600 font-medium">
+              <a routerLink="/categories" class="text-gray-600 hover:text-blue-600 font-medium">
                 View All Categories
               </a>
             </div>

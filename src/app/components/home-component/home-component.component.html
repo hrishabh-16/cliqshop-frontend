@@ -96,7 +96,15 @@
   
   <!-- Category Circle Navigation -->
   <section class="py-10 mb-12 container mx-auto px-4">
-    <h2 class="text-2xl font-bold mb-8 text-center text-sky-900">Shop By Category</h2>
+    <div class="flex justify-between items-center mb-8">
+      <h2 class="text-2xl font-bold text-sky-900">Shop By Category</h2>
+      <a routerLink="/categories" class="text-sky-600 hover:text-sky-800 flex items-center group">
+        View all
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </a>
+    </div>
     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6 justify-items-center">
       <div *ngFor="let category of categories.slice(0, 7); trackBy: trackById" 
            (click)="navigateToCategory(category.categoryId || category.id)" 
@@ -118,7 +126,15 @@
   <!-- Featured categories section -->
   <section class="py-12 mb-12 bg-sky-100">
     <div class="container mx-auto px-4">
-      <h2 class="text-3xl font-bold mb-8 text-center text-sky-900">Categories You Might Like</h2>
+      <div class="flex justify-between items-center mb-8">
+        <h2 class="text-3xl font-bold text-sky-900">Categories You Might Like</h2>
+        <a routerLink="/categories" class="text-sky-600 hover:text-sky-800 flex items-center group">
+          View all
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </a>
+      </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
         <!-- Featured category cards -->
         <div *ngFor="let category of categories.slice(0, 4); trackBy: trackById" 
