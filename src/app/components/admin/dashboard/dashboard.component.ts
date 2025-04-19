@@ -352,8 +352,14 @@ export class DashboardComponent implements OnInit {
       })
     ).subscribe({
       next: (response) => {
-        // Store all products for pagination
-        const allProducts = response.products;
+        // Extract products based on response type
+        let allProducts: Product[] = [];
+        
+        if (Array.isArray(response)) {
+          allProducts = response;
+        } else if ('products' in response) {
+          allProducts = response.products;
+        }
         
         // Add category names
         const enhancedProducts = allProducts.map(product => {
@@ -486,7 +492,14 @@ export class DashboardComponent implements OnInit {
         })
       ).subscribe({
         next: (response) => {
-          const allProducts = response.products;
+          // Extract products based on response type
+          let allProducts: Product[] = [];
+        
+          if (Array.isArray(response)) {
+            allProducts = response;
+          } else if ('products' in response) {
+            allProducts = response.products;
+          }
           
           // Add category names
           const enhancedProducts = allProducts.map(product => ({

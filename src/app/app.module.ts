@@ -11,11 +11,12 @@ import { AppComponent } from './app.component';
 import { LoginComponent } from './components/auth/login/login.component';
 import { RegisterComponent } from './components/auth/register/register.component';
 import { HomeComponent } from './components/home-component/home-component.component'; 
+import { ProductsComponent } from './components/products/products.component';
 import { AuthInterceptor } from './interceptors/auth/auth.interceptor';
 import { ProfileComponent } from './components/auth/profile/profile.component';
 import { DashboardComponent } from './components/admin/dashboard/dashboard.component';
 import { UsersComponent } from './components/admin/users/users.component';
-import { ProductsComponent } from './components/admin/products/products.component';
+import { ProductsComponent as AdminProductsComponent } from './components/admin/products/products.component';
 import { CategoriesComponent } from './components/admin/categories/categories.component';
 import { OrdersComponent } from './components/admin/orders/orders.component';
 import { ReportsComponent } from './components/admin/reports/reports.component';
@@ -26,7 +27,7 @@ import { FooterComponent } from './shared/footer/footer.component';
 import { LoadingSpinnerComponent } from './shared/loading-spinner/loading-spinner.component';
 import { AuthGuard } from './guards/auth/auth.guard';
 import { AdminGuard } from './guards/admin/admin.guard';
-import { CommonModule, DatePipe } from '@angular/common'; // Added DatePipe here
+import { CommonModule, DatePipe } from '@angular/common'; 
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
@@ -36,7 +37,7 @@ import { TruncatePipe } from './shared/pipes/truncate.pipe';
 import { CategoryService } from './services/category/category.service';
 import { ReportService } from './services/report/report.service';
 import { InventoryService } from './services/inventory/inventory.service';
-import { ProductDetailComponent } from './components/product-detail/product-detail/product-detail.component';
+
 
 
 
@@ -72,11 +73,12 @@ export function preloadCategories(categoryService: CategoryService) {
     ProfileComponent,
     RegisterComponent,
     HomeComponent,
+    ProductsComponent,
     ProfileComponent,
-    AdminProfileComponent, // Added the new AdminProfileComponent
+    AdminProfileComponent,
     DashboardComponent,
     UsersComponent,
-    ProductsComponent,
+    AdminProductsComponent,
     CategoriesComponent,
     OrdersComponent,
     ReportsComponent,
@@ -85,16 +87,16 @@ export function preloadCategories(categoryService: CategoryService) {
     FooterComponent,
     LoadingSpinnerComponent,
     TruncatePipe,
-    ProductDetailComponent
+  
   ],
   imports: [
     BrowserModule,
     AppRoutingModule,
     HttpClientModule,
-    ReactiveFormsModule, // This is needed for formGroup
+    ReactiveFormsModule,
     RouterModule,
-    CommonModule, // This provides DatePipe and other common directives
-    FormsModule, // For template-driven forms
+    CommonModule,
+    FormsModule,
     FontAwesomeModule,
     SocialLoginModule,
     JwtModule.forRoot({
@@ -118,7 +120,7 @@ export function preloadCategories(categoryService: CategoryService) {
       multi: true 
     },
     JwtHelperService,
-    DatePipe, // Add DatePipe to providers if you want to use it in components
+    DatePipe,
     {
       provide: HTTP_INTERCEPTORS,
       useClass: AuthInterceptor,

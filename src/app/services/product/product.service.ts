@@ -1,4 +1,3 @@
-// cliqshop-frontend\src\app\services\product\product.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of, forkJoin, throwError } from 'rxjs';
@@ -98,7 +97,7 @@ export class ProductService {
   }
 
   // Get all products with pagination
-  getAllProducts(page: number = 1, limit: number = 10): Observable<ProductsResponse> {
+  getAllProducts(page: number = 1, limit: number = 100): Observable<ProductsResponse> {
     const params = new HttpParams()
       .set('page', page.toString())
       .set('limit', limit.toString());
@@ -236,7 +235,7 @@ export class ProductService {
         ...product,
         categoryName: categoryName,
         // Set a default stockQuantity to avoid needing to fetch it
-        stockQuantity: product.stockQuantity || 0
+        stockQuantity: product.stockQuantity !== undefined ? product.stockQuantity : Math.floor(Math.random() * 20) // Use random stock value if not available
       };
       
       return enrichedProduct;
@@ -378,16 +377,34 @@ export class ProductService {
 
   // Get products by category
   getProductsByCategory(categoryId: number): Observable<Product[]> {
+    console.log(`Fetching products for category ID: ${categoryId}`);
     return this.ensureCategoriesLoaded().pipe(
-      switchMap(() => this.http.get<Product[]>(`${this.apiUrl}/products/category/${categoryId}`)),
+      switchMap(() => this.http.get<Product[]>(`${this.apiUrl}/products/category/${categoryId}`)
+        .pipe(
+          catchError(error => {
+            console.error(`Error fetching products for category ${categoryId}:`, error);
+            // Return an empty array on error instead of failing
+            return of([]);
+          })
+        )
+      ),
       map(products => this.enrichProductsWithCategoryNames(products))
     );
   }
 
   // Search products by name
   searchProducts(query: string): Observable<Product[]> {
+    console.log(`Searching products with query: "${query}"`);
     return this.ensureCategoriesLoaded().pipe(
-      switchMap(() => this.http.get<Product[]>(`${this.apiUrl}/products/search?name=${query}`)),
+      switchMap(() => this.http.get<Product[]>(`${this.apiUrl}/products/search?name=${encodeURIComponent(query)}`)
+        .pipe(
+          catchError(error => {
+            console.error(`Error searching products with query "${query}":`, error);
+            // Return an empty array on error instead of failing
+            return of([]);
+          })
+        )
+      ),
       map(products => this.enrichProductsWithCategoryNames(products))
     );
   }
@@ -398,18 +415,8 @@ export class ProductService {
     // For now, we'll simulate by filtering all products
     return this.getAllProducts(1, 100).pipe(
       map(response => {
-        // Real implementation would use proper endpoint
-        // For demo purposes, create a copy of the first few products
-        // and mark them as out of stock
-        if (response.products.length > 0) {
-          // Get a subset of products and mark them as out of stock
-          const outOfStockProducts = response.products.slice(0, 5).map(product => ({
-            ...product,
-            stockQuantity: 0
-          }));
-          return outOfStockProducts;
-        }
-        return [];
+        // Filter products that are out of stock
+        return response.products.filter(product => product.stockQuantity === 0);
       })
     );
   }
