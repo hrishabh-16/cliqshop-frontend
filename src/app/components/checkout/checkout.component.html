@@ -1,0 +1,550 @@
+<!-- Header -->
+<app-header></app-header>
+
+<!-- Loading Spinner -->
+<div *ngIf="isLoading" class="fixed inset-0 flex items-center justify-center bg-white bg-opacity-75 z-50">
+    <app-loading-spinner></app-loading-spinner>
+</div>
+
+<!-- Main Checkout Page -->
+<main class="bg-gradient-to-b from-sky-50 to-white min-h-screen py-8">
+    <div class="container mx-auto px-4">
+
+        <!-- Page Title -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-sky-900">Checkout</h1>
+            <p class="text-gray-600">Complete your order by providing billing and shipping details</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Checkout Form (Left Side) -->
+            <div class="lg:col-span-2">
+                <form [formGroup]="checkoutForm" (ngSubmit)="placeOrder()">
+
+                    <!-- Billing Details -->
+                    <div class="bg-white rounded-xl shadow-md p-6 mb-6 animate-fadeIn">
+                        <h2 class="text-xl font-bold text-sky-900 mb-4">Billing Details</h2>
+
+                        <div formGroupName="billing">
+                            <!-- Name Fields -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label for="billingFirstName"
+                                        class="block text-sm font-medium text-gray-700 mb-1">First Name <span
+                                            class="text-rose-500">*</span></label>
+                                    <input type="text" id="billingFirstName" formControlName="firstName"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                        [ngClass]="{'border-rose-500': isFieldInvalid('billing.firstName')}">
+                                    <p *ngIf="isFieldInvalid('billing.firstName')" class="mt-1 text-xs text-rose-500">
+                                        First name is required
+                                    </p>
+                                </div>
+                                <div>
+                                    <label for="billingLastName"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Last Name <span
+                                            class="text-rose-500">*</span></label>
+                                    <input type="text" id="billingLastName" formControlName="lastName"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                        [ngClass]="{'border-rose-500': isFieldInvalid('billing.lastName')}">
+                                    <p *ngIf="isFieldInvalid('billing.lastName')" class="mt-1 text-xs text-rose-500">
+                                        Last name is required
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Email and Company -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label for="billingEmail" class="block text-sm font-medium text-gray-700 mb-1">Email
+                                        Address <span class="text-rose-500">*</span></label>
+                                    <input type="email" id="billingEmail" formControlName="email"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                        [ngClass]="{'border-rose-500': isFieldInvalid('billing.email')}">
+                                    <p *ngIf="isFieldInvalid('billing.email')" class="mt-1 text-xs text-rose-500">
+                                        Valid email is required
+                                    </p>
+                                </div>
+                                <div>
+                                    <label for="billingCompany"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Company Name
+                                        (Optional)</label>
+                                    <input type="text" id="billingCompany" formControlName="company"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500">
+                                </div>
+                            </div>
+
+                            <!-- Country and Address -->
+                            <div class="mb-4">
+                                <label for="billingCountry" class="block text-sm font-medium text-gray-700 mb-1">Country
+                                    <span class="text-rose-500">*</span></label>
+                                <select id="billingCountry" formControlName="country"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                    [ngClass]="{'border-rose-500': isFieldInvalid('billing.country')}">
+                                    <option value="">Select a country</option>
+                                    <option value="India">India</option>
+                                    <option value="United States">United States</option>
+                                    <option value="Canada">Canada</option>
+                                    <option value="United Kingdom">United Kingdom</option>
+                                    <option value="Australia">Australia</option>
+                                    <option value="Germany">Germany</option>
+                                    <option value="France">France</option>
+                                    <option value="Japan">Japan</option>
+                                </select>
+                                <p *ngIf="isFieldInvalid('billing.country')" class="mt-1 text-xs text-rose-500">
+                                    Country is required
+                                </p>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="billingAddressLine1"
+                                    class="block text-sm font-medium text-gray-700 mb-1">Street Address <span
+                                        class="text-rose-500">*</span></label>
+                                <input type="text" id="billingAddressLine1" formControlName="addressLine1"
+                                    placeholder="House number and street name"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500 mb-2"
+                                    [ngClass]="{'border-rose-500': isFieldInvalid('billing.addressLine1')}">
+                                <p *ngIf="isFieldInvalid('billing.addressLine1')" class="mt-1 text-xs text-rose-500">
+                                    Street address is required
+                                </p>
+                                <input type="text" id="billingAddressLine2" formControlName="addressLine2"
+                                    placeholder="Apartment, suite, unit, etc. (optional)"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+
+                            <!-- City, State, Zip -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div>
+                                    <label for="billingCity" class="block text-sm font-medium text-gray-700 mb-1">Town /
+                                        City <span class="text-rose-500">*</span></label>
+                                    <input type="text" id="billingCity" formControlName="city"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                        [ngClass]="{'border-rose-500': isFieldInvalid('billing.city')}">
+                                    <p *ngIf="isFieldInvalid('billing.city')" class="mt-1 text-xs text-rose-500">
+                                        City is required
+                                    </p>
+                                </div>
+                                <div>
+                                    <label for="billingState" class="block text-sm font-medium text-gray-700 mb-1">State
+                                        <span class="text-rose-500">*</span></label>
+                                    <input type="text" id="billingState" formControlName="state"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                        [ngClass]="{'border-rose-500': isFieldInvalid('billing.state')}">
+                                    <p *ngIf="isFieldInvalid('billing.state')" class="mt-1 text-xs text-rose-500">
+                                        State is required
+                                    </p>
+                                </div>
+                                <div>
+                                    <label for="billingPostalCode"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Postcode / ZIP <span
+                                            class="text-rose-500">*</span></label>
+                                    <input type="text" id="billingPostalCode" formControlName="postalCode"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                        [ngClass]="{'border-rose-500': isFieldInvalid('billing.postalCode')}">
+                                    <p *ngIf="isFieldInvalid('billing.postalCode')" class="mt-1 text-xs text-rose-500">
+                                        Postal code is required
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Phone -->
+                            <div class="mb-4">
+                                <label for="billingPhone" class="block text-sm font-medium text-gray-700 mb-1">Phone
+                                    <span class="text-rose-500">*</span></label>
+                                <input type="tel" id="billingPhone" formControlName="phone"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                    [ngClass]="{'border-rose-500': isFieldInvalid('billing.phone')}">
+                                <p *ngIf="isFieldInvalid('billing.phone')" class="mt-1 text-xs text-rose-500">
+                                    Phone number is required
+                                </p>
+                            </div>
+
+                            <!-- Save Address Checkbox -->
+                            <div class="flex items-center mb-4">
+                                <input type="checkbox" id="saveBillingAddress" formControlName="saveAddress"
+                                    class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded mr-2">
+                                <label for="saveBillingAddress" class="text-sm text-gray-700">
+                                    Save this address for future orders
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shipping Address -->
+                    <div class="bg-white rounded-xl shadow-md p-6 mb-6 animate-fadeIn">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-bold text-sky-900">Shipping Details</h2>
+
+                            <div class="flex items-center">
+                                <input type="checkbox" id="sameAsBilling" formControlName="sameAsBilling"
+                                    class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded mr-2">
+                                <label for="sameAsBilling" class="text-sm text-gray-700">
+                                    Same as billing address
+                                </label>
+                            </div>
+                        </div>
+
+                        <div *ngIf="!checkoutForm.get('sameAsBilling')?.value" formGroupName="shipping">
+                            <!-- Name Fields -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label for="shippingFirstName"
+                                        class="block text-sm font-medium text-gray-700 mb-1">First Name <span
+                                            class="text-rose-500">*</span></label>
+                                    <input type="text" id="shippingFirstName" formControlName="firstName"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                        [ngClass]="{'border-rose-500': isFieldInvalid('shipping.firstName')}">
+                                    <p *ngIf="isFieldInvalid('shipping.firstName')" class="mt-1 text-xs text-rose-500">
+                                        First name is required
+                                    </p>
+                                </div>
+                                <div>
+                                    <label for="shippingLastName"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Last Name <span
+                                            class="text-rose-500">*</span></label>
+                                    <input type="text" id="shippingLastName" formControlName="lastName"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                        [ngClass]="{'border-rose-500': isFieldInvalid('shipping.lastName')}">
+                                    <p *ngIf="isFieldInvalid('shipping.lastName')" class="mt-1 text-xs text-rose-500">
+                                        Last name is required
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Company -->
+                            <div class="mb-4">
+                                <label for="shippingCompany"
+                                    class="block text-sm font-medium text-gray-700 mb-1">Company Name (Optional)</label>
+                                <input type="text" id="shippingCompany" formControlName="company"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+
+                            <!-- Country and Address -->
+                            <div class="mb-4">
+                                <label for="shippingCountry"
+                                    class="block text-sm font-medium text-gray-700 mb-1">Country <span
+                                        class="text-rose-500">*</span></label>
+                                <select id="shippingCountry" formControlName="country"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                    [ngClass]="{'border-rose-500': isFieldInvalid('shipping.country')}">
+                                    <option value="">Select a country</option>
+                                    <option value="India">India</option>
+                                    <option value="United States">United States</option>
+                                    <option value="Canada">Canada</option>
+                                    <option value="United Kingdom">United Kingdom</option>
+                                    <option value="Australia">Australia</option>
+                                    <option value="Germany">Germany</option>
+                                    <option value="France">France</option>
+                                    <option value="Japan">Japan</option>
+                                </select>
+                                <p *ngIf="isFieldInvalid('shipping.country')" class="mt-1 text-xs text-rose-500">
+                                    Country is required
+                                </p>
+                            </div>
+
+                            <div class="mb-4">
+                                <label for="shippingAddressLine1"
+                                    class="block text-sm font-medium text-gray-700 mb-1">Street Address <span
+                                        class="text-rose-500">*</span></label>
+                                <input type="text" id="shippingAddressLine1" formControlName="addressLine1"
+                                    placeholder="House number and street name"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500 mb-2"
+                                    [ngClass]="{'border-rose-500': isFieldInvalid('shipping.addressLine1')}">
+                                <p *ngIf="isFieldInvalid('shipping.addressLine1')" class="mt-1 text-xs text-rose-500">
+                                    Street address is required
+                                </p>
+                                <input type="text" id="shippingAddressLine2" formControlName="addressLine2"
+                                    placeholder="Apartment, suite, unit, etc. (optional)"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500">
+                            </div>
+
+                            <!-- City, State, Zip -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                                <div>
+                                    <label for="shippingCity" class="block text-sm font-medium text-gray-700 mb-1">Town
+                                        / City <span class="text-rose-500">*</span></label>
+                                    <input type="text" id="shippingCity" formControlName="city"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                        [ngClass]="{'border-rose-500': isFieldInvalid('shipping.city')}">
+                                    <p *ngIf="isFieldInvalid('shipping.city')" class="mt-1 text-xs text-rose-500">
+                                        City is required
+                                    </p>
+                                </div>
+                                <div>
+                                    <label for="shippingState"
+                                        class="block text-sm font-medium text-gray-700 mb-1">State <span
+                                            class="text-rose-500">*</span></label>
+                                    <input type="text" id="shippingState" formControlName="state"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                        [ngClass]="{'border-rose-500': isFieldInvalid('shipping.state')}">
+                                    <p *ngIf="isFieldInvalid('shipping.state')" class="mt-1 text-xs text-rose-500">
+                                        State is required
+                                    </p>
+                                </div>
+                                <div>
+                                    <label for="shippingPostalCode"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Postcode / ZIP <span
+                                            class="text-rose-500">*</span></label>
+                                    <input type="text" id="shippingPostalCode" formControlName="postalCode"
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                        [ngClass]="{'border-rose-500': isFieldInvalid('shipping.postalCode')}">
+                                    <p *ngIf="isFieldInvalid('shipping.postalCode')" class="mt-1 text-xs text-rose-500">
+                                        Postal code is required
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- Phone -->
+                            <div class="mb-4">
+                                <label for="shippingPhone" class="block text-sm font-medium text-gray-700 mb-1">Phone
+                                    <span class="text-rose-500">*</span></label>
+                                <input type="tel" id="shippingPhone" formControlName="phone"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                    [ngClass]="{'border-rose-500': isFieldInvalid('shipping.phone')}">
+                                <p *ngIf="isFieldInvalid('shipping.phone')" class="mt-1 text-xs text-rose-500">
+                                    Phone number is required
+                                </p>
+                            </div>
+
+                            <!-- Save Address Checkbox -->
+                            <div class="flex items-center mb-4">
+                                <input type="checkbox" id="saveShippingAddress" formControlName="saveAddress"
+                                    class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 rounded mr-2">
+                                <label for="saveShippingAddress" class="text-sm text-gray-700">
+                                    Save this address for future orders
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Options -->
+                    <div class="bg-white rounded-xl shadow-md p-6 mb-6 animate-fadeIn">
+                        <h2 class="text-xl font-bold text-sky-900 mb-4">Payment Method</h2>
+
+                        <div class="space-y-3" formGroupName="payment">
+                            <!-- COD Option -->
+                            <div class="flex items-start p-3 border border-gray-200 rounded-md"
+                                [class.border-sky-500]="checkoutForm.get('payment')?.get('method')?.value === 'cod'">
+                                <input type="radio" id="cod" value="cod" formControlName="method"
+                                    class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 mt-1 mr-3">
+                                <div>
+                                    <label for="cod" class="text-sm font-medium text-gray-700">Cash on Delivery</label>
+                                    <p class="text-xs text-gray-500 mt-1">Pay with cash upon delivery.</p>
+                                </div>
+                            </div>
+
+                            <!-- Credit Card Option -->
+                            <div class="flex items-start p-3 border border-gray-200 rounded-md"
+                                [class.border-sky-500]="checkoutForm.get('payment')?.get('method')?.value === 'card'">
+                                <input type="radio" id="card" value="card" formControlName="method"
+                                    class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 mt-1 mr-3">
+                                <div>
+                                    <label for="card" class="text-sm font-medium text-gray-700">Credit/Debit
+                                        Card</label>
+                                    <p class="text-xs text-gray-500 mt-1">Pay securely using your credit or debit card.
+                                    </p>
+                                </div>
+                            </div>
+
+                            <!-- UPI Option -->
+                            <div class="flex items-start p-3 border border-gray-200 rounded-md"
+                                [class.border-sky-500]="checkoutForm.get('payment')?.get('method')?.value === 'upi'">
+                                <input type="radio" id="upi" value="upi" formControlName="method"
+                                    class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 mt-1 mr-3">
+                                <div>
+                                    <label for="upi" class="text-sm font-medium text-gray-700">UPI</label>
+                                    <p class="text-xs text-gray-500 mt-1">Pay using UPI apps like Google Pay, PhonePe,
+                                        Paytm, etc.</p>
+                                </div>
+                            </div>
+
+                            <!-- PayPal Option -->
+                            <div class="flex items-start p-3 border border-gray-200 rounded-md"
+                                [class.border-sky-500]="checkoutForm.get('payment')?.get('method')?.value === 'paypal'">
+                                <input type="radio" id="paypal" value="paypal" formControlName="method"
+                                    class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 mt-1 mr-3">
+                                <div>
+                                    <label for="paypal" class="text-sm font-medium text-gray-700">PayPal</label>
+                                    <p class="text-xs text-gray-500 mt-1">Pay via PayPal; you can pay with your credit
+                                        card if you don't have a PayPal account.</p>
+                                </div>
+                            </div>
+
+                            <!-- Payment Icons -->
+                            <div class="mt-4 flex flex-wrap gap-3 justify-start">
+                                <img src="https://www.paypalobjects.com/webstatic/mktg/Logo/pp-logo-100px.png"
+                                    alt="PayPal" class="h-8 object-contain">
+                                <img src="https://www.freepnglogos.com/uploads/visa-logo-download-png-21.png" alt="Visa"
+                                    class="h-8 object-contain">
+                                <img src="https://freepngimg.com/thumb/mastercard/2-2-mastercard-free-png-image.png"
+                                    alt="MasterCard" class="h-8 object-contain">
+                                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/UPI_logo.svg/330px-UPI_logo.svg.png"
+                                    alt="UPI" class="h-8 object-contain">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Order Notes -->
+                    <div class="bg-white rounded-xl shadow-md p-6 mb-6 animate-fadeIn">
+                        <h2 class="text-xl font-bold text-sky-900 mb-4">Order Notes</h2>
+                        <div class="mb-4">
+                            <label for="orderNotes" class="block text-sm font-medium text-gray-700 mb-1">Special
+                                instructions for delivery (Optional)</label>
+                            <textarea id="orderNotes" formControlName="orderNotes" rows="3"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-sky-500 focus:border-sky-500"
+                                placeholder="Notes about your order, e.g. special notes for delivery"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button for Mobile -->
+                    <button type="submit"
+                        class="w-full bg-sky-600 hover:bg-sky-700 text-white py-3 rounded-lg transition-colors flex items-center justify-center font-medium lg:hidden mb-6"
+                        [disabled]="checkoutForm.invalid || isSubmitting"
+                        [ngClass]="{'opacity-50 cursor-not-allowed': checkoutForm.invalid || isSubmitting}">
+                        <span *ngIf="!isSubmitting">Place Order</span>
+                        <span *ngIf="isSubmitting" class="flex items-center">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
+                                fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            Processing...
+                        </span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Order Summary (Right Side) -->
+      <div class="lg:col-span-1">
+        <div class="bg-white rounded-xl shadow-md p-6 sticky top-24 animate-fadeIn">
+          <h2 class="text-xl font-bold text-sky-900 mb-4">Order Summary</h2>
+          
+          <!-- Products List -->
+          <div class="mb-6">
+            <h3 class="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-100">Products</h3>
+            
+            <div *ngIf="cart && cart.items && cart.items.length > 0">
+              <div *ngFor="let item of cart.items" class="flex justify-between py-2 border-b border-gray-100 last:border-b-0">
+                <div class="flex items-start">
+                  <div class="text-sm text-gray-800">
+                    {{ item.product?.name || 'Product' }} <span class="text-gray-500">× {{ item.quantity }}</span>
+                  </div>
+                </div>
+                <div class="text-sm font-medium text-gray-800">₹{{ ((item.product?.price || 0) * item.quantity).toFixed(2) }}</div>
+              </div>
+            </div>
+            
+            <div *ngIf="!cart || !cart.items || cart.items.length === 0" class="text-sm text-gray-500 py-2">
+              No items in cart
+            </div>
+          </div>
+
+                    
+                <!-- Shipping Method -->
+                <div class="mb-6">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-100">Shipping Method</h3>
+                    <div *ngIf="checkoutForm" class="space-y-2">
+                        <div *ngFor="let method of shippingMethods"
+                            class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                            <div class="flex items-center">
+                                <input type="radio" [id]="'summary_' + method.id" [value]="method.id"
+                                    [checked]="getShippingMethodValue() === method.id" (change)="setShippingMethod(method.id)"
+                                    class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 mr-2">
+                                <label [for]="'summary_' + method.id" class="text-sm text-gray-800">
+                                    {{ method.name }} ({{ method.description }})
+                                </label>
+                            </div>
+                            <div class="text-sm font-medium text-gray-800">
+                                {{ method.cost === 0 ? 'Free' : '₹' + method.cost.toFixed(2) }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                    <!-- Summary Details -->
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Subtotal</span>
+                            <span class="font-medium">₹{{ cart ? cart.totalPrice.toFixed(2) : '0.00' }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Shipping</span>
+                            <span class="font-medium">{{ getSelectedShippingCost() }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Tax (18% GST)</span>
+                            <span class="font-medium">₹{{ calculateTax().toFixed(2) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Total -->
+                    <div class="pt-4 border-t border-gray-200 mb-6">
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold text-gray-800">Total</span>
+                            <span class="text-2xl font-bold text-sky-900">₹{{ calculateTotal().toFixed(2) }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="button" (click)="placeOrder()"
+                        class="w-full bg-sky-600 hover:bg-sky-700 text-white py-3 rounded-lg transition-colors flex items-center justify-center font-medium"
+                        [disabled]="checkoutForm.invalid || isSubmitting"
+                        [ngClass]="{'opacity-50 cursor-not-allowed': checkoutForm.invalid || isSubmitting}">
+                        <span *ngIf="!isSubmitting">Place Order</span>
+                        <span *ngIf="isSubmitting" class="flex items-center">
+                            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
+                                fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor"
+                                    stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
+                                </path>
+                            </svg>
+                            Processing...
+                        </span>
+                    </button>
+
+
+                    <!-- Privacy Note -->
+                    <p class="text-xs text-gray-500 mt-4 text-center">
+                        By placing your order, you agree to our terms and privacy policy. We also consent to some of
+                        your data being stored by CliqShop, which may be used to make future shopping experiences better
+                        for you.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+
+<!-- Back To Top Button -->
+<button (click)="scrollToTop()"
+    class="fixed right-6 bottom-6 bg-sky-600 text-white p-3 rounded-full shadow-lg hover:bg-sky-700 transition-all duration-300 z-50 transform hover:scale-110"
+    [ngClass]="{'opacity-100 visible': showScrollTop, 'opacity-0 invisible': !showScrollTop}">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l7-7 7 7M5 19l7-7 7 7" />
+    </svg>
+</button>
+
+<!-- Footer -->
+<app-footer></app-footer>
+
+<!-- Custom CSS for Animations -->
+<style>
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fadeIn {
+        animation: fadeIn 0.3s ease-out forwards;
+    }
+</style>

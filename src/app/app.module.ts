@@ -24,6 +24,7 @@ import { OrdersComponent } from './components/admin/orders/orders.component';
 import { ReportsComponent } from './components/admin/reports/reports.component';
 import { AdminProfileComponent } from './components/admin/profile/profile.component';
 import { CartComponent } from './components/cart/cart.component';
+import { CheckoutComponent } from './components/checkout/checkout.component';
 import { HeaderComponent } from './shared/header/header.component';
 import { FooterComponent } from './shared/footer/footer.component';
 import { LoadingSpinnerComponent } from './shared/loading-spinner/loading-spinner.component';
@@ -40,8 +41,7 @@ import { CategoryService } from './services/category/category.service';
 import { ReportService } from './services/report/report.service';
 import { InventoryService } from './services/inventory/inventory.service';
 import { CartService } from './services/cart/cart.service';
-
-
+import { CheckoutService } from './services/checkout/checkout.service';
 
 export function tokenGetter() {
   return localStorage.getItem('token');
@@ -87,6 +87,7 @@ export function preloadCategories(categoryService: CategoryService) {
     OrdersComponent,
     ReportsComponent,
     CartComponent,
+    CheckoutComponent,
     HeaderComponent,
     FooterComponent,
     LoadingSpinnerComponent,
@@ -119,6 +120,7 @@ export function preloadCategories(categoryService: CategoryService) {
     ReportService,
     InventoryService,
     CartService,
+    CheckoutService,
     { 
       provide: HTTP_INTERCEPTORS, 
       useClass: AuthInterceptor, 

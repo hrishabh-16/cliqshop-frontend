@@ -1,0 +1,25 @@
+/* Add custom styles for the checkout page here */
+/* Most styling is handled via Tailwind classes in the HTML */
+
+/* Add a smooth transition for form controls */
+input, select, textarea {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  /* Custom focus styles */
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+  }
+  
+  /* Custom radio and checkbox styles */
+  input[type="radio"], input[type="checkbox"] {
+    cursor: pointer;
+  }
+  
+  /* Sticky positioning for order summary */
+  .sticky {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 24px;
+  }

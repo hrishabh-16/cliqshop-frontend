@@ -13,6 +13,7 @@ import { OrdersComponent } from './components/admin/orders/orders.component';
 import { ReportsComponent } from './components/admin/reports/reports.component';
 import { UsersComponent } from './components/admin/users/users.component';
 import { CartComponent } from './components/cart/cart.component';
+import { CheckoutComponent } from './components/checkout/checkout.component';
 import { AdminProfileComponent } from './components/admin/profile/profile.component';
 import { ProductsComponent } from './components/products/products.component';
 import { CategoriesComponent } from './components/categories/categories.component';
@@ -30,7 +31,7 @@ const routes: Routes = [
   // Protected routes that require authentication
   { path: 'profile', component: ProfileComponent, canActivate: [AuthGuard] },
   { path: 'cart', component: CartComponent, canActivate: [AuthGuard] },
-  { path: 'checkout', component: CartComponent, canActivate: [AuthGuard] }, // Temporary redirect to cart until checkout is implemented
+  { path: 'checkout', component: CheckoutComponent, canActivate: [AuthGuard] },
   
   // Admin routes - require both auth and admin role
   {
