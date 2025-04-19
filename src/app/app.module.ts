@@ -39,7 +39,7 @@ import { TruncatePipe } from './shared/pipes/truncate.pipe';
 import { CategoryService } from './services/category/category.service';
 import { ReportService } from './services/report/report.service';
 import { InventoryService } from './services/inventory/inventory.service';
-
+import { CartService } from './services/cart/cart.service';
 
 
 
@@ -118,6 +118,7 @@ export function preloadCategories(categoryService: CategoryService) {
   providers: [
     ReportService,
     InventoryService,
+    CartService,
     { 
       provide: HTTP_INTERCEPTORS, 
       useClass: AuthInterceptor, 

@@ -1,16 +1,18 @@
-import { Component, OnInit, HostListener } from '@angular/core';
+import { Component, OnInit, HostListener, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
 import { CategoryService } from '../../services/category/category.service';
+import { CartService } from '../../services/cart/cart.service';
 import { Category } from '../../models/category.model';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-header',
-  standalone: false,
+  standalone:false,
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
-export class HeaderComponent implements OnInit {
+export class HeaderComponent implements OnInit, OnDestroy {
   isLoggedIn = false;
   isAdmin = false;
   username = '';
@@ -18,24 +20,46 @@ export class HeaderComponent implements OnInit {
   isScrolled = false;
   categories: Category[] = [];
   isProfileMenuOpen = false;
+  cartItemCount = 0;
+  private authSubscription?: Subscription;
+  private cartSubscription?: Subscription;
 
   constructor(
     private authService: AuthService,
     private router: Router,
-    private categoryService: CategoryService
+    private categoryService: CategoryService,
+    private cartService: CartService
   ) { }
 
   ngOnInit(): void {
-    this.updateAuthStatus();
+    this.setupAuthListener();
     this.loadCategories();
+    this.setupScrollListener();
+  }
+
+  ngOnDestroy(): void {
+    this.authSubscription?.unsubscribe();
+    this.cartSubscription?.unsubscribe();
+  }
+
+  private setupAuthListener(): void {
+    this.authSubscription = this.authService.getCurrentUserObservable().subscribe(() => {
+      this.updateAuthStatus();
+    });
+    this.updateAuthStatus();
+  }
+
+  private setupScrollListener(): void {
+    this.onWindowScroll(); // Initial check
+    window.addEventListener('scroll', this.onWindowScroll.bind(this));
   }
 
   @HostListener('window:scroll')
-  onWindowScroll() {
+  private onWindowScroll(): void {
     this.isScrolled = window.scrollY > 50;
   }
 
-  loadCategories(): void {
+  private loadCategories(): void {
     this.categoryService.getAllCategories().subscribe({
       next: (categories) => {
         this.categories = categories.slice(0, 6); // Show first 6 categories
@@ -46,22 +70,56 @@ export class HeaderComponent implements OnInit {
     });
   }
 
-  updateAuthStatus(): void {
+  private updateAuthStatus(): void {
     this.isLoggedIn = this.authService.isLoggedIn();
     this.isAdmin = this.authService.isAdmin();
     
     if (this.isLoggedIn) {
       const user = this.authService.getCurrentUser();
-      this.username = user ? user.name || user.username : '';
+      this.username = user?.name || user?.username || '';
+      this.updateCartCount();
+    } else {
+      this.cartItemCount = 0;
     }
+  }
+
+  private updateCartCount(): void {
+    if (!this.isLoggedIn) {
+      this.cartItemCount = 0;
+      return;
+    }
+
+    const userId = this.authService.getCurrentUserId();
+    if (!userId) {
+      console.warn('Cannot update cart count - userId is missing');
+      this.cartItemCount = 0;
+      return;
+    }
+
+    this.cartSubscription?.unsubscribe();
+    this.cartSubscription = this.cartService.getCartByUserId(userId).subscribe({
+      next: (cart) => {
+        this.cartItemCount = cart?.items?.reduce((total, item) => total + (item.quantity || 0), 0) || 0;
+      },
+      error: (error) => {
+        console.error('Error fetching cart count:', error);
+        this.cartItemCount = 0;
+      }
+    });
   }
 
   toggleMenu(): void {
     this.isMenuOpen = !this.isMenuOpen;
+    if (this.isMenuOpen) {
+      this.isProfileMenuOpen = false;
+    }
   }
 
   toggleProfileMenu(): void {
     this.isProfileMenuOpen = !this.isProfileMenuOpen;
+    if (this.isProfileMenuOpen) {
+      this.isMenuOpen = false;
+    }
   }
 
   closeMenus(): void {
@@ -71,7 +129,7 @@ export class HeaderComponent implements OnInit {
 
   login(): void {
     this.closeMenus();
-    this.router.navigate(['/login']);
+    this.router.navigate(['/login'], { queryParams: { returnUrl: this.router.url } });
   }
 
   register(): void {
@@ -88,11 +146,7 @@ export class HeaderComponent implements OnInit {
 
   goToProfile(): void {
     this.closeMenus();
-    if (this.isAdmin) {
-      this.router.navigate(['/admin/settings/profile']);
-    } else {
-      this.router.navigate(['/profile']);
-    }
+    this.router.navigate([this.isAdmin ? '/admin/settings/profile' : '/profile']);
   }
 
   goToCart(): void {
@@ -106,6 +160,12 @@ export class HeaderComponent implements OnInit {
   }
 
   goToHome(): void {
+    this.closeMenus();
     this.router.navigate(['/home']);
+  }
+
+  navigateToCategory(categoryId: number): void {
+    this.closeMenus();
+    this.router.navigate(['/products'], { queryParams: { category: categoryId } });
   }
 }

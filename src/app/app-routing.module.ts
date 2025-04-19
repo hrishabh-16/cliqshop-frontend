@@ -24,12 +24,13 @@ const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'home', component: HomeComponent },
   { path: 'products', component: ProductsComponent },
-  { path: 'products/:id', component: ProductDetailComponent },  // Added product detail route
+  { path: 'products/:id', component: ProductDetailComponent },
   { path: 'categories', component: CategoriesComponent },
   
   // Protected routes that require authentication
   { path: 'profile', component: ProfileComponent, canActivate: [AuthGuard] },
   { path: 'cart', component: CartComponent, canActivate: [AuthGuard] },
+  { path: 'checkout', component: CartComponent, canActivate: [AuthGuard] }, // Temporary redirect to cart until checkout is implemented
   
   // Admin routes - require both auth and admin role
   {
@@ -89,9 +90,9 @@ const routes: Routes = [
 
 @NgModule({
   imports: [RouterModule.forRoot(routes, {
-    scrollPositionRestoration: 'enabled',  // Added for better UX
-    anchorScrolling: 'enabled',            // Added for better UX
-    scrollOffset: [0, 64]                  // Account for fixed header height
+    scrollPositionRestoration: 'enabled',
+    anchorScrolling: 'enabled',
+    scrollOffset: [0, 64]
   })],
   exports: [RouterModule],
   providers: [AuthGuard, AdminGuard]

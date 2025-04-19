@@ -1,0 +1,68 @@
+/* Add additional animation styles */
+@keyframes fadeOut {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+  }
+  
+  @keyframes slideInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  .animate-fadeOut {
+    animation: fadeOut 0.3s ease-out forwards;
+  }
+  
+  .animate-slideInRight {
+    animation: slideInRight 0.3s ease-out forwards;
+  }
+  
+  /* Ensure that quantity controls don't overflow on small mobile screens */
+  @media (max-width: 360px) {
+    .quantity-controls {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    
+    .quantity-controls > * {
+      margin-top: 0.5rem;
+    }
+  }
+  
+  /* Smooth transition for cart items */
+  .cart-item {
+    transition: background-color 0.2s ease-out;
+  }
+  
+  .cart-item:hover {
+    background-color: rgba(240, 249, 255, 0.5);
+  }
+  
+  /* Pulse animation for checkout button */
+  @keyframes pulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(14, 165, 233, 0.7);
+    }
+    70% {
+      box-shadow: 0 0 0 10px rgba(14, 165, 233, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(14, 165, 233, 0);
+    }
+  }
+  
+  .checkout-button:focus {
+    animation: pulse 1.5s infinite;
+  }
