@@ -16,6 +16,7 @@ import { CartComponent } from './components/cart/cart.component';
 import { AdminProfileComponent } from './components/admin/profile/profile.component';
 import { ProductsComponent } from './components/products/products.component';
 import { CategoriesComponent } from './components/categories/categories.component';
+import { ProductDetailComponent } from './components/product-detail/product-detail.component';
 
 const routes: Routes = [
   // Public routes that don't require authentication
@@ -23,6 +24,7 @@ const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'home', component: HomeComponent },
   { path: 'products', component: ProductsComponent },
+  { path: 'products/:id', component: ProductDetailComponent },  // Added product detail route
   { path: 'categories', component: CategoriesComponent },
   
   // Protected routes that require authentication
@@ -86,7 +88,11 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes, {
+    scrollPositionRestoration: 'enabled',  // Added for better UX
+    anchorScrolling: 'enabled',            // Added for better UX
+    scrollOffset: [0, 64]                  // Account for fixed header height
+  })],
   exports: [RouterModule],
   providers: [AuthGuard, AdminGuard]
 })

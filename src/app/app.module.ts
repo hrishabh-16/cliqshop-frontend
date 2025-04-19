@@ -15,6 +15,7 @@ import { ProductsComponent } from './components/products/products.component';
 import { CategoriesComponent } from './components/categories/categories.component';
 import { AuthInterceptor } from './interceptors/auth/auth.interceptor';
 import { ProfileComponent } from './components/auth/profile/profile.component';
+import { ProductDetailComponent } from './components/product-detail/product-detail.component';
 import { DashboardComponent } from './components/admin/dashboard/dashboard.component';
 import { UsersComponent } from './components/admin/users/users.component';
 import { ProductsComponent as AdminProductsComponent } from './components/admin/products/products.component';
@@ -80,6 +81,7 @@ export function preloadCategories(categoryService: CategoryService) {
     AdminProfileComponent,
     DashboardComponent,
     UsersComponent,
+    ProductDetailComponent,
     AdminProductsComponent,
     AdminCategoriesComponent,
     OrdersComponent,

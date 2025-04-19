@@ -276,7 +276,8 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           <!-- Product Card -->
           <div *ngFor="let product of filteredProducts" 
-               class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group">
+     class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer"
+     [routerLink]="['/products', product.productId]">
             <!-- Sale badge -->
             <div *ngIf="getDiscountPercentage(product) > 0" class="absolute top-3 left-3 bg-rose-500 text-white text-xs font-bold uppercase px-3 py-1.5 rounded-full z-10 shadow-sm animate-pulse">
               {{ getDiscountPercentage(product) }}% Off
@@ -303,13 +304,13 @@
               </div>
               
               <!-- Add to cart button -->
-              <button (click)="addToCart(product)" 
-                      class="absolute bottom-0 left-0 right-0 bg-sky-600 hover:bg-sky-700 text-white py-3 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center font-medium">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                Add to cart
-              </button>
+              <button (click)="addToCart(product); $event.stopPropagation()" 
+              class="absolute bottom-0 left-0 right-0 bg-sky-600 hover:bg-sky-700 text-white py-3 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center font-medium">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        Add to cart
+      </button>
             </div>
             
             <div class="p-5">
