@@ -25,6 +25,7 @@ import { ReportsComponent } from './components/admin/reports/reports.component';
 import { AdminProfileComponent } from './components/admin/profile/profile.component';
 import { CartComponent } from './components/cart/cart.component';
 import { CheckoutComponent } from './components/checkout/checkout.component';
+import { PaymentComponent } from './components/payment/payment.component';
 import { HeaderComponent } from './shared/header/header.component';
 import { FooterComponent } from './shared/footer/footer.component';
 import { LoadingSpinnerComponent } from './shared/loading-spinner/loading-spinner.component';
@@ -88,6 +89,7 @@ export function preloadCategories(categoryService: CategoryService) {
     ReportsComponent,
     CartComponent,
     CheckoutComponent,
+    PaymentComponent, // Added Payment Component
     HeaderComponent,
     FooterComponent,
     LoadingSpinnerComponent,

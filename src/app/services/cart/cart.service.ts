@@ -2,8 +2,8 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
 import { AuthService } from '../auth/auth.service';
 import { Observable, of, throwError } from 'rxjs';
-import { catchError, tap, retry, timeout, finalize } from 'rxjs/operators';
-import { Cart, CartItem } from '../../models/cart.model';
+import { catchError, tap, retry, timeout, map } from 'rxjs/operators';
+import { Cart, CartItem, normalizeCart } from '../../models/cart.model';
 
 @Injectable({
   providedIn: 'root'
@@ -32,6 +32,7 @@ export class CartService {
     return this.http.get<Cart>(`${this.apiUrl}/${userId}`).pipe(
       timeout(10000), // Set timeout to 10 seconds
       retry(2), // Retry twice if the request fails
+      map(cart => normalizeCart(cart)), // Normalize the cart data structure
       tap(cart => console.log(`Fetched cart for user: ${userId}`, cart)),
       catchError(error => {
         console.error(`getCartByUserId failed:`, error);
@@ -62,6 +63,7 @@ export class CartService {
     ).pipe(
       timeout(10000),
       retry(1),
+      map(cart => normalizeCart(cart)), // Normalize the cart data structure
       tap(cart => console.log('Added item to cart:', productId, quantity, cart)),
       catchError(this.handleError)
     );
@@ -86,6 +88,7 @@ export class CartService {
     ).pipe(
       timeout(10000),
       retry(1),
+      map(cart => normalizeCart(cart)), // Normalize the cart data structure
       tap(cart => console.log('Removed item from cart:', productId, cart)),
       catchError(this.handleError)
     );
@@ -113,6 +116,7 @@ export class CartService {
     ).pipe(
       timeout(10000),
       retry(1),
+      map(cart => normalizeCart(cart)), // Normalize the cart data structure
       tap(cart => console.log('Updated cart item quantity:', productId, quantity, cart)),
       catchError(this.handleError)
     );
@@ -141,10 +145,9 @@ export class CartService {
     if (!cartItems || !Array.isArray(cartItems)) return 0;
     
     return cartItems.reduce((total, item) => {
-      if (item && item.product && typeof item.product.price === 'number' && typeof item.quantity === 'number') {
-        return total + (item.product.price * item.quantity);
-      }
-      return total;
+      // Handle both structures: item with product object or item with direct properties
+      const price = item.product?.price || item.productPrice || 0;
+      return total + (price * (item.quantity || 0));
     }, 0);
   }
 

@@ -2,7 +2,7 @@ import { Component, OnInit, HostListener, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { CartService } from '../../services/cart/cart.service';
 import { AuthService } from '../../services/auth/auth.service';
-import { Cart } from '../../models/cart.model';
+import { Cart, normalizeCart } from '../../models/cart.model';
 
 @Component({
   selector: 'app-cart',
@@ -98,6 +98,27 @@ export class CartComponent implements OnInit {
     });
   }
 
+  getProductProperty(item: any, property: string, fallback: any = undefined): any {
+    // First check if item has a product object with the property
+    if (item.product && typeof item.product[property] !== 'undefined') {
+      return item.product[property];
+    }
+    
+    // Next check direct property on the item with 'product' prefix
+    const productPropName = `product${property.charAt(0).toUpperCase() + property.slice(1)}`;
+    if (typeof item[productPropName] !== 'undefined') {
+      return item[productPropName];
+    }
+    
+    // Finally, check direct property match
+    if (typeof item[property] !== 'undefined') {
+      return item[property];
+    }
+    
+    // Return fallback if nothing found
+    return fallback;
+  }
+
   increaseQuantity(productId: number): void {
     if (!this.cart) return;
     
@@ -107,14 +128,17 @@ export class CartComponent implements OnInit {
       return;
     }
     
-    const cartItem = this.cart.items.find(item => item.product.productId === productId);
+    const cartItem = this.cart.items.find(item => 
+      this.getProductProperty(item, 'productId') === productId);
+    
     if (!cartItem) {
       console.error('Cart item not found for product ID:', productId);
       return;
     }
     
-    // Check stock availability
-    if (cartItem.product.stockQuantity !== undefined && cartItem.quantity >= cartItem.product.stockQuantity) {
+    // Check stock availability - if available
+    const stockQuantity = this.getProductProperty(cartItem, 'stockQuantity');
+    if (stockQuantity !== undefined && cartItem.quantity >= stockQuantity) {
       this.showNotification('Cannot add more items. Maximum stock reached.', 'error');
       return;
     }
@@ -166,7 +190,9 @@ export class CartComponent implements OnInit {
       return;
     }
     
-    const cartItem = this.cart.items.find(item => item.product.productId === productId);
+    const cartItem = this.cart.items.find(item => 
+      this.getProductProperty(item, 'productId') === productId);
+    
     if (!cartItem || cartItem.quantity <= 1) {
       console.error('Cannot decrease quantity: item not found or already at minimum');
       return;
@@ -225,11 +251,14 @@ export class CartComponent implements OnInit {
       this.isLoading = true;
       
       // Optimistically update the UI by removing the item
-      const itemIndex = this.cart.items.findIndex(item => item.product.productId === productId);
+      const itemIndex = this.cart.items.findIndex(item => 
+        this.getProductProperty(item, 'productId') === productId);
+      
       if (itemIndex !== -1) {
         const removedItem = this.cart.items.splice(itemIndex, 1)[0];
         // Update total price
-        this.cart.totalPrice -= (removedItem.product.price * removedItem.quantity);
+        const itemPrice = this.getProductProperty(removedItem, 'price') || 0;
+        this.cart.totalPrice -= (itemPrice * removedItem.quantity);
       }
       
       console.log(`Removing product ${productId} from cart`);

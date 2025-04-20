@@ -452,7 +452,10 @@ export class DashboardComponent implements OnInit {
         // Calculate pagination
         this.totalUsers = users.length;
         const startIndex = (this.currentUserPage - 1) * this.itemsPerPage;
-        this.recentUsers = users.slice(startIndex, startIndex + this.itemsPerPage);
+        this.recentUsers = users.slice(startIndex, startIndex + this.itemsPerPage).map(user => ({
+          ...user,
+          phoneNumber: user.phoneNumber || '' // Ensure phoneNumber is always a string
+        }));
         this.userPages = this.generatePageNumbers(this.totalUsers, this.itemsPerPage);
         this.isLoading.users = false;
       },

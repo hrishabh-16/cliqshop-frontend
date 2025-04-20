@@ -16,7 +16,43 @@
             <p class="text-gray-600">Complete your order by providing billing and shipping details</p>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Payment Component -->
+        <div *ngIf="showPaymentComponent" class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
+            <div class="lg:col-span-2">
+                <app-payment [amount]="paymentAmount" [orderId]="orderId"
+                    [email]="checkoutForm.get('billing')?.get('email')?.value"
+                    (paymentComplete)="handlePaymentComplete($event)">
+                </app-payment>
+            </div>
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-md p-6 sticky top-24 animate-fadeIn">
+                    <h2 class="text-xl font-bold text-sky-900 mb-4">Order Summary</h2>
+                    <div class="space-y-3 mb-6">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Subtotal</span>
+                            <span class="font-medium">₹{{ cart ? cart.totalPrice.toFixed(2) : '0.00' }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Shipping</span>
+                            <span class="font-medium">{{ getSelectedShippingCost() }}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Tax (18% GST)</span>
+                            <span class="font-medium">₹{{ calculateTax().toFixed(2) }}</span>
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t border-gray-200 mb-6">
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-bold text-gray-800">Total</span>
+                            <span class="text-2xl font-bold text-sky-900">₹{{ calculateTotal().toFixed(2) }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Checkout Form -->
+        <div *ngIf="!showPaymentComponent" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <!-- Checkout Form (Left Side) -->
             <div class="lg:col-span-2">
                 <form [formGroup]="checkoutForm" (ngSubmit)="placeOrder()">
@@ -321,18 +357,7 @@
                         <h2 class="text-xl font-bold text-sky-900 mb-4">Payment Method</h2>
 
                         <div class="space-y-3" formGroupName="payment">
-                            <!-- COD Option -->
-                            <div class="flex items-start p-3 border border-gray-200 rounded-md"
-                                [class.border-sky-500]="checkoutForm.get('payment')?.get('method')?.value === 'cod'">
-                                <input type="radio" id="cod" value="cod" formControlName="method"
-                                    class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 mt-1 mr-3">
-                                <div>
-                                    <label for="cod" class="text-sm font-medium text-gray-700">Cash on Delivery</label>
-                                    <p class="text-xs text-gray-500 mt-1">Pay with cash upon delivery.</p>
-                                </div>
-                            </div>
-
-                            <!-- Credit Card Option -->
+                            <!-- Card Payment Option -->
                             <div class="flex items-start p-3 border border-gray-200 rounded-md"
                                 [class.border-sky-500]="checkoutForm.get('payment')?.get('method')?.value === 'card'">
                                 <input type="radio" id="card" value="card" formControlName="method"
@@ -342,6 +367,17 @@
                                         Card</label>
                                     <p class="text-xs text-gray-500 mt-1">Pay securely using your credit or debit card.
                                     </p>
+                                </div>
+                            </div>
+
+                            <!-- COD Option -->
+                            <div class="flex items-start p-3 border border-gray-200 rounded-md"
+                                [class.border-sky-500]="checkoutForm.get('payment')?.get('method')?.value === 'cod'">
+                                <input type="radio" id="cod" value="cod" formControlName="method"
+                                    class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 mt-1 mr-3">
+                                <div>
+                                    <label for="cod" class="text-sm font-medium text-gray-700">Cash on Delivery</label>
+                                    <p class="text-xs text-gray-500 mt-1">Pay with cash upon delivery.</p>
                                 </div>
                             </div>
 
@@ -398,8 +434,7 @@
                     <!-- Submit Button for Mobile -->
                     <button type="submit"
                         class="w-full bg-sky-600 hover:bg-sky-700 text-white py-3 rounded-lg transition-colors flex items-center justify-center font-medium lg:hidden mb-6"
-                        [disabled]="checkoutForm.invalid || isSubmitting"
-                        [ngClass]="{'opacity-50 cursor-not-allowed': checkoutForm.invalid || isSubmitting}">
+                        [disabled]="isSubmitting" [ngClass]="{'opacity-50 cursor-not-allowed': isSubmitting}">
                         <span *ngIf="!isSubmitting">Place Order</span>
                         <span *ngIf="isSubmitting" class="flex items-center">
                             <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
@@ -413,55 +448,67 @@
                             Processing...
                         </span>
                     </button>
+
+                    <!-- Add Reset Button for mobile -->
+                    <button *ngIf="checkoutForm.invalid && (checkoutForm.touched || checkoutForm.dirty)" type="button"
+                        (click)="resetForm()"
+                        class="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg transition-colors flex items-center justify-center font-medium lg:hidden mb-6">
+                        Reset Form
+                    </button>
                 </form>
             </div>
 
             <!-- Order Summary (Right Side) -->
-      <div class="lg:col-span-1">
-        <div class="bg-white rounded-xl shadow-md p-6 sticky top-24 animate-fadeIn">
-          <h2 class="text-xl font-bold text-sky-900 mb-4">Order Summary</h2>
-          
-          <!-- Products List -->
-          <div class="mb-6">
-            <h3 class="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-100">Products</h3>
-            
-            <div *ngIf="cart && cart.items && cart.items.length > 0">
-              <div *ngFor="let item of cart.items" class="flex justify-between py-2 border-b border-gray-100 last:border-b-0">
-                <div class="flex items-start">
-                  <div class="text-sm text-gray-800">
-                    {{ item.product?.name || 'Product' }} <span class="text-gray-500">× {{ item.quantity }}</span>
-                  </div>
-                </div>
-                <div class="text-sm font-medium text-gray-800">₹{{ ((item.product?.price || 0) * item.quantity).toFixed(2) }}</div>
-              </div>
-            </div>
-            
-            <div *ngIf="!cart || !cart.items || cart.items.length === 0" class="text-sm text-gray-500 py-2">
-              No items in cart
-            </div>
-          </div>
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-md p-6 sticky top-24 animate-fadeIn">
+                    <h2 class="text-xl font-bold text-sky-900 mb-4">Order Summary</h2>
 
-                    
-                <!-- Shipping Method -->
-                <div class="mb-6">
-                    <h3 class="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-100">Shipping Method</h3>
-                    <div *ngIf="checkoutForm" class="space-y-2">
-                        <div *ngFor="let method of shippingMethods"
-                            class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                            <div class="flex items-center">
-                                <input type="radio" [id]="'summary_' + method.id" [value]="method.id"
-                                    [checked]="getShippingMethodValue() === method.id" (change)="setShippingMethod(method.id)"
-                                    class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 mr-2">
-                                <label [for]="'summary_' + method.id" class="text-sm text-gray-800">
-                                    {{ method.name }} ({{ method.description }})
-                                </label>
+                    <!-- Products List -->
+                    <div class="mb-6">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-100">Products</h3>
+
+                        <div *ngIf="cart && cart.items && cart.items.length > 0">
+                            <div *ngFor="let item of cart.items"
+                                class="flex justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                <div class="flex items-start">
+                                    <div class="text-sm text-gray-800">
+                                        {{ item.product && item.product.name ? item.product.name : 'Product' }} <span
+                                            class="text-gray-500">× {{ item.quantity }}</span>
+                                    </div>
+                                </div>
+                                <div class="text-sm font-medium text-gray-800">₹{{ ((item?.product?.price || 0) *
+                                    item.quantity).toFixed(2) }}</div>
                             </div>
-                            <div class="text-sm font-medium text-gray-800">
-                                {{ method.cost === 0 ? 'Free' : '₹' + method.cost.toFixed(2) }}
+                        </div>
+
+                        <div *ngIf="!cart || !cart.items || cart.items.length === 0" class="text-sm text-gray-500 py-2">
+                            No items in cart
+                        </div>
+                    </div>
+
+                    <!-- Shipping Method -->
+                    <div class="mb-6">
+                        <h3 class="text-sm font-semibold text-gray-700 mb-3 pb-2 border-b border-gray-100">Shipping
+                            Method</h3>
+                        <div *ngIf="checkoutForm" class="space-y-2">
+                            <div *ngFor="let method of shippingMethods"
+                                class="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                                <div class="flex items-center">
+                                    <input type="radio" [id]="'summary_' + method.id" [value]="method.id"
+                                        [checked]="getShippingMethodValue() === method.id"
+                                        (change)="setShippingMethod(method.id)"
+                                        class="h-4 w-4 text-sky-600 focus:ring-sky-500 border-gray-300 mr-2">
+                                    <label [for]="'summary_' + method.id" class="text-sm text-gray-800">
+                                        {{ method.name }} ({{ method.description }})
+                                    </label>
+                                </div>
+                                <div class="text-sm font-medium text-gray-800">
+                                    {{ method.cost === 0 ? 'Free' : '₹' + method.cost.toFixed(2) }}
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
+
                     <!-- Summary Details -->
                     <div class="space-y-3 mb-6">
                         <div class="flex justify-between">
@@ -489,8 +536,7 @@
                     <!-- Submit Button -->
                     <button type="button" (click)="placeOrder()"
                         class="w-full bg-sky-600 hover:bg-sky-700 text-white py-3 rounded-lg transition-colors flex items-center justify-center font-medium"
-                        [disabled]="checkoutForm.invalid || isSubmitting"
-                        [ngClass]="{'opacity-50 cursor-not-allowed': checkoutForm.invalid || isSubmitting}">
+                        [disabled]="isSubmitting" [ngClass]="{'opacity-50 cursor-not-allowed': isSubmitting}">
                         <span *ngIf="!isSubmitting">Place Order</span>
                         <span *ngIf="isSubmitting" class="flex items-center">
                             <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg"
@@ -503,6 +549,13 @@
                             </svg>
                             Processing...
                         </span>
+                    </button>
+
+                    <!-- Add Reset Button for desktop -->
+                    <button *ngIf="checkoutForm.invalid && (checkoutForm.touched || checkoutForm.dirty)" type="button"
+                        (click)="resetForm()"
+                        class="w-full mt-2 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg transition-colors flex items-center justify-center font-medium">
+                        Reset Form
                     </button>
 
 
@@ -548,3 +601,8 @@
         animation: fadeIn 0.3s ease-out forwards;
     }
 </style>
+
+
+
+
+

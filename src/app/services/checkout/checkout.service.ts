@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpParams, HttpHeaders } from '@angular/common/http';
+import { Observable, throwError, of } from 'rxjs';
 import { catchError, tap, retry, timeout } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
 import { Address } from '../../models/address.model';
-import { Order } from '../../models/order.model';
+import { Order, OrderRequest } from '../../models/order.model';
 
 @Injectable({
   providedIn: 'root'
@@ -19,8 +19,8 @@ export class CheckoutService {
 
   getUserAddresses(userId: number): Observable<Address[]> {
     return this.http.get<Address[]>(`${this.apiUrl}/addresses/user/${userId}`).pipe(
-      timeout(10000), // Set timeout to 10 seconds
-      retry(1),
+      timeout(10000),
+      retry(2),
       tap(addresses => console.log(`Fetched addresses for user: ${userId}`, addresses)),
       catchError(this.handleError)
     );
@@ -46,7 +46,18 @@ export class CheckoutService {
   }
 
   private createAddress(userId: number, address: Address): Observable<Address> {
-    return this.http.post<Address>(`${this.apiUrl}/addresses/${userId}`, address).pipe(
+    // Clean the object for API
+    const cleanedAddress = this.cleanObject(address);
+    
+    const headers = new HttpHeaders()
+      .set('Content-Type', 'application/json')
+      .set('Accept', 'application/json');
+    
+    return this.http.post<Address>(
+      `${this.apiUrl}/addresses/${userId}`, 
+      cleanedAddress,
+      { headers }
+    ).pipe(
       timeout(10000),
       retry(1),
       tap(newAddress => console.log('Created new address:', newAddress)),
@@ -55,7 +66,18 @@ export class CheckoutService {
   }
 
   private updateAddress(address: Address): Observable<Address> {
-    return this.http.put<Address>(`${this.apiUrl}/addresses/${address.addressId}`, address).pipe(
+    // Clean the object for API
+    const cleanedAddress = this.cleanObject(address);
+    
+    const headers = new HttpHeaders()
+      .set('Content-Type', 'application/json')
+      .set('Accept', 'application/json');
+    
+    return this.http.put<Address>(
+      `${this.apiUrl}/addresses/${address.addressId}`, 
+      cleanedAddress,
+      { headers }
+    ).pipe(
       timeout(10000),
       retry(1),
       tap(updatedAddress => console.log('Updated address:', updatedAddress)),
@@ -72,9 +94,23 @@ export class CheckoutService {
     );
   }
 
-  placeOrder(orderRequest: any): Observable<Order> {
-    return this.http.post<Order>(`${this.apiUrl}/orders`, orderRequest).pipe(
-      timeout(15000), // Longer timeout for order placement
+  placeOrder(orderRequest: OrderRequest): Observable<Order> {
+    // Clean the object to match backend expectations
+    const cleanedOrderRequest = this.cleanObject(orderRequest);
+    
+    // Create headers that match what the backend expects
+    const headers = new HttpHeaders()
+      .set('Content-Type', 'application/json')
+      .set('Accept', 'application/json');
+    
+    console.log('Sending order request:', JSON.stringify(cleanedOrderRequest));
+    
+    return this.http.post<Order>(
+      `${this.apiUrl}/orders`, 
+      cleanedOrderRequest,
+      { headers }
+    ).pipe(
+      timeout(15000),
       tap(order => console.log('Order placed successfully:', order)),
       catchError(this.handleError)
     );
@@ -111,12 +147,109 @@ export class CheckoutService {
     );
   }
 
+  // Payment-related methods
+  
+  createPaymentIntent(paymentRequest: any): Observable<any> {
+    const cleanedPaymentRequest = this.cleanObject(paymentRequest);
+    
+    const headers = new HttpHeaders()
+      .set('Content-Type', 'application/json')
+      .set('Accept', 'application/json');
+    
+    return this.http.post<any>(
+      `${this.apiUrl}/payments/create-payment-intent`, 
+      cleanedPaymentRequest,
+      { headers }
+    ).pipe(
+      timeout(15000),
+      tap(response => console.log('Payment intent created:', response)),
+      catchError(this.handleError)
+    );
+  }
+
+  confirmPaymentIntent(paymentIntentId: string, paymentMethodId: string): Observable<any> {
+    const params = new HttpParams()
+      .set('paymentIntentId', paymentIntentId)
+      .set('paymentMethodId', paymentMethodId);
+      
+    return this.http.post<any>(`${this.apiUrl}/payments/confirm-payment-intent`, null, { params }).pipe(
+      timeout(15000),
+      tap(response => console.log('Payment intent confirmed:', response)),
+      catchError(this.handleError)
+    );
+  }
+
+  cancelPaymentIntent(paymentIntentId: string): Observable<any> {
+    const params = new HttpParams().set('paymentIntentId', paymentIntentId);
+      
+    return this.http.post<any>(`${this.apiUrl}/payments/cancel-payment-intent`, null, { params }).pipe(
+      timeout(10000),
+      tap(response => console.log('Payment intent cancelled:', response)),
+      catchError(this.handleError)
+    );
+  }
+
+  getPaymentIntent(paymentIntentId: string): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/payments/payment-intent/${paymentIntentId}`).pipe(
+      timeout(10000),
+      tap(response => console.log('Payment intent retrieved:', response)),
+      catchError(this.handleError)
+    );
+  }
+
+  getStripeConfig(): Observable<any> {
+    return this.http.get<any>(`${this.apiUrl}/payments/config`).pipe(
+      timeout(10000),
+      retry(1),
+      tap(config => console.log('Fetched Stripe config:', config)),
+      catchError(error => {
+        console.error('Error fetching Stripe config:', error);
+        // Return a mock config for testing if the real one can't be fetched
+        return of({
+          publishableKey: 'pk_test_mock_key_for_testing',
+          isMockData: true
+        });
+      })
+    );
+  }
+
+  /**
+   * Helper method to remove undefined/null values from objects before sending to API
+   */
+  private cleanObject(obj: any): any {
+    if (!obj) return {};
+    
+    const cleanedObj = { ...obj };
+    
+    // Remove undefined or null values
+    Object.keys(cleanedObj).forEach(key => {
+      if (cleanedObj[key] === undefined || cleanedObj[key] === null) {
+        delete cleanedObj[key];
+      }
+    });
+    
+    return cleanedObj;
+  }
+
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An unknown error occurred';
     
     if (error.error instanceof ErrorEvent) {
       // Client-side error
       errorMessage = `Error: ${error.error.message}`;
+    } else if (error.status === 0) {
+      // Network error (server not reachable)
+      errorMessage = 'Could not connect to the server. Please check your internet connection and try again.';
+    } else if (error.status === 404) {
+      errorMessage = 'The requested resource was not found.';
+    } else if (error.status === 400) {
+      errorMessage = 'Bad request. Please check your input data.';
+    } else if (error.status === 401) {
+      errorMessage = 'Unauthorized. Please log in again.';
+    } else if (error.status === 403) {
+      errorMessage = 'Access denied. You do not have permission to perform this action.';
+    } else if (error.status === 500) {
+      errorMessage = 'Server error. Please try again later.';
     } else {
       // Server-side error
       errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;

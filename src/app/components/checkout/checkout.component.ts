@@ -6,6 +6,7 @@ import { CheckoutService } from '../../services/checkout/checkout.service';
 import { AuthService } from '../../services/auth/auth.service';
 import { Cart } from '../../models/cart.model';
 import { Address, AddressType } from '../../models/address.model';
+import { OrderRequest } from '../../models/order.model';
 
 // Extended User interface to match what we need in this component
 interface ExtendedUser {
@@ -19,7 +20,7 @@ interface ExtendedUser {
 
 @Component({
   selector: 'app-checkout',
-  standalone: false,
+  standalone: false,  
   templateUrl: './checkout.component.html',
   styleUrls: ['./checkout.component.css']
 })
@@ -29,6 +30,9 @@ export class CheckoutComponent implements OnInit {
   isSubmitting: boolean = false;
   showScrollTop: boolean = false;
   checkoutForm!: FormGroup;
+  formSubmitAttempt: boolean = false; // Track if form submit was attempted
+  retryCount: number = 0; // Track retry attempts
+  maxRetries: number = 3; // Maximum retries
   
   shippingMethods = [
     { id: 'standard', name: 'Standard Shipping', description: '5-7 working days', cost: 99 },
@@ -36,6 +40,13 @@ export class CheckoutComponent implements OnInit {
     { id: 'next_day', name: 'Next Day Delivery', description: '1-2 working days', cost: 299 },
     { id: 'free', name: 'Free Shipping', description: 'For orders above ₹999', cost: 0 }
   ];
+
+  // Payment related properties
+  showPaymentComponent: boolean = false;
+  paymentAmount: number = 0;
+  orderId: number | null = null;
+  paymentSuccessful: boolean = false;
+  paymentError: string = '';
   
   constructor(
     private formBuilder: FormBuilder,
@@ -48,6 +59,7 @@ export class CheckoutComponent implements OnInit {
     // Create form
     this.createForm();
   }
+  
   private createForm(): void {
     try {
       this.checkoutForm = this.formBuilder.group({
@@ -66,21 +78,21 @@ export class CheckoutComponent implements OnInit {
           saveAddress: [true]
         }),
         shipping: this.formBuilder.group({
-          firstName: ['', Validators.required],
-          lastName: ['', Validators.required],
+          firstName: [''],
+          lastName: [''],
           company: [''],
-          country: ['', Validators.required],
-          addressLine1: ['', Validators.required],
+          country: [''],
+          addressLine1: [''],
           addressLine2: [''],
-          city: ['', Validators.required],
-          state: ['', Validators.required],
-          postalCode: ['', Validators.required],
-          phone: ['', Validators.required],
+          city: [''],
+          state: [''],
+          postalCode: [''],
+          phone: [''],
           saveAddress: [true]
         }),
         sameAsBilling: [true],
         payment: this.formBuilder.group({
-          method: ['cod', Validators.required]
+          method: ['card', Validators.required]
         }),
         shippingMethod: this.formBuilder.group({
           method: ['standard', Validators.required]
@@ -99,8 +111,12 @@ export class CheckoutComponent implements OnInit {
     this.loadCart();
     this.loadUserAddresses();
     
+    // Add debug for form validation
+    console.log('Initial form validity:', this.checkoutForm.valid);
+    
     // When sameAsBilling changes, update shipping validators
     this.checkoutForm.get('sameAsBilling')?.valueChanges.subscribe(sameAsBilling => {
+      console.log('Same as billing changed:', sameAsBilling);
       const shippingGroup = this.checkoutForm.get('shipping');
       
       if (sameAsBilling) {
@@ -124,6 +140,9 @@ export class CheckoutComponent implements OnInit {
           shippingGroup?.get(key)?.updateValueAndValidity();
         });
       }
+      
+      // After updating validators, check form validity again
+      console.log('Form validity after shipping update:', this.checkoutForm.valid);
     });
   }
 
@@ -144,9 +163,10 @@ export class CheckoutComponent implements OnInit {
     const user = this.authService.getCurrentUser();
     return {
       ...user,
-      phoneNumber: '' // Ensure phoneNumber exists but may be empty
+      phoneNumber: (user as any).phoneNumber || '' // Ensure phoneNumber exists but may be empty
     } as ExtendedUser;
   }
+  
   getShippingMethodValue(): string {
     const shippingMethodControl = this.checkoutForm.get('shippingMethod');
     if (shippingMethodControl && shippingMethodControl instanceof FormGroup) {
@@ -192,7 +212,7 @@ export class CheckoutComponent implements OnInit {
           this.cart = cart;
           this.isLoading = false;
           
-          // If cart is null or has no items, redirect to cart page
+          // Only redirect if cart is actually empty
           if (!this.cart || !this.cart.items || this.cart.items.length === 0) {
             this.showNotification('Your cart is empty', 'error');
             this.router.navigate(['/cart']);
@@ -204,11 +224,10 @@ export class CheckoutComponent implements OnInit {
         this.ngZone.run(() => {
           this.isLoading = false;
           this.showNotification('Failed to load cart. Please try again later.', 'error');
-          this.router.navigate(['/cart']);
+          // Don't redirect on error - let the user try again
         });
       }
     });
-    console.log('Cart loaded:', this.cart);
   }
 
   loadUserAddresses(): void {
@@ -373,25 +392,84 @@ export class CheckoutComponent implements OnInit {
   }
 
   isFieldInvalid(fieldPath: string): boolean {
-    const control = this.checkoutForm.get(fieldPath);
-    return control ? control.invalid && (control.touched || control.dirty) : false;
+    try {
+      const control = this.checkoutForm.get(fieldPath);
+      return control ? (control.invalid && (control.touched || control.dirty || this.formSubmitAttempt)) : false;
+    } catch (error) {
+      console.error(`Error checking field validity for ${fieldPath}:`, error);
+      return false; // Default to valid to avoid blocking the form
+    }
+  }
+
+  debugFormValidity(): void {
+    console.log('Form validity:', this.checkoutForm.valid);
+    console.log('Form errors:', this.checkoutForm.errors);
+    
+    // Check billing group
+    const billingGroup = this.checkoutForm.get('billing');
+    console.log('Billing group validity:', billingGroup?.valid);
+    
+    if (billingGroup) {
+      Object.keys((billingGroup as FormGroup).controls).forEach(key => {
+        const control = billingGroup.get(key);
+        console.log(`Billing.${key} validity:`, control?.valid, 'Errors:', control?.errors);
+      });
+    }
+    
+    // Check shipping group if not same as billing
+    if (!this.checkoutForm.get('sameAsBilling')?.value) {
+      const shippingGroup = this.checkoutForm.get('shipping');
+      console.log('Shipping group validity:', shippingGroup?.valid);
+      
+      if (shippingGroup) {
+        Object.keys((shippingGroup as FormGroup).controls).forEach(key => {
+          const control = shippingGroup.get(key);
+          console.log(`Shipping.${key} validity:`, control?.valid, 'Errors:', control?.errors);
+        });
+      }
+    }
+    
+    // Check payment method
+    const paymentGroup = this.checkoutForm.get('payment');
+    console.log('Payment group validity:', paymentGroup?.valid);
   }
 
   placeOrder(): void {
-    if (this.checkoutForm.invalid) {
-      // Mark all fields as touched to display validation errors
-      this.markFormGroupTouched(this.checkoutForm);
-      this.showNotification('Please fill in all required fields', 'error');
+    console.log('Place order clicked');
+    
+    // Set form submit attempt to true to trigger validation messages
+    this.formSubmitAttempt = true;
+    
+    // Check if we're already submitting to prevent multiple submissions
+    if (this.isSubmitting) {
+      console.log('Already processing order, ignoring additional clicks');
       return;
     }
     
+    // Check the cart first - this is most important
     if (!this.cart || !this.cart.items || this.cart.items.length === 0) {
+      console.log('Cart is empty');
       this.showNotification('Your cart is empty', 'error');
       this.router.navigate(['/cart']);
       return;
     }
     
+    // Validate cart items
+    this.validateCartItems();
+    
+    // Now check form validity
+    if (this.checkoutForm.invalid) {
+      console.log('Form is invalid, marking all fields as touched');
+      this.markFormGroupTouched(this.checkoutForm);
+      this.validateRequiredFields();
+      this.debugFormValidity();
+      this.showNotification('Please fill in all required fields', 'error');
+      return;
+    }
+    
     this.isSubmitting = true;
+    console.log('Processing order...');
+    
     const user = this.authService.getCurrentUser();
     
     if (!user || !user.userId) {
@@ -404,119 +482,365 @@ export class CheckoutComponent implements OnInit {
     // Prepare order data
     const formValue = this.checkoutForm.value;
     
-    // Prepare billing address - omitting user property entirely
-    const billingAddress: Partial<Address> = {
-      addressId: null,
-      addressLine1: formValue.billing.addressLine1,
-      addressLine2: formValue.billing.addressLine2 || null,
-      city: formValue.billing.city,
-      state: formValue.billing.state,
-      postalCode: formValue.billing.postalCode,
-      country: formValue.billing.country,
-      isDefault: formValue.billing.saveAddress,
-      addressType: formValue.sameAsBilling ? 'BOTH' : 'BILLING'
-    };
-    
-    // Prepare shipping address if different from billing
-    let shippingAddress: Partial<Address> | null = null;
-    if (!formValue.sameAsBilling) {
-      shippingAddress = {
-        addressId: null,
-        addressLine1: formValue.shipping.addressLine1,
-        addressLine2: formValue.shipping.addressLine2 || null,
-        city: formValue.shipping.city,
-        state: formValue.shipping.state,
-        postalCode: formValue.shipping.postalCode,
-        country: formValue.shipping.country,
-        isDefault: formValue.shipping.saveAddress,
-        addressType: 'SHIPPING'
+    try {
+      // Create billing address using helper
+      const billingAddress = this.createAddressFromForm(
+        formValue.billing,
+        user.userId,
+        formValue.sameAsBilling ? 'BOTH' : 'BILLING'
+      );
+      
+      // Create shipping address if needed
+      let shippingAddress: Address | null = null;
+      if (!formValue.sameAsBilling) {
+        shippingAddress = this.createAddressFromForm(
+          formValue.shipping,
+          user.userId,
+          'SHIPPING'
+        );
+      }
+      
+      // Prepare cart items in the format expected by the backend
+      const orderItems = this.cart.items
+        .filter(item => item && (item.product?.productId || item.productId) !== undefined)
+        .map(item => ({
+          productId: item.product?.productId || item.productId as number,
+          quantity: item.quantity || 1,
+          price: item.product?.price || item.productPrice || 0
+        }));
+      
+      // Prepare order request with proper structure
+      const orderRequest: OrderRequest = {
+        userId: user.userId,
+        billingAddressId: null,
+        shippingAddressId: null,
+        items: orderItems,
+        totalPrice: this.calculateTotal(),
+        shippingMethod: formValue.shippingMethod?.method || 'standard',
+        paymentMethod: formValue.payment?.method || 'card',
+        orderNotes: formValue.orderNotes || null
       };
-    }
-    
-    // Prepare order request
-    const orderRequest = {
-      userId: user.userId,
-      billingAddressId: null as number | null, // Will be set after saving addresses
-      shippingAddressId: null as number | null, // Will be set after saving addresses
-      shippingMethod: formValue.shippingMethod.method,
-      paymentMethod: formValue.payment.method,
-      orderNotes: formValue.orderNotes || null,
-      orderTotal: this.calculateTotal(),
-      cartItems: this.cart.items.map(item => ({
-        productId: item.product.productId,
-        quantity: item.quantity,
-        price: item.product.price
-      }))
-    };
-    
-    // First, save addresses if needed
-    if (formValue.billing.saveAddress) {
-      this.checkoutService.saveAddress(user.userId, billingAddress as Address).subscribe({
-        next: (savedBillingAddress) => {
-          console.log('Billing address saved:', savedBillingAddress);
-          orderRequest.billingAddressId = savedBillingAddress.addressId;
-          
-          if (!formValue.sameAsBilling && formValue.shipping.saveAddress && shippingAddress) {
-            this.checkoutService.saveAddress(user.userId, shippingAddress as Address).subscribe({
-              next: (savedShippingAddress) => {
-                console.log('Shipping address saved:', savedShippingAddress);
-                orderRequest.shippingAddressId = savedShippingAddress.addressId;
-                this.submitOrder(orderRequest);
-              },
-              error: (error) => this.handleOrderError(error)
-            });
-          } else {
-            // Same address for shipping or don't save shipping address
-            orderRequest.shippingAddressId = orderRequest.billingAddressId;
-            this.submitOrder(orderRequest);
+      
+      console.log('Order request prepared:', orderRequest);
+      
+      // First, save addresses if needed
+      if (formValue.billing.saveAddress) {
+        this.checkoutService.saveAddress(user.userId, billingAddress).subscribe({
+          next: (savedBillingAddress) => {
+            console.log('Billing address saved:', savedBillingAddress);
+            
+            // Ensure we have a valid addressId
+            if (savedBillingAddress && savedBillingAddress.addressId) {
+              orderRequest.billingAddressId = savedBillingAddress.addressId;
+            } else {
+              console.warn('Saved billing address missing addressId');
+            }
+            
+            if (!formValue.sameAsBilling && formValue.shipping.saveAddress && shippingAddress) {
+              this.checkoutService.saveAddress(user.userId, shippingAddress).subscribe({
+                next: (savedShippingAddress) => {
+                  console.log('Shipping address saved:', savedShippingAddress);
+                  
+                  // Ensure we have a valid addressId
+                  if (savedShippingAddress && savedShippingAddress.addressId) {
+                    orderRequest.shippingAddressId = savedShippingAddress.addressId;
+                  } else {
+                    console.warn('Saved shipping address missing addressId');
+                  }
+                  
+                  this.submitOrder(orderRequest);
+                },
+                error: (error) => {
+                  console.error('Error saving shipping address:', error);
+                  this.handleOrderError(error);
+                }
+              });
+            } else {
+              // Same address for shipping or don't save shipping address
+              orderRequest.shippingAddressId = orderRequest.billingAddressId;
+              this.submitOrder(orderRequest);
+            }
+          },
+          error: (error) => {
+            console.error('Error saving billing address:', error);
+            this.handleOrderError(error);
           }
-        },
-        error: (error) => this.handleOrderError(error)
-      });
-    } else {
-      // Don't save addresses, just place the order
-      this.submitOrder(orderRequest);
+        });
+      } else {
+        // Don't save addresses, just place the order
+        console.log('Not saving addresses, proceeding with order');
+        this.submitOrder(orderRequest);
+      }
+    } catch (error) {
+      console.error('Error preparing order:', error);
+      this.isSubmitting = false;
+      this.showNotification('Error processing your order. Please try again.', 'error');
     }
   }
+  
+  // Helper method to create Address objects
+  createAddressFromForm(
+    formData: any, 
+    userId: number, 
+    addressType: AddressType
+  ): Address {
+    return {
+      addressId: null,
+      userId: userId,
+      addressLine1: formData.addressLine1 || '',
+      addressLine2: formData.addressLine2 || null,
+      city: formData.city || '',
+      state: formData.state || '',
+      postalCode: formData.postalCode || '',
+      country: formData.country || '',
+      isDefault: formData.saveAddress || false,
+      addressType: addressType
+    };
+  }
 
-  submitOrder(orderRequest: any): void {
+  submitOrder(orderRequest: OrderRequest): void {
+    // Check if payment method is card
+    const paymentMethod = this.checkoutForm.get('payment')?.get('method')?.value;
+    console.log('Submitting order with payment method:', paymentMethod);
+    
+    // Make direct API call with simple retry logic
     this.checkoutService.placeOrder(orderRequest).subscribe({
       next: (orderResponse) => {
         console.log('Order placed successfully:', orderResponse);
         this.ngZone.run(() => {
-          this.isSubmitting = false;
-          this.showNotification('Order placed successfully!', 'success');
-          // Clear cart and redirect to order confirmation page
-          this.cartService.clearCart(orderRequest.userId).subscribe();
-          this.router.navigate(['/order-confirmation'], { 
-            queryParams: { orderId: orderResponse.orderId }
-          });
+          this.orderId = orderResponse.orderId;
+          
+          if (paymentMethod === 'card') {
+            // If payment method is card, show the payment component
+            console.log('Showing payment component for card payment');
+            this.paymentAmount = this.calculateTotal();
+            this.showPaymentComponent = true;
+            this.isSubmitting = false;
+          } else {
+            // For other payment methods (COD, etc.), proceed as before
+            console.log('Order complete with non-card payment');
+            this.isSubmitting = false;
+            this.showNotification('Order placed successfully!', 'success');
+            // Clear cart and redirect to order confirmation page
+            this.cartService.clearCart(orderRequest.userId).subscribe({
+              next: () => console.log('Cart cleared'),
+              error: (err) => console.error('Error clearing cart:', err)
+            });
+            this.router.navigate(['/order-confirmation'], { 
+              queryParams: { orderId: orderResponse.orderId }
+            });
+          }
         });
       },
-      error: (error) => this.handleOrderError(error)
+      error: (error) => {
+        console.error('Error placing order:', error);
+        
+        // Simple retry without complex logic
+        if (this.retryCount < 2) {
+          this.retryCount++;
+          this.showNotification(`Connection issue. Retrying... (${this.retryCount}/2)`, 'error');
+          
+          setTimeout(() => {
+            console.log(`Retry attempt ${this.retryCount}/2`);
+            this.submitOrder(orderRequest);
+          }, 1000);
+        } else {
+          this.handleOrderError(error);
+        }
+      }
     });
   }
-
+  
   handleOrderError(error: any): void {
     console.error('Error during checkout:', error);
     this.ngZone.run(() => {
-      this.isSubmitting = false;
+      this.isSubmitting = false; // Important! Reset submission state
       this.showNotification(
-        'Error processing your order. Please try again later.', 
+        error.message || 'Error processing your order. Please try again later.', 
         'error'
       );
     });
   }
 
-  markFormGroupTouched(formGroup: FormGroup): void {
-    Object.keys(formGroup.controls).forEach(key => {
-      const control = formGroup.get(key);
-      if (control instanceof FormGroup) {
-        this.markFormGroupTouched(control);
-      } else {
-        control?.markAsTouched();
+  handlePaymentComplete(event: { success: boolean, paymentIntentId?: string, error?: string }): void {
+    console.log('Payment completion event received:', event);
+    
+    if (event.success) {
+      // Payment succeeded
+      this.paymentSuccessful = true;
+      this.showNotification('Payment successful!', 'success');
+      
+      // Clear cart
+      const userId = this.authService.getCurrentUser()?.userId;
+      if (userId) {
+        console.log('Clearing cart after successful payment');
+        this.cartService.clearCart(userId).subscribe({
+          next: () => console.log('Cart cleared successfully'),
+          error: (err) => console.error('Error clearing cart:', err)
+        });
       }
+      
+      // Redirect to order confirmation page
+      setTimeout(() => {
+        console.log('Redirecting to order confirmation page for order:', this.orderId);
+        this.router.navigate(['/order-confirmation'], { 
+          queryParams: { orderId: this.orderId }
+        });
+      }, 2000);
+    } else {
+      // Payment failed
+      console.error('Payment failed:', event.error);
+      this.paymentError = event.error || 'An unknown error occurred during payment.';
+      this.showNotification(this.paymentError, 'error');
+      this.showPaymentComponent = false;
+    }
+  }
+
+  markFormGroupTouched(formGroup: FormGroup): void {
+    try {
+      Object.keys(formGroup.controls).forEach(key => {
+        const control = formGroup.get(key);
+        if (control instanceof FormGroup) {
+          this.markFormGroupTouched(control);
+        } else if (control) {
+          control.markAsTouched();
+          control.markAsDirty();
+          control.updateValueAndValidity();
+          console.log(`Marked control ${key} as touched. Valid: ${control.valid}, Errors:`, control.errors);
+        }
+      });
+      formGroup.updateValueAndValidity();
+    } catch (error) {
+      console.error('Error marking form group touched:', error);
+    }
+  }
+  
+  resetForm(): void {
+    console.log('Resetting form state');
+    this.isSubmitting = false;
+    this.showPaymentComponent = false;
+    this.formSubmitAttempt = false;
+    this.retryCount = 0;
+    
+    // Re-validate the form
+    this.checkoutForm.updateValueAndValidity();
+    console.log('Form validity after reset:', this.checkoutForm.valid);
+  }
+  
+  validateCartItems(): void {
+    if (!this.cart || !this.cart.items) {
+      console.error('Cart or cart items are undefined');
+      return;
+    }
+
+    console.log('Validating cart items:', this.cart.items);
+    
+    // Filter out invalid items
+    const validItems = this.cart.items.filter(item => {
+      if (!item) {
+        console.error('Found null item in cart');
+        return false;
+      }
+      
+      // Handle both item structures (with product object or direct properties)
+      if (!item.product && !item.productId) {
+        console.error('Found item without product or productId:', item);
+        return false;
+      }
+      
+      // Check if we have a product ID (either directly or in product object)
+      const hasProductId = (item.product && item.product.productId) || item.productId;
+      if (!hasProductId) {
+        console.error('Found item without valid productId:', item);
+        return false;
+      }
+      
+      // Check price (either in product or directly on item)
+      const price = item.product?.price || item.productPrice;
+      if (typeof price !== 'number') {
+        console.error('Found item with invalid price:', item);
+        if (item.product) {
+          item.product.price = 0; // Set default price
+        } else {
+          item.productPrice = 0;
+        }
+      }
+      
+      // Check quantity
+      if (!item.quantity || typeof item.quantity !== 'number') {
+        console.error('Found item with invalid quantity:', item);
+        item.quantity = 1; // Set default quantity
+      }
+      
+      return true;
     });
+    
+    // Update the cart if we had to filter items
+    if (validItems.length !== this.cart.items.length) {
+      console.warn(`Removed ${this.cart.items.length - validItems.length} invalid items from cart`);
+      this.cart.items = validItems;
+      
+      // Recalculate total price
+      this.cart.totalPrice = validItems.reduce((total, item) => {
+        const price = item.product?.price || item.productPrice || 0;
+        return total + (price * (item.quantity || 1));
+      }, 0);
+    }
+  }
+  
+  validateRequiredFields(): void {
+    // Check billing fields first
+    const billingControls = [
+      'firstName', 'lastName', 'email', 'country', 
+      'addressLine1', 'city', 'state', 'postalCode', 'phone'
+    ];
+    
+    const billingGroup = this.checkoutForm.get('billing');
+    if (billingGroup) {
+      billingControls.forEach(field => {
+        const control = billingGroup.get(field);
+        if (control) {
+          control.markAsTouched();
+          control.markAsDirty();
+          control.updateValueAndValidity();
+        }
+      });
+    }
+    
+    // If shipping is not same as billing, check shipping fields
+    if (!this.checkoutForm.get('sameAsBilling')?.value) {
+      const shippingGroup = this.checkoutForm.get('shipping');
+      if (shippingGroup) {
+        billingControls.forEach(field => {
+          const control = shippingGroup.get(field);
+          if (control) {
+            control.markAsTouched();
+            control.markAsDirty();
+            control.updateValueAndValidity();
+          }
+        });
+      }
+    }
+    
+    // Make sure payment method is selected
+    const paymentMethodControl = this.checkoutForm.get('payment')?.get('method');
+    if (paymentMethodControl && !paymentMethodControl.value) {
+      paymentMethodControl.setValue('card'); // Default to card payment
+      paymentMethodControl.markAsTouched();
+      paymentMethodControl.markAsDirty();
+    }
+    
+    // Make sure shipping method is selected
+    const shippingMethodControl = this.checkoutForm.get('shippingMethod')?.get('method');
+    if (shippingMethodControl && !shippingMethodControl.value) {
+      shippingMethodControl.setValue('standard'); // Default to standard shipping
+      shippingMethodControl.markAsTouched();
+      shippingMethodControl.markAsDirty();
+    }
+    
+    // Update form validity
+    this.checkoutForm.updateValueAndValidity();
+    console.log('Form validity after validation:', this.checkoutForm.valid);
   }
 
   // Helper method to show a notification

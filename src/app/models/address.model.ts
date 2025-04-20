@@ -1,8 +1,11 @@
+
+
 import { User } from './user.model';
 
 export interface Address {
   addressId: number | null;
-  user: User;
+  user?: User;         // Make user optional with '?'
+  userId?: number;     // Add userId as an alternative
   addressLine1: string;
   addressLine2: string | null;
   city: string;

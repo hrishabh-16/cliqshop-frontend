@@ -50,7 +50,7 @@
             <!-- Control Buttons (Left Side) -->
             <div class="flex flex-col gap-2 mr-2">
               <!-- Delete Button -->
-              <button (click)="removeItem(item.product.productId)" 
+              <button (click)="removeItem(getProductProperty(item, 'productId'))" 
                       class="flex items-center justify-center w-10 h-10 bg-rose-100 text-rose-500 rounded-md hover:bg-rose-200">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -58,9 +58,9 @@
               </button>
               
               <!-- Increase Button -->
-              <button (click)="increaseQuantity(item.product.productId)"
-                      [disabled]="item.product.stockQuantity !== undefined && item.quantity >= item.product.stockQuantity"
-                      [ngClass]="{'opacity-50 cursor-not-allowed': item.product.stockQuantity !== undefined && item.quantity >= item.product.stockQuantity}"
+              <button (click)="increaseQuantity(getProductProperty(item, 'productId'))"
+                      [disabled]="getProductProperty(item, 'stockQuantity') !== undefined && item.quantity >= getProductProperty(item, 'stockQuantity')"
+                      [ngClass]="{'opacity-50 cursor-not-allowed': getProductProperty(item, 'stockQuantity') !== undefined && item.quantity >= getProductProperty(item, 'stockQuantity')}"
                       class="flex items-center justify-center w-10 h-10 bg-sky-100 text-sky-500 rounded-md hover:bg-sky-200">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -68,7 +68,7 @@
               </button>
               
               <!-- Decrease Button -->
-              <button (click)="decreaseQuantity(item.product.productId)"
+              <button (click)="decreaseQuantity(getProductProperty(item, 'productId'))"
                       [disabled]="item.quantity <= 1"
                       [ngClass]="{'opacity-50 cursor-not-allowed': item.quantity <= 1}"
                       class="flex items-center justify-center w-10 h-10 bg-sky-100 text-sky-500 rounded-md hover:bg-sky-200">
@@ -80,29 +80,29 @@
             
             <!-- Product Image -->
             <div class="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0">
-              <img [src]="item.product.imageUrl || '/assets/images/placeholder-product.png'" 
-                   [alt]="item.product.name" 
+              <img [src]="getProductProperty(item, 'imageUrl') || '/assets/images/placeholder-product.png'" 
+                   [alt]="getProductProperty(item, 'name')" 
                    class="w-full h-full object-cover"
                    onerror="this.src='/assets/images/placeholder-product.png'">
             </div>
             
             <!-- Product Details -->
             <div class="flex-grow">
-              <h3 class="text-lg font-semibold text-sky-900 mb-1">{{ item.product.name }}</h3>
-              <p *ngIf="item.product.categoryName" class="text-sm text-gray-500 mb-2">{{ item.product.categoryName }}</p>
+              <h3 class="text-lg font-semibold text-sky-900 mb-1">{{ getProductProperty(item, 'name') }}</h3>
+              <p *ngIf="getProductProperty(item, 'categoryName')" class="text-sm text-gray-500 mb-2">{{ getProductProperty(item, 'categoryName') }}</p>
               
               <!-- Price and Stock -->
               <div class="flex flex-wrap items-center gap-2 mb-2">
-                <span class="font-bold text-sky-800">₹{{ item.product.price.toFixed(2) || '0.00' }}</span>
-                <span *ngIf="item.product.stockQuantity !== undefined && item.product.stockQuantity > 0"
+                <span class="font-bold text-sky-800">₹{{ getProductProperty(item, 'price', 0).toFixed(2) }}</span>
+                <span *ngIf="getProductProperty(item, 'stockQuantity') !== undefined && getProductProperty(item, 'stockQuantity') > 0"
                     class="text-xs bg-emerald-100 text-emerald-600 px-2 py-1 rounded-full">
                     In Stock
                 </span>
-                <span *ngIf="item.product.stockQuantity !== undefined && item.product.stockQuantity === 0"
+                <span *ngIf="getProductProperty(item, 'stockQuantity') !== undefined && getProductProperty(item, 'stockQuantity') === 0"
                     class="text-xs bg-rose-100 text-rose-600 px-2 py-1 rounded-full">
                     Out of Stock
                 </span>
-                <span *ngIf="item.product.stockQuantity === undefined"
+                <span *ngIf="getProductProperty(item, 'stockQuantity') === undefined"
                     class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">
                     Status Unknown
                 </span>
@@ -116,7 +116,7 @@
             
             <!-- Item Total -->
             <div class="text-right">
-              <div class="text-lg font-bold text-sky-900">₹{{ (item.product.price * item.quantity).toFixed(2) }}</div>
+              <div class="text-lg font-bold text-sky-900">₹{{ (getProductProperty(item, 'price', 0) * item.quantity).toFixed(2) }}</div>
             </div>
           </div>
         </div>
@@ -185,7 +185,7 @@
           <!-- Visa[3] -->
           <img src="https://freepngimg.com/thumb/mastercard/2-2-mastercard-free-png-image.png" alt="MasterCard"
             class="h-6 object-contain"> <!-- MasterCard[7] -->
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/UPI_logo.svg/330px-UPI_logo.svg.png" alt="UPI" class="h-6 object-contain">
+         <img src="https://upload.wikimedia.org/wikipedia/commons/3/3c/UPI-Logo-vector.svg" alt="UPI" class="h-6 object-contain">
           <!-- UPI[5] -->
         </div>
 
