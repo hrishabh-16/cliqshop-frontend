@@ -1,373 +1,640 @@
 <div class="container mx-auto px-4 py-8 max-w-4xl">
-    <!-- Toast Notification -->
-    <div *ngIf="showToast"
-         [ngClass]="{'bg-green-500': toastType === 'success', 'bg-red-500': toastType === 'error'}"
-         class="fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg text-white flex items-center transition-all duration-300 transform translate-y-0 opacity-100 max-w-md">
-      <div class="mr-2" *ngIf="toastType === 'success'">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+  <!-- Toast Notification -->
+  <div *ngIf="showToast"
+       [ngClass]="{'bg-green-500': toastType === 'success', 'bg-red-500': toastType === 'error'}"
+       class="fixed top-4 right-4 z-50 px-4 py-3 rounded-md shadow-lg text-white flex items-center transition-all duration-300 transform translate-y-0 opacity-100 max-w-md toast-enter">
+    <div class="mr-2" *ngIf="toastType === 'success'">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+      </svg>
+    </div>
+    <div class="mr-2" *ngIf="toastType === 'error'">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </div>
+    <div>{{ toastMessage }}</div>
+    <button (click)="showToast = false" class="ml-4 text-white hover:text-gray-200 focus:outline-none">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Breadcrumb -->
+  <div class="flex flex-col space-y-3 mb-6">
+    <div class="flex items-center space-x-4">
+      <a routerLink="/home" class="text-blue-500 hover:text-blue-700 transition-colors">
+        <i class="fas fa-arrow-left"></i> Home
+      </a>
+    </div>
+    <nav class="text-sm text-gray-500 dark:text-gray-400">
+      <ol class="flex items-center space-x-2">
+        <li><a routerLink="/home" class="hover:text-blue-500 transition-colors">Home</a></li>
+        <li><i class="fas fa-chevron-right text-xs mx-1"></i></li>
+        <li class="text-blue-500 font-medium">Profile</li>
+      </ol>
+    </nav>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div *ngIf="isLoading" class="flex justify-center items-center h-64">
+    <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500"></div>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+    <span class="block sm:inline">{{ errorMessage }}</span>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+    <span class="block sm:inline">{{ successMessage }}</span>
+  </div>
+
+  <div *ngIf="!isLoading && userProfile" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transition-all duration-300 transform hover:shadow-xl">
+    <!-- Profile Header -->
+    <div class="bg-gradient-to-r from-sky-500 to-sky-600 p-6 text-white relative overflow-hidden">
+      <!-- Background Pattern -->
+      <div class="absolute inset-0 opacity-10">
+        <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
+          <defs>
+            <pattern id="pattern" width="40" height="40" patternUnits="userSpaceOnUse">
+              <circle cx="20" cy="20" r="3" fill="white"/>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#pattern)"/>
         </svg>
       </div>
-      <div class="mr-2" *ngIf="toastType === 'error'">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+      <div class="flex flex-col md:flex-row items-center relative z-10">
+        <div class="relative w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 md:mb-0 md:mr-6 transform transition duration-500 hover:scale-105">
+          <img src="https://i.imgur.com/hu3WExw.png" alt="Profile" class="w-full h-full object-cover">
+        </div>
+        <div class="text-center md:text-left">
+          <h1 class="text-2xl font-bold mb-1">{{ userProfile.name }}</h1>
+          <p class="text-sky-100">{{ userProfile.role }}</p>
+          <p class="text-sky-100 text-sm">Member since {{ userProfile.createdAt | date }}</p>
+        </div>
       </div>
-      <div>{{ toastMessage }}</div>
-      <button (click)="showToast = false" class="ml-4 text-white hover:text-gray-200 focus:outline-none">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-      </button>
     </div>
-  
-    <!-- Breadcrumb -->
-    <div class="flex flex-col space-y-3 mb-6">
-      <div class="flex items-center space-x-4">
-        <a routerLink="/home" class="text-blue-500 hover:text-blue-700 transition-colors">
-          <i class="fas fa-arrow-left"></i> Home
-        </a>
+
+    <!-- Profile Content -->
+    <div class="p-6">
+      <!-- Tabs -->
+      <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
+        <button [class.border-sky-500]="!isChangingPassword && !isAddressTab"
+                [class.text-sky-600]="!isChangingPassword && !isAddressTab"
+                [class.border-transparent]="isChangingPassword || isAddressTab"
+                class="py-2 px-4 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-200"
+                (click)="setTab('profile')">
+          Profile Information
+        </button>
+        <button [class.border-sky-500]="isChangingPassword"
+                [class.text-sky-600]="isChangingPassword"
+                [class.border-transparent]="!isChangingPassword"
+                class="py-2 px-4 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-200"
+                (click)="setTab('password')">
+          Change Password
+        </button>
+        <button [class.border-sky-500]="isAddressTab"
+                [class.text-sky-600]="isAddressTab"
+                [class.border-transparent]="!isAddressTab"
+                class="py-2 px-4 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-200"
+                (click)="setTab('address')">
+          Addresses
+        </button>
       </div>
-      <nav class="text-sm text-gray-500 dark:text-gray-400">
-        <ol class="flex items-center space-x-2">
-          <li><a routerLink="/home" class="hover:text-blue-500 transition-colors">Home</a></li>
-          <li><i class="fas fa-chevron-right text-xs mx-1"></i></li>
-          <li class="text-blue-500 font-medium">Profile</li>
-        </ol>
-      </nav>
-    </div>
-  
-    <!-- Loading Spinner -->
-    <div *ngIf="isLoading" class="flex justify-center items-center h-64">
-      <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-sky-500"></div>
-    </div>
-  
-    <!-- Error Message -->
-    <div *ngIf="errorMessage" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-      <span class="block sm:inline">{{ errorMessage }}</span>
-    </div>
-  
-    <!-- Success Message -->
-    <div *ngIf="successMessage" class="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-      <span class="block sm:inline">{{ successMessage }}</span>
-    </div>
-  
-    <div *ngIf="!isLoading && userProfile" class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden transition-all duration-300 transform hover:shadow-xl">
-      <!-- Profile Header -->
-      <div class="bg-gradient-to-r from-sky-500 to-sky-600 p-6 text-white relative">
-        <div class="flex flex-col md:flex-row items-center">
-          <div class="relative w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-white shadow-md mb-4 md:mb-0 md:mr-6">
-            <img src="https://i.imgur.com/hu3WExw.png" alt="Profile" class="w-full h-full object-cover">
+
+      <!-- Profile Information Form -->
+      <div *ngIf="!isChangingPassword && !isAddressTab" class="space-y-6 transition-all duration-300">
+        <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="animate-fadeIn">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="form-group">
+              <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Username</label>
+              <input type="text" formControlName="username"
+                     class="form-input bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent disabled:opacity-75"
+                     readonly>
+            </div>
+            <div class="form-group">
+              <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Email</label>
+              <input type="email" formControlName="email"
+                     class="form-input bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent disabled:opacity-75"
+                     readonly>
+            </div>
+            <div class="form-group">
+              <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Full Name</label>
+              <input type="text" formControlName="name"
+                     [class.border-red-500]="profileForm.get('name')?.invalid && profileForm.get('name')?.touched"
+                     class="form-input border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
+                     [readOnly]="!isEditMode">
+              <p *ngIf="profileForm.get('name')?.invalid && profileForm.get('name')?.touched" class="text-red-500 text-xs mt-1">Name is required</p>
+            </div>
+            <div class="form-group">
+              <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Phone Number</label>
+              <input type="text" formControlName="phoneNumber"
+                     [class.border-red-500]="profileForm.get('phoneNumber')?.invalid && profileForm.get('phoneNumber')?.touched"
+                     class="form-input border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
+                     [readOnly]="!isEditMode">
+              <p *ngIf="profileForm.get('phoneNumber')?.invalid && profileForm.get('phoneNumber')?.touched" class="text-red-500 text-xs mt-1">
+                Please enter a valid 10-digit phone number
+              </p>
+            </div>
           </div>
-          <div class="text-center md:text-left">
-            <h1 class="text-2xl font-bold mb-1">{{ userProfile.name }}</h1>
-            <p class="text-sky-100">{{ userProfile.role }}</p>
-            <p class="text-sky-100 text-sm">Member since {{ userProfile.createdAt | date }}</p>
-          </div>
-        </div>
-      </div>
-  
-      <!-- Profile Content -->
-      <div class="p-6">
-        <!-- Tabs -->
-        <div class="flex border-b border-gray-200 dark:border-gray-700 mb-6">
-          <button [class.border-sky-500]="!isChangingPassword && !isAddressTab"
-                  [class.text-sky-600]="!isChangingPassword && !isAddressTab"
-                  [class.border-transparent]="isChangingPassword || isAddressTab"
-                  class="py-2 px-4 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-200"
-                  (click)="setTab('profile')">
-            Profile Information
-          </button>
-          <button [class.border-sky-500]="isChangingPassword"
-                  [class.text-sky-600]="isChangingPassword"
-                  [class.border-transparent]="!isChangingPassword"
-                  class="py-2 px-4 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-200"
-                  (click)="setTab('password')">
-            Change Password
-          </button>
-          <button [class.border-sky-500]="isAddressTab"
-                  [class.text-sky-600]="isAddressTab"
-                  [class.border-transparent]="!isAddressTab"
-                  class="py-2 px-4 border-b-2 font-medium text-sm focus:outline-none transition-colors duration-200"
-                  (click)="setTab('address')">
-            Addresses
-          </button>
-        </div>
-  
-        <!-- Profile Information Form -->
-        <div *ngIf="!isChangingPassword && !isAddressTab" class="space-y-6 transition-all duration-300">
-          <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="animate-fadeIn">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="form-group">
-                <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Username</label>
-                <input type="text" formControlName="username"
-                       class="form-input bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent disabled:opacity-75"
-                       readonly>
-              </div>
-              <div class="form-group">
-                <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Email</label>
-                <input type="email" formControlName="email"
-                       class="form-input bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent disabled:opacity-75"
-                       readonly>
-              </div>
-              <div class="form-group">
-                <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Full Name</label>
-                <input type="text" formControlName="name"
-                       [class.border-red-500]="profileForm.get('name')?.invalid && profileForm.get('name')?.touched"
-                       class="form-input border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
-                       [readOnly]="!isEditMode">
-                <p *ngIf="profileForm.get('name')?.invalid && profileForm.get('name')?.touched" class="text-red-500 text-xs mt-1">Name is required</p>
-              </div>
-              <div class="form-group">
-                <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Phone Number</label>
-                <input type="text" formControlName="phoneNumber"
-                       [class.border-red-500]="profileForm.get('phoneNumber')?.invalid && profileForm.get('phoneNumber')?.touched"
-                       class="form-input border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-all duration-200"
-                       [readOnly]="!isEditMode">
-                <p *ngIf="profileForm.get('phoneNumber')?.invalid && profileForm.get('phoneNumber')?.touched" class="text-red-500 text-xs mt-1">
-                  Please enter a valid 10-digit phone number
-                </p>
-              </div>
-            </div>
-            <div class="flex justify-end mt-6 space-x-4">
-              <button type="button"
-                      *ngIf="!isEditMode"
-                      (click)="toggleEditMode()"
-                      class="bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
-                <span class="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                  </svg>
-                  Edit Profile
-                </span>
-              </button>
-              <button type="button"
-                      *ngIf="isEditMode"
-                      (click)="toggleEditMode()"
-                      class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                Cancel
-              </button>
-              <button type="submit"
-                      *ngIf="isEditMode"
-                      [disabled]="profileForm.invalid || isSubmitting"
-                      class="bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-75 disabled:cursor-not-allowed flex items-center">
-                <span *ngIf="isSubmitting" class="mr-2">
-                  <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                </span>
-                Save Changes
-              </button>
-            </div>
-          </form>
-        </div>
-  
-        <!-- Change Password Form -->
-        <div *ngIf="isChangingPassword" class="space-y-6 transition-all duration-300">
-          <form [formGroup]="passwordForm" (ngSubmit)="onPasswordChange()" class="animate-fadeIn">
-            <div class="form-group mb-4">
-              <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Current Password</label>
-              <input type="password" formControlName="oldPassword"
-                     [class.border-red-500]="passwordForm.get('oldPassword')?.invalid && passwordForm.get('oldPassword')?.touched"
-                     class="form-input border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent">
-              <p *ngIf="passwordForm.get('oldPassword')?.invalid && passwordForm.get('oldPassword')?.touched" class="text-red-500 text-xs mt-1">
-                Current password is required
-              </p>
-            </div>
-            <div class="form-group mb-4">
-              <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">New Password</label>
-              <input type="password" formControlName="newPassword"
-                     [class.border-red-500]="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched"
-                     class="form-input border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent">
-              <p *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched" class="text-red-500 text-xs mt-1">
-                Password must be at least 6 characters
-              </p>
-            </div>
-            <div class="form-group mb-4">
-              <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Confirm New Password</label>
-              <input type="password" formControlName="confirmPassword"
-                     [class.border-red-500]="(passwordForm.get('confirmPassword')?.invalid || passwordForm.hasError('mismatch')) && passwordForm.get('confirmPassword')?.touched"
-                     class="form-input border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent">
-              <p *ngIf="passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched" class="text-red-500 text-xs mt-1">
-                Confirm password is required
-              </p>
-              <p *ngIf="passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched" class="text-red-500 text-xs mt-1">
-                Passwords do not match
-              </p>
-            </div>
-            <div class="flex justify-end mt-6 space-x-4">
-              <button type="button"
-                      (click)="togglePasswordChange()"
-                      class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                Cancel
-              </button>
-              <button type="submit"
-                      [disabled]="passwordForm.invalid || isSubmitting"
-                      class="bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-75 disabled:cursor-not-allowed flex items-center">
-                <span *ngIf="isSubmitting" class="mr-2">
-                  <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                </span>
-                Change Password
-              </button>
-            </div>
-          </form>
-        </div>
-  
-        <!-- Address Management Tab -->
-        <div *ngIf="isAddressTab" class="space-y-6 transition-all duration-300">
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-lg font-semibold">My Addresses</h2>
-            <button class="bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
-                    (click)="openAddressForm()">
-              Add Address
+          <div class="flex justify-end mt-6 space-x-4">
+            <button type="button"
+                    *ngIf="!isEditMode"
+                    (click)="toggleEditMode()"
+                    class="bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+              <span class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Edit Profile
+              </span>
+            </button>
+            <button type="button"
+                    *ngIf="isEditMode"
+                    (click)="toggleEditMode()"
+                    class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+              Cancel
+            </button>
+            <button type="submit"
+                    *ngIf="isEditMode"
+                    [disabled]="profileForm.invalid || isSubmitting"
+                    class="bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-75 disabled:cursor-not-allowed flex items-center">
+              <span *ngIf="isSubmitting" class="mr-2">
+                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </span>
+              Save Changes
             </button>
           </div>
-          <!-- Address List -->
-          <div *ngIf="addresses && addresses.length > 0; else noAddresses">
-            <div *ngFor="let address of addresses" class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow p-4 mb-4 flex flex-col md:flex-row md:items-center justify-between">
-              <div>
-                <div class="font-semibold">{{ address.name || userProfile.name }}</div>
-                <div class="text-gray-700 dark:text-gray-300 text-sm">
-                  {{ address.addressLine1 }}<span *ngIf="address.addressLine2">, {{ address.addressLine2 }}</span>, {{ address.city }}, {{ address.state }}, {{ address.postalCode }}, {{ address.country }}
-                </div>
-                <div class="text-gray-500 text-xs mt-1">
-                  {{ address.phone || userProfile.phoneNumber }} | {{ address.addressType }}
-                  <span *ngIf="address.isDefault" class="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs">Default</span>
-                </div>
+        </form>
+      </div>
+
+      <!-- Change Password Form -->
+      <div *ngIf="isChangingPassword" class="space-y-6 transition-all duration-300">
+        <form [formGroup]="passwordForm" (ngSubmit)="onPasswordChange()" class="animate-fadeIn">
+          <div class="form-group mb-4">
+            <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Current Password</label>
+            <input type="password" formControlName="oldPassword"
+                   [class.border-red-500]="passwordForm.get('oldPassword')?.invalid && passwordForm.get('oldPassword')?.touched"
+                   class="form-input border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent">
+            <p *ngIf="passwordForm.get('oldPassword')?.invalid && passwordForm.get('oldPassword')?.touched" class="text-red-500 text-xs mt-1">
+              Current password is required
+            </p>
+          </div>
+          <div class="form-group mb-4">
+            <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">New Password</label>
+            <input type="password" formControlName="newPassword"
+                   [class.border-red-500]="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched"
+                   class="form-input border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent">
+            <p *ngIf="passwordForm.get('newPassword')?.invalid && passwordForm.get('newPassword')?.touched" class="text-red-500 text-xs mt-1">
+              Password must be at least 6 characters
+            </p>
+          </div>
+          <div class="form-group mb-4">
+            <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Confirm New Password</label>
+            <input type="password" formControlName="confirmPassword"
+                   [class.border-red-500]="(passwordForm.get('confirmPassword')?.invalid || passwordForm.hasError('mismatch')) && passwordForm.get('confirmPassword')?.touched"
+                   class="form-input border border-gray-300 dark:border-gray-600 rounded-md shadow-sm py-2 px-3 w-full text-gray-700 dark:text-gray-300 leading-tight focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-transparent">
+            <p *ngIf="passwordForm.get('confirmPassword')?.invalid && passwordForm.get('confirmPassword')?.touched" class="text-red-500 text-xs mt-1">
+              Confirm password is required
+            </p>
+            <p *ngIf="passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched" class="text-red-500 text-xs mt-1">
+              Passwords do not match
+            </p>
+          </div>
+          <div class="flex justify-end mt-6 space-x-4">
+            <button type="button"
+                    (click)="togglePasswordChange()"
+                    class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+              Cancel
+            </button>
+            <button type="submit"
+                    [disabled]="passwordForm.invalid || isSubmitting"
+                    class="bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-75 disabled:cursor-not-allowed flex items-center">
+              <span *ngIf="isSubmitting" class="mr-2">
+                <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+              </span>
+              Change Password
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Address Management Tab -->
+      <div *ngIf="isAddressTab" class="space-y-6 transition-all duration-300 animate-fadeIn">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-semibold text-sky-600">My Addresses</h2>
+          <button class="bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded-md  duration-200 shadow-md hover:shadow-lg transform hover:scale-105 transition-all"
+                  (click)="openAddressForm()">
+            <span class="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+              </svg>
+              Add Address
+            </span>
+          </button>
+        </div>
+        <!-- Address List -->
+        <div *ngIf="addresses && addresses.length > 0; else noAddresses" class="grid grid-cols-1 gap-4">
+          <div *ngFor="let address of addresses" class="bg-gray-50 dark:bg-gray-700 rounded-lg shadow-md p-4 mb-4 flex flex-col md:flex-row md:items-center justify-between transform transition duration-300 hover:shadow-xl hover:scale-[1.01]">
+            <div class="flex-grow">
+              <div class="flex items-center">
+                <div class="font-semibold text-gray-800 dark:text-gray-200">{{ address.name || userProfile.name }}</div>
+                <span *ngIf="address.isDefault" class="ml-2 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-xs font-medium">Default</span>
+                <span class="ml-2 px-2 py-0.5 rounded-full text-xs font-medium"
+                      [ngClass]="{
+                        'bg-blue-100 text-blue-700': address.addressType === 'SHIPPING',
+                        'bg-purple-100 text-purple-700': address.addressType === 'BILLING',
+                        'bg-sky-100 text-sky-700': address.addressType === 'BOTH'
+                      }">
+                  <span *ngIf="address.addressType === 'SHIPPING'">Shipping</span>
+                  <span *ngIf="address.addressType === 'BILLING'">Billing</span>
+                  <span *ngIf="address.addressType === 'BOTH'">Shipping & Billing</span>
+                </span>
               </div>
-              <div class="flex space-x-2 mt-2 md:mt-0">
-                <button class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded transition" (click)="editAddress(address)">
-                  Edit
-                </button>
-                <button class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded transition" (click)="deleteAddress(address)">
-                  Delete
-                </button>
-                <button *ngIf="!address.isDefault" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded transition" (click)="setDefaultAddress(address)">
-                  Set Default
-                </button>
+              <div class="text-gray-700 dark:text-gray-300 text-sm mt-1">
+                {{ address.addressLine1 }}<span *ngIf="address.addressLine2">, {{ address.addressLine2 }}</span>
+              </div>
+              <div class="text-gray-700 dark:text-gray-300 text-sm">
+                {{ address.city }}, {{ address.state }}, {{ address.postalCode }}, {{ address.country }}
+              </div>
+              <div class="text-gray-500 text-xs mt-1">
+                {{ address.phone || userProfile.phoneNumber }}
               </div>
             </div>
+            <div class="flex flex-wrap gap-2 mt-3 md:mt-0 justify-end">
+              <button class="bg-yellow-400 hover:bg-yellow-500 text-white px-3 py-1 rounded-md shadow-sm hover:shadow-md transition-all duration-200 flex items-center" (click)="editAddress(address)">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+                Edit
+              </button>
+              <button [ngClass]="{
+                        'bg-red-500 hover:bg-red-600': address.addressType !== 'BOTH',
+                        'bg-red-600 hover:bg-red-700': address.addressType === 'BOTH'
+                      }" 
+                      class="text-white px-3 py-1 rounded-md shadow-sm hover:shadow-md transition-all duration-200 flex items-center" 
+                      (click)="deleteAddress(address)"
+                      [title]="address.addressType === 'BOTH' ? 'This address is used for both shipping and billing' : 'Delete address'">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete
+                <span *ngIf="address.addressType === 'BOTH'" class="ml-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </span>
+              </button>
+              <button *ngIf="!address.isDefault" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded-md shadow-sm hover:shadow-md transition-all duration-200 flex items-center" 
+                      (click)="setDefaultAddress(address)">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+                Set Default
+              </button>
+            </div>
           </div>
-          <ng-template #noAddresses>
-            <div class="text-gray-500 text-center">No addresses found.</div>
-          </ng-template>
-  
-          <!-- Address Form Modal -->
-          <div *ngIf="showAddressForm" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-lg relative">
-              <button class="absolute top-2 right-2 text-gray-400 hover:text-gray-700" (click)="closeAddressForm()">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        </div>
+        <ng-template #noAddresses>
+          <div class="text-center p-6 bg-gray-50 dark:bg-gray-700 rounded-lg shadow">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <p class="text-gray-500 mb-4">No addresses found.</p>
+            <button class="bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-4 rounded-md transition-colors duration-200"
+                    (click)="openAddressForm()">
+              Add Your First Address
+            </button>
+          </div>
+        </ng-template>
+
+        <!-- Address Form Modal with Improved UI -->
+        <div *ngIf="showAddressForm" class="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 backdrop-blur-sm animate-fadeIn">
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg relative transform transition-all duration-300 overflow-hidden">
+            <!-- Modal Header with Gradient -->
+            <div class="bg-gradient-to-r from-sky-500 to-blue-600 p-6 text-white">
+              <h3 class="text-2xl font-bold">{{ editingAddress ? 'Edit Address' : 'Add New Address' }}</h3>
+              <p class="text-sky-100 text-sm mt-1">{{ editingAddress ? 'Update your address information' : 'Add a new address to your profile' }}</p>
+              <button class="absolute top-4 right-4 text-white hover:text-gray-200 transition-colors duration-200" (click)="closeAddressForm()">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <h3 class="text-2xl font-bold mb-6 text-sky-600 text-center">{{ editingAddress ? 'Edit Address' : 'Add Address' }}</h3>
-              <form [formGroup]="addressForm" (ngSubmit)="onAddressSubmit()">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Name</label>
+            </div>
+            
+            <!-- Form Body -->
+            <form [formGroup]="addressForm" (ngSubmit)="onAddressSubmit()" class="p-6">
+              <!-- Two Column Layout -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <!-- Full Name -->
+                <div class="form-group">
+                  <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                    Full Name <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
                     <input type="text" formControlName="name"
-                           class="form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500"
-                           [class.border-red-500]="addressForm.get('name')?.invalid && addressForm.get('name')?.touched">
-                    <p *ngIf="addressForm.get('name')?.invalid && addressForm.get('name')?.touched" class="text-red-500 text-xs mt-1">Name is required</p>
+                           class="pl-10 form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-colors duration-200"
+                           [class.border-red-500]="addressForm.get('name')?.invalid && addressForm.get('name')?.touched"
+                           placeholder="John Doe">
                   </div>
-                  <div>
-                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Phone</label>
+                  <p *ngIf="addressForm.get('name')?.invalid && addressForm.get('name')?.touched" class="text-red-500 text-xs mt-1">Name is required</p>
+                </div>
+                
+                <!-- Phone Number -->
+                <div class="form-group">
+                  <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                    Phone Number <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      </svg>
+                    </div>
                     <input type="text" formControlName="phone"
-                           class="form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500"
-                           [class.border-red-500]="addressForm.get('phone')?.invalid && addressForm.get('phone')?.touched">
-                    <p *ngIf="addressForm.get('phone')?.invalid && addressForm.get('phone')?.touched" class="text-red-500 text-xs mt-1">Valid phone required</p>
+                           class="pl-10 form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-colors duration-200"
+                           [class.border-red-500]="addressForm.get('phone')?.invalid && addressForm.get('phone')?.touched"
+                           placeholder="1234567890">
                   </div>
-                  <div class="md:col-span-2">
-                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Address Line 1</label>
+                  <p *ngIf="addressForm.get('phone')?.invalid && addressForm.get('phone')?.touched" class="text-red-500 text-xs mt-1">Valid phone required (10 digits)</p>
+                </div>
+                
+                <!-- Address Line 1 -->
+                <div class="form-group md:col-span-2">
+                  <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                    Address Line 1 <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>
+                    </div>
                     <input type="text" formControlName="addressLine1"
-                           class="form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500"
-                           [class.border-red-500]="addressForm.get('addressLine1')?.invalid && addressForm.get('addressLine1')?.touched">
-                    <p *ngIf="addressForm.get('addressLine1')?.invalid && addressForm.get('addressLine1')?.touched" class="text-red-500 text-xs mt-1">Address Line 1 is required</p>
+                           class="pl-10 form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-colors duration-200"
+                           [class.border-red-500]="addressForm.get('addressLine1')?.invalid && addressForm.get('addressLine1')?.touched"
+                           placeholder="123 Main Street">
                   </div>
-                  <div class="md:col-span-2">
-                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Address Line 2</label>
+                  <p *ngIf="addressForm.get('addressLine1')?.invalid && addressForm.get('addressLine1')?.touched" class="text-red-500 text-xs mt-1">Address Line 1 is required</p>
+                </div>
+                
+                <!-- Address Line 2 -->
+                <div class="form-group md:col-span-2">
+                  <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                    Address Line 2 <span class="text-gray-400 text-xs">(Optional)</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
                     <input type="text" formControlName="addressLine2"
-                           class="form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500">
+                           class="pl-10 form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-colors duration-200"
+                           placeholder="Apartment, suite, unit, etc.">
                   </div>
-                  <div>
-                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">City</label>
+                </div>
+                
+                <!-- City -->
+                <div class="form-group">
+                  <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                    City <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                      </svg>
+                    </div>
                     <input type="text" formControlName="city"
-                           class="form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500"
-                           [class.border-red-500]="addressForm.get('city')?.invalid && addressForm.get('city')?.touched">
-                    <p *ngIf="addressForm.get('city')?.invalid && addressForm.get('city')?.touched" class="text-red-500 text-xs mt-1">City is required</p>
+                           class="pl-10 form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-colors duration-200"
+                           [class.border-red-500]="addressForm.get('city')?.invalid && addressForm.get('city')?.touched"
+                           placeholder="New York">
                   </div>
-                  <div>
-                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">State</label>
+                  <p *ngIf="addressForm.get('city')?.invalid && addressForm.get('city')?.touched" class="text-red-500 text-xs mt-1">City is required</p>
+                </div>
+                
+                <!-- State/Province -->
+                <div class="form-group">
+                  <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                    State/Province <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>
+                    </div>
                     <input type="text" formControlName="state"
-                           class="form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500"
-                           [class.border-red-500]="addressForm.get('state')?.invalid && addressForm.get('state')?.touched">
-                    <p *ngIf="addressForm.get('state')?.invalid && addressForm.get('state')?.touched" class="text-red-500 text-xs mt-1">State is required</p>
+                           class="pl-10 form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-colors duration-200"
+                           [class.border-red-500]="addressForm.get('state')?.invalid && addressForm.get('state')?.touched"
+                           placeholder="NY">
                   </div>
-                  <div>
-                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Postal Code</label>
+                  <p *ngIf="addressForm.get('state')?.invalid && addressForm.get('state')?.touched" class="text-red-500 text-xs mt-1">State is required</p>
+                </div>
+                
+                <!-- Postal Code -->
+                <div class="form-group">
+                  <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                    Postal Code <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                      </svg>
+                    </div>
                     <input type="text" formControlName="postalCode"
-                           class="form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500"
-                           [class.border-red-500]="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched">
-                    <p *ngIf="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched" class="text-red-500 text-xs mt-1">Postal code is required</p>
+                           class="pl-10 form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-colors duration-200"
+                           [class.border-red-500]="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched"
+                           placeholder="10001">
                   </div>
-                  <div>
-                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Country</label>
+                  <p *ngIf="addressForm.get('postalCode')?.invalid && addressForm.get('postalCode')?.touched" class="text-red-500 text-xs mt-1">Postal code is required</p>
+                </div>
+                
+                <!-- Country -->
+                <div class="form-group">
+                  <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                    Country <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
                     <input type="text" formControlName="country"
-                           class="form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500"
-                           [class.border-red-500]="addressForm.get('country')?.invalid && addressForm.get('country')?.touched">
-                    <p *ngIf="addressForm.get('country')?.invalid && addressForm.get('country')?.touched" class="text-red-500 text-xs mt-1">Country is required</p>
+                           class="pl-10 form-input border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-colors duration-200"
+                           [class.border-red-500]="addressForm.get('country')?.invalid && addressForm.get('country')?.touched"
+                           placeholder="United States">
                   </div>
-                  <div>
-                    <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">Address Type</label>
+                  <p *ngIf="addressForm.get('country')?.invalid && addressForm.get('country')?.touched" class="text-red-500 text-xs mt-1">Country is required</p>
+                </div>
+                
+                <!-- Address Type -->
+                <div class="form-group">
+                  <label class="block text-gray-700 dark:text-gray-300 text-sm font-medium mb-2">
+                    Address Type <span class="text-red-500">*</span>
+                  </label>
+                  <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+                      </svg>
+                    </div>
                     <select formControlName="addressType"
-                            class="form-select border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500">
+                            class="pl-10 form-select border border-gray-300 dark:border-gray-600 rounded-lg shadow-sm py-2 px-3 w-full focus:ring-2 focus:ring-sky-500 focus:border-transparent transition-colors duration-200">
                       <option value="SHIPPING">Shipping</option>
                       <option value="BILLING">Billing</option>
-                      <option value="BOTH">Both</option>
+                      <option value="BOTH">Both (Shipping & Billing)</option>
                     </select>
                   </div>
-                  <div class="md:col-span-2 flex items-center mt-2">
-                    <input type="checkbox" formControlName="isDefault" id="isDefault" class="mr-2">
-                    <label for="isDefault" class="text-sm text-gray-700 dark:text-gray-300">Set as default address</label>
+                </div>
+              </div>
+              
+              <!-- Default Address Toggle -->
+              <div class="form-group mt-6 flex items-center">
+                <label for="isDefault" class="flex items-center cursor-pointer">
+                  <div class="relative">
+                    <input type="checkbox" formControlName="isDefault" id="isDefault" class="sr-only">
+                    <div class="block bg-gray-200 dark:bg-gray-700 w-12 h-6 rounded-full"></div>
+                    <div class="dot absolute left-1 top-1 bg-white w-4 h-4 rounded-full transition transform"></div>
                   </div>
-                </div>
-                <div class="flex justify-end mt-8 space-x-4">
-                  <button type="button"
-                          (click)="closeAddressForm()"
-                          class="border border-gray-300 bg-white hover:bg-gray-100 text-gray-700 font-medium py-2 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
-                    Cancel
-                  </button>
-                  <button type="submit"
-                          [disabled]="addressForm.invalid || isSubmitting"
-                          class="bg-sky-500 hover:bg-sky-600 text-white font-medium py-2 px-6 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-75 disabled:cursor-not-allowed flex items-center">
-                    <span *ngIf="isSubmitting" class="mr-2">
-                      <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    </span>
-                    {{ editingAddress ? 'Save Changes' : 'Add Address' }}
-                  </button>
-                </div>
-              </form>
-            </div>
+                  <div class="ml-3 text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Set as default address
+                    <p class="text-xs text-gray-500">This will be used as your primary address</p>
+                  </div>
+                </label>
+              </div>
+              
+              <!-- Form Buttons -->
+              <div class="flex justify-end mt-8 space-x-4">
+                <button type="button"
+                        (click)="closeAddressForm()"
+                        class="px-6 py-2.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 shadow-sm hover:shadow transform hover:scale-105">
+                  Cancel
+                </button>
+                <button type="submit"
+                        [disabled]="addressForm.invalid || isSubmitting"
+                        class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-sky-500 to-blue-600 text-white font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:opacity-75 disabled:cursor-not-allowed shadow-md hover:shadow-lg transform hover:scale-105 flex items-center">
+                  <span *ngIf="isSubmitting" class="mr-2">
+                    <svg class="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </span>
+                  {{ editingAddress ? 'Update Address' : 'Add Address' }}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
     </div>
   </div>
+</div>
+
+<style>
+  /* Fade in animation */
+  @keyframes fadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fadeIn {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
   
-  <style>
-    @keyframes fadeIn {
-      0% { opacity: 0; transform: translateY(10px); }
-      100% { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fadeIn {
-      animation: fadeIn 0.5s ease-out forwards;
-    }
-  </style>
+  /* Modal animation */
+  @keyframes modalEnter {
+    0% { opacity: 0; transform: scale(0.95) translateY(10px); }
+    100% { opacity: 1; transform: scale(1) translateY(0); }
+  }
   
+  /* Slide in animation */
+  @keyframes slideIn {
+    0% { transform: translateX(-20px); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  
+  /* Pulse animation for buttons */
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  
+  /* Custom toggle switch animation */
+  input[type="checkbox"]:checked ~ .dot {
+    transform: translateX(100%);
+  }
+  input[type="checkbox"]:checked + .block {
+    background-color: #0ea5e9;
+  }
+  
+  /* Address card hover effect */
+  .address-card {
+    transition: all 0.3s ease;
+  }
+  .address-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* Button hover effects */
+  .btn-hover-effect {
+    transition: all 0.2s ease;
+  }
+  .btn-hover-effect:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  }
+  
+  /* Form input focus effect */
+  .form-input:focus, .form-select:focus {
+    box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.15);
+  }
+  
+  /* Tab animation */
+  .tab-enter {
+    animation: slideIn 0.3s ease forwards;
+  }
+  
+  /* Toast animation */
+  @keyframes toastEnter {
+    from { transform: translateY(-20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  @keyframes toastExit {
+    from { transform: translateY(0); opacity: 1; }
+    to { transform: translateY(-20px); opacity: 0; }
+  }
+  .toast-enter { animation: toastEnter 0.3s ease forwards; }
+  .toast-exit { animation: toastExit 0.3s ease forwards; }
+  
+  /* Backdrop blur animation */
+  @keyframes blurIn {
+    from { backdrop-filter: blur(0px); }
+    to { backdrop-filter: blur(4px); }
+  }
+  .backdrop-blur-sm {
+    animation: blurIn 0.3s ease forwards;
+  }
+  
+  /* Loading spinner animation enhancement */
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .enhanced-spin {
+    animation: spin 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+  }
+</style>
