@@ -3,12 +3,13 @@ import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth/auth.service';
 import { CategoryService } from '../../services/category/category.service';
 import { CartService } from '../../services/cart/cart.service';
+import { OrderService } from '../../services/order/order.service';
 import { Category } from '../../models/category.model';
 import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-header',
-  standalone:false,
+  standalone: false,
   templateUrl: './header.component.html',
   styleUrls: ['./header.component.css']
 })
@@ -21,14 +22,17 @@ export class HeaderComponent implements OnInit, OnDestroy {
   categories: Category[] = [];
   isProfileMenuOpen = false;
   cartItemCount = 0;
+  orderCount = 0;
   private authSubscription?: Subscription;
   private cartSubscription?: Subscription;
+  private orderSubscription?: Subscription;
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private categoryService: CategoryService,
-    private cartService: CartService
+    private cartService: CartService,
+    private orderService: OrderService
   ) { }
 
   ngOnInit(): void {
@@ -40,6 +44,7 @@ export class HeaderComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.authSubscription?.unsubscribe();
     this.cartSubscription?.unsubscribe();
+    this.orderSubscription?.unsubscribe();
   }
 
   private setupAuthListener(): void {
@@ -78,8 +83,10 @@ export class HeaderComponent implements OnInit, OnDestroy {
       const user = this.authService.getCurrentUser();
       this.username = user?.name || user?.username || '';
       this.updateCartCount();
+      this.updateOrderCount();
     } else {
       this.cartItemCount = 0;
+      this.orderCount = 0;
     }
   }
 
@@ -106,6 +113,31 @@ export class HeaderComponent implements OnInit, OnDestroy {
         this.cartItemCount = 0;
       }
     });
+  }
+
+  private updateOrderCount(): void {
+    if (!this.isLoggedIn) {
+      this.orderCount = 0;
+      return;
+    }
+
+    const userId = this.authService.getCurrentUserId();
+    if (!userId) {
+      console.warn('Cannot update order count - userId is missing');
+      this.orderCount = 0;
+      return;
+    }
+
+    // this.orderSubscription?.unsubscribe();
+    // this.orderSubscription = this.orderService.getOrdersCount(userId).subscribe({
+    //   next: (count) => {
+    //     this.orderCount = count;
+    //   },
+    //   error: (error) => {
+    //     console.error('Error fetching order count:', error);
+    //     this.orderCount = 0;
+    //   }
+    // });
   }
 
   toggleMenu(): void {
@@ -146,7 +178,13 @@ export class HeaderComponent implements OnInit, OnDestroy {
 
   goToProfile(): void {
     this.closeMenus();
-    this.router.navigate([this.isAdmin ? '/admin/settings/profile' : '/profile']);
+    this.router.navigate([this.isAdmin ? '/admin/settings/profile' : '/user/profile']);
+  }
+
+  goToOrders(): void {
+    this.closeMenus();
+    // Navigate to user orders for regular users, admin orders for admins
+    this.router.navigate([this.isAdmin ? '/admin/orders' : '/orders']);
   }
 
   goToCart(): void {

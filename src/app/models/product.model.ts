@@ -13,6 +13,7 @@ export class Product {
   updatedAt?: Date;
   sku?: string;     // Added Stock Keeping Unit
   isActive?: boolean; // Added status flag
+  brand?: string; 
 
   constructor(
     productId: number,
@@ -27,7 +28,8 @@ export class Product {
     createdAt?: Date,
     updatedAt?: Date,
     sku?: string,
-    isActive?: boolean
+    isActive?: boolean,
+    brand?: string
   ) {
     this.productId = productId;
     this.name = name;
@@ -42,5 +44,6 @@ export class Product {
     this.updatedAt = updatedAt;
     this.sku = sku;
     this.isActive = isActive !== undefined ? isActive : true; // Default to active if not specified
+    this.brand = brand;
   }
 }

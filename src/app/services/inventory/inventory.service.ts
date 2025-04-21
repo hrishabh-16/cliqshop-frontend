@@ -12,6 +12,7 @@ export interface Inventory {
     productId: number;
     name: string;
     price: number;
+    imageUrl?: string;
   };
   quantity: number;
   lowStockThreshold?: number;
@@ -76,11 +77,33 @@ export class InventoryService {
   }
 
   updateStock(productId: number, quantity: number): Observable<Inventory> {
-    return this.http.put<Inventory>(`${API_URL}/${productId}/stock?change=${quantity}`, {});
+    return this.http.put<Inventory>(`${API_URL}/${productId}/stock?change=${quantity}`, {}).pipe(
+      catchError(error => {
+        console.error(`Error updating stock for product ${productId}:`, error);
+        // Try with admin API if regular fails
+        return this.http.put<Inventory>(`${ADMIN_API_URL}/${productId}/stock?change=${quantity}`, {}).pipe(
+          catchError(adminError => {
+            console.error(`Error updating stock with admin API for product ${productId}:`, adminError);
+            return throwError(() => new Error(`Failed to update stock for product ID: ${productId}`));
+          })
+        );
+      })
+    );
   }
 
   setLowStockThreshold(productId: number, threshold: number): Observable<Inventory> {
-    return this.http.put<Inventory>(`${API_URL}/${productId}/threshold?threshold=${threshold}`, {});
+    return this.http.put<Inventory>(`${API_URL}/${productId}/threshold?threshold=${threshold}`, {}).pipe(
+      catchError(error => {
+        console.error(`Error setting threshold for product ${productId}:`, error);
+        // Try with admin API if regular fails
+        return this.http.put<Inventory>(`${ADMIN_API_URL}/${productId}/threshold?threshold=${threshold}`, {}).pipe(
+          catchError(adminError => {
+            console.error(`Error setting threshold with admin API for product ${productId}:`, adminError);
+            return throwError(() => new Error(`Failed to set threshold for product ID: ${productId}`));
+          })
+        );
+      })
+    );
   }
 
   getLowStockItems(): Observable<Inventory[]> {
@@ -94,7 +117,16 @@ export class InventoryService {
           tap(items => console.log('Low stock items from admin API:', items)),
           catchError(adminError => {
             console.error('Error fetching low stock items from admin API:', adminError);
-            return throwError(() => new Error('Failed to fetch low stock items'));
+            
+            // As a fallback, calculate low stock items from all inventory
+            return this.getAllInventory().pipe(
+              map(inventory => {
+                return inventory.filter(item => {
+                  const threshold = item.lowStockThreshold || 10; // Default threshold
+                  return item.quantity <= threshold;
+                });
+              })
+            );
           })
         );
       })
@@ -102,24 +134,49 @@ export class InventoryService {
   }
 
   updateWarehouseLocation(productId: number, location: string): Observable<Inventory> {
-    return this.http.put<Inventory>(`${API_URL}/${productId}/location?location=${location}`, {});
+    return this.http.put<Inventory>(`${API_URL}/${productId}/location?location=${encodeURIComponent(location)}`, {}).pipe(
+      catchError(error => {
+        console.error(`Error updating location for product ${productId}:`, error);
+        return throwError(() => new Error(`Failed to update location for product ID: ${productId}`));
+      })
+    );
   }
 
   deleteInventory(inventoryId: number): Observable<void> {
-    return this.http.delete<void>(`${API_URL}/${inventoryId}`);
+    return this.http.delete<void>(`${API_URL}/${inventoryId}`).pipe(
+      catchError(error => {
+        console.error(`Error deleting inventory ${inventoryId}:`, error);
+        return throwError(() => new Error(`Failed to delete inventory ID: ${inventoryId}`));
+      })
+    );
   }
 
   // Admin specific endpoints
   adminGetAllInventory(): Observable<Inventory[]> {
-    return this.http.get<Inventory[]>(`${ADMIN_API_URL}`);
+    return this.http.get<Inventory[]>(`${ADMIN_API_URL}`).pipe(
+      catchError(error => {
+        console.error('Error fetching all inventory from admin API:', error);
+        return of([]);
+      })
+    );
   }
 
   adminUpdateStock(productId: number, quantity: number): Observable<Inventory> {
-    return this.http.put<Inventory>(`${ADMIN_API_URL}/${productId}/stock?change=${quantity}`, {});
+    return this.http.put<Inventory>(`${ADMIN_API_URL}/${productId}/stock?change=${quantity}`, {}).pipe(
+      catchError(error => {
+        console.error(`Error updating stock with admin API for product ${productId}:`, error);
+        return throwError(() => new Error(`Failed to update stock for product ID: ${productId}`));
+      })
+    );
   }
 
   adminUpdateThreshold(productId: number, threshold: number): Observable<Inventory> {
-    return this.http.put<Inventory>(`${ADMIN_API_URL}/${productId}/threshold?threshold=${threshold}`, {});
+    return this.http.put<Inventory>(`${ADMIN_API_URL}/${productId}/threshold?threshold=${threshold}`, {}).pipe(
+      catchError(error => {
+        console.error(`Error setting threshold with admin API for product ${productId}:`, error);
+        return throwError(() => new Error(`Failed to set threshold for product ID: ${productId}`));
+      })
+    );
   }
   
   // Get products with their inventory status

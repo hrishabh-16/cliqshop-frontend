@@ -102,6 +102,38 @@
               </a>
             </div>
           </div>
+
+          <!-- Inventory Menu -->
+          <div class="space-y-1">
+            <button (click)="toggleMenu('inventory')"
+              class="w-full flex items-center justify-between px-4 py-3 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-sky-50 dark:hover:bg-sky-900 transition-colors">
+              <div class="flex items-center">
+                <span class="flex items-center justify-center w-7 h-7 text-teal-600 dark:text-teal-400">
+                  <i class="fas fa-boxes"></i>
+                </span>
+                <span class="ml-3 font-medium">Inventory</span>
+              </div>
+              <span class="transform transition-transform duration-200" [ngClass]="menus.inventory ? 'rotate-180' : ''">
+                <i class="fas fa-chevron-down text-sm"></i>
+              </span>
+            </button>
+          
+            <!-- Submenu -->
+            <div *ngIf="menus.inventory" class="pl-12 space-y-1 animate-slideDown overflow-hidden">
+              <a routerLink="/admin/inventory" [queryParams]="{view: 'stock'}"
+                class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                Stock Management
+              </a>
+              <a routerLink="/admin/inventory" [queryParams]="{view: 'lowStock'}"
+                class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                Low Stock Items
+              </a>
+              <a routerLink="/admin/inventory" [queryParams]="{view: 'warehouse'}"
+                class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
+                Warehouse Locations
+              </a>
+            </div>
+          </div>
           
           <!-- Orders Menu -->
           <div class="space-y-1">
@@ -125,7 +157,7 @@
                  class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
                 All Orders
               </a>
-              <a routerLink="/admin/orders" [queryParams]="{status: 'pending'}" 
+              <!-- <a routerLink="/admin/orders" [queryParams]="{status: 'pending'}" 
                  class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
                 Pending
               </a>
@@ -136,7 +168,7 @@
               <a routerLink="/admin/orders" [queryParams]="{status: 'completed'}" 
                  class="block py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-sky-600 dark:hover:text-sky-400 transition-colors">
                 Completed
-              </a>
+              </a> -->
             </div>
           </div>
           
@@ -808,4 +840,5 @@
     margin-left: 0;
   }
 }
+
 </style>

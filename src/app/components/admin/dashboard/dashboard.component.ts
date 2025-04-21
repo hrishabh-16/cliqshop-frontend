@@ -336,6 +336,7 @@ export class DashboardComponent implements OnInit {
     });
   }
 
+  
   loadRecentProducts(): void {
     this.isLoading.products = true;
     

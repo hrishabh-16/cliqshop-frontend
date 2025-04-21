@@ -1,0 +1,246 @@
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto">
+        <!-- Loading Indicator -->
+        <div *ngIf="isLoading" class="py-12 flex justify-center">
+            <div class="flex items-center justify-center">
+                <svg class="animate-spin h-10 w-10 text-sky-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="ml-2 text-gray-600">Loading order details...</span>
+            </div>
+        </div>
+        
+        <!-- Order Not Found -->
+        <div *ngIf="!isLoading && !order" class="bg-white rounded-xl shadow-md p-8 text-center">
+            <div class="flex justify-center mb-4">
+                <div class="bg-red-100 p-3 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-2">Order Not Found</h3>
+            <p class="text-gray-600 mb-6">We couldn't find the order details you're looking for.</p>
+            <div class="flex flex-col sm:flex-row justify-center gap-4">
+                <button 
+                    routerLink="/orders" 
+                    class="inline-flex items-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                    My Orders
+                </button>
+                <button 
+                    routerLink="/products" 
+                    class="inline-flex items-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                    Continue Shopping
+                </button>
+            </div>
+        </div>
+        
+        <!-- Order Confirmation Content -->
+        <div *ngIf="!isLoading && order" class="space-y-6">
+            <!-- Success Banner -->
+            <div class="bg-green-50 border border-green-200 rounded-xl p-6 text-center">
+                <div class="flex justify-center mb-4">
+                    <div class="bg-green-100 p-2 rounded-full">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-500" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Order Confirmed!</h1>
+                <p class="text-gray-600 mb-1">Thank you for your purchase. Your order has been received.</p>
+                <p class="text-gray-600 mb-4">We've sent a confirmation email to <strong>{{ order.customer?.email || 'your email address' }}</strong></p>
+                <div class="flex justify-center">
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-white border border-gray-300 shadow-sm">
+                        Order #{{ order.orderId }}
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Order Details Card -->
+            <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                <!-- Order Header -->
+                <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+                    <div class="flex flex-wrap items-center justify-between">
+                        <div>
+                            <h2 class="text-xl font-medium text-gray-800">Order Summary</h2>
+                            <p class="text-sm text-gray-500">Placed on {{ order.orderDate | date:'medium' }}</p>
+                        </div>
+                        <div>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium capitalize" 
+                                [ngClass]="{
+                                    'bg-green-100 text-green-800': order.orderStatus === 'DELIVERED',
+                                    'bg-blue-100 text-blue-800': order.orderStatus === 'PROCESSING' || order.orderStatus === 'CONFIRMED',
+                                    'bg-yellow-100 text-yellow-800': order.orderStatus === 'SHIPPED',
+                                    'bg-red-100 text-red-800': order.orderStatus === 'CANCELLED',
+                                    'bg-gray-100 text-gray-800': order.orderStatus === 'PENDING'
+                                }">
+                                {{ order.orderStatus | lowercase }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Items -->
+                <div class="px-6 py-4">
+                    <h3 class="text-lg font-medium text-gray-800 mb-4">Items in your order</h3>
+                    <div class="space-y-4">
+                        <div *ngFor="let item of order.orderItems" class="flex flex-col sm:flex-row sm:items-center py-4 border-b border-gray-200 last:border-0">
+                            <div class="flex items-center flex-1">
+                                <div class="flex-shrink-0 w-20 h-20 bg-gray-100 rounded-md overflow-hidden">
+                                    <img *ngIf="item.product?.imageUrl" [src]="item.product?.imageUrl" 
+                                        [alt]="item.product?.name || 'Product'" class="w-full h-full object-center object-cover">
+                                    <div *ngIf="!item.product?.imageUrl" class="w-full h-full flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <h4 class="text-sm font-medium text-gray-800">{{ item.product?.name || 'Product' }}</h4>
+                                    <p class="mt-1 text-sm text-gray-500" *ngIf="item.product?.brand">{{ item.product?.brand }}</p>
+                                    <div class="mt-2 flex text-sm">
+                                        <p class="text-gray-500">Qty: {{ item.quantity }}</p>
+                                        <p class="ml-4 text-gray-500">Price: ₹{{ item.price | number:'1.2-2' }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 sm:mt-0 text-right">
+                                <p class="text-base font-medium text-gray-800">₹{{ (item.quantity * item.price) | number:'1.2-2' }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Totals -->
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200">
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Subtotal</span>
+                            <span class="text-gray-800 font-medium">₹{{ order.subtotal | number:'1.2-2' }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Shipping</span>
+                            <span class="text-gray-800 font-medium">₹{{ order.shippingCost | number:'1.2-2' }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-600">Tax</span>
+                            <span class="text-gray-800 font-medium">₹{{ order.tax | number:'1.2-2' }}</span>
+                        </div>
+                        <div *ngIf="order.discount > 0" class="flex justify-between text-sm">
+                            <span class="text-gray-600">Discount</span>
+                            <span class="text-green-600 font-medium">-₹{{ order.discount | number:'1.2-2' }}</span>
+                        </div>
+                        <div class="border-t border-gray-200 mt-2 pt-2 flex justify-between">
+                            <span class="text-base font-medium text-gray-800">Total</span>
+                            <span class="text-base font-medium text-gray-900">₹{{ order.orderTotal | number:'1.2-2' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Shipping & Billing Details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Shipping Details -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-800">Shipping Details</h3>
+                    </div>
+                    <div class="px-6 py-4">
+                        <address class="not-italic">
+                            <div class="font-medium" *ngIf="order.shippingAddress?.name">{{ order.shippingAddress?.name }}</div>
+                            <div>{{ order.shippingAddress?.addressLine1 }}</div>
+                            <div *ngIf="order.shippingAddress?.addressLine2">{{ order.shippingAddress?.addressLine2 }}</div>
+                            <div>{{ order.shippingAddress?.city }}, {{ order.shippingAddress?.state }} {{ order.shippingAddress?.postalCode }}</div>
+                            <div>{{ order.shippingAddress?.country }}</div>
+                            <div *ngIf="order.shippingAddress?.phone" class="mt-2">Phone: {{ order.shippingAddress?.phone }}</div>
+                        </address>
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <p class="text-sm font-medium text-gray-700">Shipping Method</p>
+                            <p class="mt-1 text-sm text-gray-600">{{ order.shippingMethod }}</p>
+                            <div *ngIf="order.estimatedDeliveryDate">
+                                <p class="mt-3 text-sm font-medium text-gray-700">Estimated Delivery</p>
+                                <p class="mt-1 text-sm text-gray-600">{{ order.estimatedDeliveryDate | date }}</p>
+                            </div>
+                            <div *ngIf="order.trackingNumber">
+                                <p class="mt-3 text-sm font-medium text-gray-700">Tracking Number</p>
+                                <p class="mt-1 text-sm text-gray-600">{{ order.trackingNumber }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment Information -->
+                <div class="bg-white rounded-xl shadow-md overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-medium text-gray-800">Payment Information</h3>
+                    </div>
+                    <div class="px-6 py-4">
+                        <div class="space-y-3">
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Payment Method</p>
+                                <p class="mt-1">{{ order.paymentMethod }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Payment Status</p>
+                                <p class="mt-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium"
+                                    [ngClass]="{
+                                        'bg-green-100 text-green-800': order.paymentStatus === 'PAID',
+                                        'bg-yellow-100 text-yellow-800': order.paymentStatus === 'PENDING',
+                                        'bg-red-100 text-red-800': order.paymentStatus === 'FAILED',
+                                        'bg-blue-100 text-blue-800': order.paymentStatus === 'REFUNDED'
+                                    }">
+                                    {{ order.paymentStatus }}
+                                </p>
+                            </div>
+                            <div *ngIf="order.paymentInfo?.cardLast4">
+                                <p class="text-sm font-medium text-gray-500">Card Information</p>
+                                <p class="mt-1">{{ order.paymentInfo?.cardBrand || 'Card' }} ending in {{ order.paymentInfo?.cardLast4 }}</p>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-gray-500">Billing Address</p>
+                                <address class="mt-1 not-italic">
+                                    <div *ngIf="order.billingAddress?.name || order.shippingAddress?.name">
+                                      {{ order.billingAddress?.name || order.shippingAddress?.name }}
+                                    </div>
+                                    <div>{{ order.billingAddress?.addressLine1 || order.shippingAddress?.addressLine1 }}</div>
+                                    <div *ngIf="order.billingAddress?.addressLine2 || order.shippingAddress?.addressLine2">
+                                        {{ order.billingAddress?.addressLine2 || order.shippingAddress?.addressLine2 }}
+                                    </div>
+                                    <div>
+                                        {{ order.billingAddress?.city || order.shippingAddress?.city }}, 
+                                        {{ order.billingAddress?.state || order.shippingAddress?.state }} 
+                                        {{ order.billingAddress?.postalCode || order.shippingAddress?.postalCode }}
+                                    </div>
+                                    <div>{{ order.billingAddress?.country || order.shippingAddress?.country }}</div>
+                                </address>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex flex-col sm:flex-row justify-center gap-4 pt-4">
+                <button 
+                    (click)="printOrder()" 
+                    class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v3a2 2 0 002 2h1v2a2 2 0 002 2h6a2 2 0 002-2v-2h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" />
+                    </svg>
+                    Print Order
+                </button>
+                <button 
+                    routerLink="/orders" 
+                    class="inline-flex items-center justify-center px-6 py-3 border border-gray-300 shadow-sm text-base font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                    My Orders
+                </button>
+                <button 
+                    routerLink="/products" 
+                    class="inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-md shadow-sm text-white bg-sky-600 hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500">
+                    Continue Shopping
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

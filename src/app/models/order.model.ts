@@ -1,44 +1,25 @@
-// import { User } from './user.model';
-// import { Address } from './address.model';
-// import { Product } from './product.model';
-
-// export interface Order {
-//   orderId: number;
-//   user: User;
-//   orderDate: string;
-//   totalPrice: number;
-//   status: OrderStatus;
-//   paymentMethod: PaymentMethod;
-//   shippingMethod: ShippingMethod;
-//   billingAddress: Address;
-//   shippingAddress: Address;
-//   orderItems: OrderItem[];
-//   orderNotes?: string;
-// }
-
-// export interface OrderItem {
-//   orderItemId: number;
-//   product: Product;
-//   quantity: number;
-//   price: number;
-// }
-
-// export type OrderStatus = 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
-// export type PaymentMethod = 'cod' | 'card' | 'paypal' | 'upi';
-// export type ShippingMethod = 'standard' | 'express' | 'next_day' | 'free';
 
 import { Address } from './address.model';
 import { Product } from './product.model';
+import { User } from './user.model';
 
 export interface Order {
   orderId: number;
   userId: number;
+  customer?: User;
   orderDate: string;
   orderStatus: OrderStatus;
+  subtotal: number;
+  tax: number;
+  shippingCost: number;
+  discount: number;
   orderTotal: number;
   paymentStatus: PaymentStatus;
   paymentMethod: string;
+  paymentInfo?: PaymentInfo;
   shippingMethod: string;
+  billingAddressId?: number;
+  shippingAddressId: number;
   billingAddress?: Address;
   shippingAddress?: Address;
   orderItems: OrderItem[];
@@ -49,16 +30,28 @@ export interface Order {
 
 export interface OrderItem {
   orderItemId: number;
-  product: Product | number; // Can be either a Product object or just a productId
-  productId?: number;
+  orderId?: number;
+  product?: Product;
+  productId: number;
   quantity: number;
   price: number;
   productSnapshot?: any; // To store a snapshot of the product at the time of ordering
 }
 
+export interface PaymentInfo {
+  paymentId?: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  cardLast4?: string;
+  cardBrand?: string;
+  transactionId?: string;
+  paymentDate?: string;
+}
+
 export enum OrderStatus {
   PENDING = 'PENDING',
   PROCESSING = 'PROCESSING',
+  CONFIRMED = 'CONFIRMED',
   SHIPPED = 'SHIPPED',
   DELIVERED = 'DELIVERED',
   CANCELLED = 'CANCELLED',
@@ -75,12 +68,15 @@ export enum PaymentStatus {
 
 export interface OrderRequest {
   userId: number;
-  billingAddressId: number | null;
+  cartId?: number;
+  billingAddressId?: number | null;
   shippingAddressId: number | null;
-  items: OrderItemRequest[];  // This was previously cartItems
-  totalPrice: number;
+  items?: OrderItemRequest[];
+  paymentMethodId?: string;
+  totalPrice?: number;
   shippingMethod: string;
   paymentMethod: string;
+  couponCode?: string;
   orderNotes?: string | null;
 }
 
@@ -88,4 +84,11 @@ export interface OrderItemRequest {
   productId: number;
   quantity: number;
   price: number;
+}
+
+export interface OrderResponse {
+  orders: Order[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
 }

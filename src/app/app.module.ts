@@ -37,12 +37,18 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 import { TruncatePipe } from './shared/pipes/truncate.pipe';
+import { MatDialogModule } from '@angular/material/dialog';
 
+import { OrdersModule } from './orders.module';
+import { ToastrModule } from 'ngx-toastr';
 import { CategoryService } from './services/category/category.service';
 import { ReportService } from './services/report/report.service';
 import { InventoryService } from './services/inventory/inventory.service';
 import { CartService } from './services/cart/cart.service';
 import { CheckoutService } from './services/checkout/checkout.service';
+import { InventoryComponent } from './components/admin/inventory/inventory.component';
+import { UserProfileComponent } from './components/user-profile/user-profile.component';
+
 
 export function tokenGetter() {
   return localStorage.getItem('token');
@@ -94,6 +100,9 @@ export function preloadCategories(categoryService: CategoryService) {
     FooterComponent,
     LoadingSpinnerComponent,
     TruncatePipe,
+    InventoryComponent,
+    UserProfileComponent,
+  
   
   ],
   imports: [
@@ -103,9 +112,11 @@ export function preloadCategories(categoryService: CategoryService) {
     ReactiveFormsModule,
     RouterModule,
     CommonModule,
+    OrdersModule,
+    MatDialogModule,
     FormsModule,
     FontAwesomeModule,
-    SocialLoginModule,
+    SocialLoginModule, ToastrModule.forRoot(),
     JwtModule.forRoot({
       config: {
         tokenGetter: tokenGetter,

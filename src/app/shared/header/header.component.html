@@ -64,17 +64,20 @@
           
           <a routerLink="/products" routerLinkActive="text-sky-600" class="text-gray-700 hover:text-sky-600 font-medium">Products</a>
           
-          <a routerLink="/contact" routerLinkActive="text-sky-600" class="text-gray-700 hover:text-sky-600 font-medium">Contact</a>
+          <!-- Changed from fixed link to method call that checks user role -->
+          <a (click)="goToOrders()" routerLinkActive="text-sky-600" class="text-gray-700 hover:text-sky-600 font-medium cursor-pointer">My Orders</a>
+          
+          <!-- <a routerLink="/contact" routerLinkActive="text-sky-600" class="text-gray-700 hover:text-sky-600 font-medium">Contact</a> -->
         </nav>
         
         <!-- Action Buttons -->
         <div class="flex items-center space-x-4">
           <!-- Search -->
-          <button class="text-gray-700 hover:text-sky-600 p-2 rounded-full hover:bg-gray-100">
+          <!-- <button class="text-gray-700 hover:text-sky-600 p-2 rounded-full hover:bg-gray-100">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
-          </button>
+          </button> -->
           
           <!-- Cart -->
           <button (click)="goToCart()" class="text-gray-700 hover:text-sky-600 p-2 rounded-full hover:bg-gray-100 relative">
@@ -100,7 +103,8 @@
               <a (click)="goToProfile()" class="block px-4 py-2 text-gray-700 hover:bg-sky-50 hover:text-sky-600 cursor-pointer">
                 My Profile
               </a>
-              <a routerLink="/orders" class="block px-4 py-2 text-gray-700 hover:bg-sky-50 hover:text-sky-600">
+              <!-- Use the goToOrders method instead of a fixed link -->
+              <a (click)="goToOrders()" class="block px-4 py-2 text-gray-700 hover:bg-sky-50 hover:text-sky-600 cursor-pointer">
                 My Orders
               </a>
               <a *ngIf="isAdmin" (click)="goToDashboard()" class="block px-4 py-2 text-gray-700 hover:bg-sky-50 hover:text-sky-600 cursor-pointer">
@@ -144,7 +148,6 @@
         <a routerLink="/home" routerLinkActive="text-sky-600" [routerLinkActiveOptions]="{exact: true}" class="text-gray-700 py-2 border-b border-gray-100">Home</a>
         <a routerLink="/products" routerLinkActive="text-sky-600" class="text-gray-700 py-2 border-b border-gray-100">Products</a>
         
-        
         <!-- Categories in mobile view -->
         <div class="py-2 border-b border-gray-100">
           <span class="font-medium text-gray-700">Popular Categories</span>
@@ -168,8 +171,11 @@
           </span>
         </a>
         
-        <a routerLink="/sale" routerLinkActive="text-sky-600" class="text-pink-600 py-2 border-b border-gray-100">Sale</a>
-        <a routerLink="/contact" routerLinkActive="text-sky-600" class="text-gray-700 py-2 border-b border-gray-100">Contact</a>
+        <!-- Use the goToOrders method instead of a fixed link -->
+        <a (click)="goToOrders()" class="text-gray-700 py-2 border-b border-gray-100 cursor-pointer">My Orders</a>
+        
+        <!-- <a routerLink="/sale" routerLinkActive="text-sky-600" class="text-pink-600 py-2 border-b border-gray-100">Sale</a>
+        <a routerLink="/contact" routerLinkActive="text-sky-600" class="text-gray-700 py-2 border-b border-gray-100">Contact</a> -->
         
         <!-- Auth Buttons in Mobile Menu -->
         <div *ngIf="!isLoggedIn" class="flex flex-col space-y-2 pt-2">
@@ -185,7 +191,7 @@
         <div *ngIf="isLoggedIn" class="flex flex-col space-y-2 pt-2">
           <div class="font-medium text-gray-700 border-b border-gray-100 pb-2">Hello, {{ username }}</div>
           <a (click)="goToProfile()" class="text-gray-600 hover:text-sky-600 py-2 cursor-pointer">My Profile</a>
-          <a routerLink="/orders" class="text-gray-600 hover:text-sky-600 py-2">My Orders</a>
+          <a (click)="goToOrders()" class="text-gray-600 hover:text-sky-600 py-2 cursor-pointer">My Orders</a>
           <a routerLink="/cart" class="text-gray-600 hover:text-sky-600 py-2">My Cart</a>
           <a *ngIf="isAdmin" (click)="goToDashboard()" class="text-gray-600 hover:text-sky-600 py-2 cursor-pointer">Admin Dashboard</a>
           <a (click)="logout()" class="text-red-600 hover:text-red-700 py-2 cursor-pointer">Logout</a>

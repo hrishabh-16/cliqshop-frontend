@@ -2,6 +2,7 @@ import { Component, OnInit, Input, Output, EventEmitter, ViewChild, ElementRef, 
 import { Router } from '@angular/router';
 import { CheckoutService } from '../../services/checkout/checkout.service';
 import { AuthService } from '../../services/auth/auth.service';
+import { CartService } from '../../services/cart/cart.service';
 
 declare var Stripe: any;
 
@@ -38,6 +39,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
   constructor(
     private checkoutService: CheckoutService,
     private authService: AuthService,
+    private cartService: CartService,
     private router: Router,
     private ngZone: NgZone
   ) { }
@@ -56,7 +58,10 @@ export class PaymentComponent implements OnInit, OnDestroy {
       },
       error: (error) => {
         console.error('Error fetching Stripe config:', error);
-        this.showError('Failed to initialize payment system. Please try again later.');
+        // Fallback to using the hardcoded key from application.properties
+        setTimeout(() => {
+          this.initializeStripe('pk_test_51PX0GoEwavEcfWl1BeMUetVJmMx0uwoVCSInMUu8OJxFf2fXgZppwfG9scwfE6Ra9QRJu1lnTCq56FNc7ZgkXVB000nmnzVM1E');
+        }, 500);
       }
     });
   }
@@ -71,7 +76,8 @@ export class PaymentComponent implements OnInit, OnDestroy {
   private initializeStripe(publishableKey: string): void {
     try {
       console.log('Initializing Stripe with key:', publishableKey);
-      // Initialize Stripe with your publishable key
+      
+      // Initialize Stripe with publishable key
       this.stripe = Stripe(publishableKey);
   
       // Create card element
@@ -95,28 +101,22 @@ export class PaymentComponent implements OnInit, OnDestroy {
       });
   
       console.log('Card element created');
+      
+      // Wait for DOM to be ready then mount card - simpler approach without zone handling
+      if (this.cardElement && this.cardElement.nativeElement) {
+        console.log('Mounting card element to DOM');
+        this.card.mount(this.cardElement.nativeElement);
   
-      // Mount the card element only if element is available
-      this.ngZone.runOutsideAngular(() => {
-        if (this.cardElement && this.cardElement.nativeElement) {
-          console.log('Mounting card element to DOM');
-          this.card.mount(this.cardElement.nativeElement);
-  
-          // Listen for changes in the card element
-          this.card.on('change', (event: any) => {
-            this.ngZone.run(() => {
-              console.log('Card input changed:', event.complete ? 'complete' : 'incomplete');
-              this.cardComplete = event.complete;
-              this.cardError = event.error ? event.error.message : '';
-            });
-          });
-        } else {
-          console.error('Card element not found in DOM');
-          this.ngZone.run(() => {
-            this.showError('Payment form could not be loaded. Please refresh and try again.');
-          });
-        }
-      });
+        // Listen for changes in the card element
+        this.card.on('change', (event: any) => {
+          console.log('Card input changed:', event.complete ? 'complete' : 'incomplete');
+          this.cardComplete = event.complete;
+          this.cardError = event.error ? event.error.message : '';
+        });
+      } else {
+        console.error('Card element not found in DOM');
+        this.showError('Payment form could not be loaded. Please refresh and try again.');
+      }
   
       // Create a payment intent if we have an order ID
       if (this.orderId) {
@@ -152,9 +152,9 @@ export class PaymentComponent implements OnInit, OnDestroy {
     this.checkoutService.createPaymentIntent(paymentIntentRequest).subscribe({
       next: (response) => {
         console.log('Payment intent created successfully:', response);
-        if (response && response.success) {
+        if (response && response.clientSecret) {
           this.clientSecret = response.clientSecret;
-          this.paymentIntentId = response.paymentIntentId;
+          this.paymentIntentId = response.paymentIntentId || '';
           console.log('Ready for payment confirmation with client secret');
         } else {
           console.error('Payment intent creation failed:', response);
@@ -193,6 +193,7 @@ export class PaymentComponent implements OnInit, OnDestroy {
     this.isProcessing = true;
     console.log('Confirming card payment with Stripe...');
   
+    // Process the payment with Stripe
     this.stripe.confirmCardPayment(this.clientSecret, {
       payment_method: {
         card: this.card,
@@ -216,6 +217,30 @@ export class PaymentComponent implements OnInit, OnDestroy {
           if (result.paymentIntent && result.paymentIntent.status === 'succeeded') {
             console.log('Payment succeeded!');
             this.paymentSuccess = true;
+            
+            // Clear the cart immediately
+            const user = this.authService.getCurrentUser();
+            if (user && user.userId) {
+              console.log('Clearing cart for user:', user.userId);
+              this.cartService.clearCart(user.userId).subscribe({
+                next: () => {
+                  console.log('Cart cleared successfully after payment');
+                  
+                  // Redirect to the order confirmation page
+                  this.router.navigate(['/order-confirmation'], { 
+                    queryParams: { orderId: this.orderId }
+                  });
+                },
+                error: (err) => console.error('Error clearing cart after payment:', err)
+              });
+            } else {
+              // If for some reason user isn't available, still redirect
+              this.router.navigate(['/order-confirmation'], { 
+                queryParams: { orderId: this.orderId }
+              });
+            }
+            
+            // Emit payment complete event
             this.paymentComplete.emit({
               success: true,
               paymentIntentId: result.paymentIntent.id
@@ -236,13 +261,11 @@ export class PaymentComponent implements OnInit, OnDestroy {
   }
 
   showError(message: string): void {
-    this.ngZone.run(() => {
-      this.paymentError = true;
-      this.paymentErrorMessage = message;
-      this.paymentComplete.emit({
-        success: false,
-        error: message
-      });
+    this.paymentError = true;
+    this.paymentErrorMessage = message;
+    this.paymentComplete.emit({
+      success: false,
+      error: message
     });
   }
 

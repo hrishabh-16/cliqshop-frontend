@@ -557,7 +557,7 @@ export class CheckoutComponent implements OnInit {
               });
             } else {
               // Same address for shipping or don't save shipping address
-              orderRequest.shippingAddressId = orderRequest.billingAddressId;
+              orderRequest.shippingAddressId = orderRequest.billingAddressId ?? 0; // Default to 0 if null or undefined
               this.submitOrder(orderRequest);
             }
           },
@@ -609,23 +609,25 @@ export class CheckoutComponent implements OnInit {
         console.log('Order placed successfully:', orderResponse);
         this.ngZone.run(() => {
           this.orderId = orderResponse.orderId;
+          this.isSubmitting = false;
           
           if (paymentMethod === 'card') {
             // If payment method is card, show the payment component
             console.log('Showing payment component for card payment');
             this.paymentAmount = this.calculateTotal();
             this.showPaymentComponent = true;
-            this.isSubmitting = false;
           } else {
             // For other payment methods (COD, etc.), proceed as before
             console.log('Order complete with non-card payment');
-            this.isSubmitting = false;
             this.showNotification('Order placed successfully!', 'success');
-            // Clear cart and redirect to order confirmation page
+            
+            // Clear cart for non-card payment methods
             this.cartService.clearCart(orderRequest.userId).subscribe({
-              next: () => console.log('Cart cleared'),
-              error: (err) => console.error('Error clearing cart:', err)
+              next: () => console.log('Cart cleared successfully after non-card payment'),
+              error: (err) => console.error('Error clearing cart after non-card payment:', err)
             });
+            
+            // Redirect to order confirmation page
             this.router.navigate(['/order-confirmation'], { 
               queryParams: { orderId: orderResponse.orderId }
             });
@@ -636,12 +638,12 @@ export class CheckoutComponent implements OnInit {
         console.error('Error placing order:', error);
         
         // Simple retry without complex logic
-        if (this.retryCount < 2) {
+        if (this.retryCount < this.maxRetries) {
           this.retryCount++;
-          this.showNotification(`Connection issue. Retrying... (${this.retryCount}/2)`, 'error');
+          this.showNotification(`Connection issue. Retrying... (${this.retryCount}/${this.maxRetries})`, 'error');
           
           setTimeout(() => {
-            console.log(`Retry attempt ${this.retryCount}/2`);
+            console.log(`Retry attempt ${this.retryCount}/${this.maxRetries}`);
             this.submitOrder(orderRequest);
           }, 1000);
         } else {
@@ -670,15 +672,7 @@ export class CheckoutComponent implements OnInit {
       this.paymentSuccessful = true;
       this.showNotification('Payment successful!', 'success');
       
-      // Clear cart
-      const userId = this.authService.getCurrentUser()?.userId;
-      if (userId) {
-        console.log('Clearing cart after successful payment');
-        this.cartService.clearCart(userId).subscribe({
-          next: () => console.log('Cart cleared successfully'),
-          error: (err) => console.error('Error clearing cart:', err)
-        });
-      }
+      // Note: Cart is already cleared in the payment component
       
       // Redirect to order confirmation page
       setTimeout(() => {
