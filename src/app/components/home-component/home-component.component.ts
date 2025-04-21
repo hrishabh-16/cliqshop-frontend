@@ -17,6 +17,7 @@ import { finalize } from 'rxjs/operators';
 export class HomeComponent implements OnInit, AfterViewChecked {
   @ViewChild('chatMessages') private chatMessagesContainer!: ElementRef;
   
+  
   featuredProducts: Product[] = [];
   latestProducts: Product[] = [];
   categories: Category[] = [];
@@ -112,6 +113,11 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         }
       });
   }
+
+  getCategoryName(productCategoryId: number): string {
+    const category = this.categories.find(c => c.categoryId === productCategoryId);
+    return category?.name || 'General';
+  }
   
   // Check and load products if needed
   checkAndLoadProducts(): void {
@@ -204,6 +210,60 @@ export class HomeComponent implements OnInit, AfterViewChecked {
         this.latestProducts = this.homeService.getMockProducts(4);
       }
     });
+  }
+
+  getCategoryColor(category: any): string {
+    // Create a consistent color based on category name
+    const colors = [
+      'bg-gradient-to-r from-pink-500 to-rose-500',
+      'bg-gradient-to-r from-amber-500 to-yellow-500',
+      'bg-gradient-to-r from-green-500 to-emerald-500',
+      'bg-gradient-to-r from-blue-500 to-indigo-500',
+      'bg-gradient-to-r from-purple-500 to-violet-500',
+      'bg-gradient-to-r from-cyan-500 to-sky-500',
+      'bg-gradient-to-r from-red-500 to-orange-500'
+    ];
+    
+    // Get a consistent index based on category name
+    const index = Math.abs(this.hashCode(category.name)) % colors.length;
+    return colors[index];
+  }
+  
+
+  getCategoryGradient(category: any): string {
+    // Create consistent gradients based on category name
+    const gradients = [
+      'bg-gradient-to-br from-indigo-500 to-purple-600',
+      'bg-gradient-to-br from-rose-500 to-pink-600',
+      'bg-gradient-to-br from-emerald-500 to-teal-600',
+      'bg-gradient-to-br from-amber-500 to-orange-600',
+      'bg-gradient-to-br from-blue-500 to-cyan-600',
+      'bg-gradient-to-br from-violet-500 to-fuchsia-600',
+      'bg-gradient-to-br from-lime-500 to-green-600'
+    ];
+    
+    const index = Math.abs(this.hashCode(category.name)) % gradients.length;
+    return gradients[index];
+  }
+  
+  getCategoryIcon(categoryName: string): string {
+    // Map category names to specific icons
+    const name = categoryName.toLowerCase();
+    if (name.includes('electron') || name.includes('tech')) return 'electronics';
+    if (name.includes('cloth') || name.includes('fashion')) return 'clothing';
+    if (name.includes('home') || name.includes('furniture')) return 'home';
+    return 'default';
+  }
+  
+  // Simple hash function for consistent colors
+  hashCode(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32bit integer
+    }
+    return hash;
   }
 
   searchProducts(): void {

@@ -49,19 +49,20 @@
 </div>
 
 <!-- Main Content -->
-<main class="bg-gradient-to-b from-sky-50 to-white">
+<main class="bg-gradient-to-b from-sky-50 to-white overflow-x-hidden max-w-full">
   <!-- Hero Slider Section -->
   <section class="relative mb-12 bg-sky-50 py-8">
     <div class="container mx-auto px-4">
-      <div class="overflow-hidden rounded-xl shadow-2xl h-[450px]">
+      <div class="overflow-hidden rounded-xl shadow-2xl h-[450px] relative">
         <!-- Dynamic Slides -->
         <div *ngFor="let banner of banners; let i = index"
           [ngClass]="{'opacity-0 translate-x-full absolute': currentSlide !== i, 'opacity-100 translate-x-0 relative': currentSlide === i}"
-          class="w-full h-full bg-gradient-to-r from-sky-900 to-sky-700 bg-cover bg-center transition-all duration-700 ease-in-out"
-          [style.background-image]="'url(' + (banner.image || 'https://images.unsplash.com/photo-1607082349566-187342175e2f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80') + ')'">
+          class="w-full h-full transition-all duration-700 ease-in-out"
+          [style.background-image]="'url(' + (banner.image || 'https://images.unsplash.com/photo-1607082349566-187342175e2f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80') + ')'"
+          style="background-size: cover; background-position: center;">
           <div class="absolute inset-0 bg-black opacity-30"></div>
           <div class="absolute inset-0 flex flex-col justify-center items-start p-12 text-white animate-fadeIn">
-            <h1 class="text-5xl md:text-6xl font-bold mb-4 animate-slideInRight">{{ banner.title }}</h1>
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-4 animate-slideInRight">{{ banner.title }}</h1>
             <p class="text-lg md:text-xl mb-8 max-w-xl animate-slideInRight animation-delay-100">{{ banner.subtitle }}
             </p>
             <button (click)="navigateToProducts()"
@@ -74,132 +75,275 @@
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- Slider Controls -->
-      <button (click)="prevSlide()"
-        class="absolute left-6 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-75 p-3 rounded-full shadow-md hover:bg-opacity-100 transition-all hover:bg-sky-100 z-10">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-          class="h-6 w-6 text-sky-900">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-      </button>
-      <button (click)="nextSlide()"
-        class="absolute right-6 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-75 p-3 rounded-full shadow-md hover:bg-opacity-100 transition-all hover:bg-sky-100 z-10">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-          class="h-6 w-6 text-sky-900">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
+        <!-- Slider Controls - Enhanced buttons -->
+        <button (click)="prevSlide()"
+          class="absolute left-6 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-75 p-3 rounded-full shadow-md hover:bg-opacity-100 transition-all hover:bg-sky-100 z-10 focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            class="h-6 w-6 text-sky-900">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+        </button>
+        <button (click)="nextSlide()"
+          class="absolute right-6 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-75 p-3 rounded-full shadow-md hover:bg-opacity-100 transition-all hover:bg-sky-100 z-10 focus:outline-none focus:ring-2 focus:ring-sky-500">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+            class="h-6 w-6 text-sky-900">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </button>
 
-      <!-- Slider Dots -->
-      <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 z-10">
-        <button *ngFor="let banner of banners; let i = index" (click)="goToSlide(i)"
-          [ngClass]="{'bg-sky-500 w-10': currentSlide === i, 'bg-white bg-opacity-60 w-3': currentSlide !== i}"
-          class="h-3 rounded-full transition-all duration-300 hover:bg-sky-400"></button>
+        <!-- Slider Dots -->
+        <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex space-x-3 z-10">
+          <button *ngFor="let banner of banners; let i = index" (click)="goToSlide(i)"
+            [ngClass]="{'bg-sky-500 w-10': currentSlide === i, 'bg-white bg-opacity-60 w-3': currentSlide !== i}"
+            class="h-3 rounded-full transition-all duration-300 hover:bg-sky-400 focus:outline-none"></button>
+        </div>
       </div>
     </div>
+  </section>
 
-    <!-- Category Circle Navigation -->
-    <section class="py-10 mb-12 container mx-auto px-4">
+  <!-- Category Circle Navigation -->
+  <section class="py-10 mb-12 container mx-auto px-4">
+    <div class="flex justify-between items-center mb-8">
+      <h2 class="text-2xl font-bold text-sky-900">Shop By Category</h2>
+      <a routerLink="/categories" class="text-sky-600 hover:text-sky-800 flex items-center group">
+        View all
+        <svg xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </a>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-6 justify-items-center">
+      <div *ngFor="let category of categories.slice(0, 7); trackBy: trackById"
+        (click)="navigateToCategory(category.categoryId || category.id)"
+        class="cursor-pointer flex flex-col items-center group">
+        <div
+          class="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full overflow-hidden mb-3 border-2 border-sky-200 shadow-md hover:shadow-lg transition-all duration-300 group-hover:border-sky-500 transform group-hover:scale-105 flex items-center justify-center"
+          [style.background]="getCategoryColor(category)">
+          <span class="text-3xl md:text-4xl font-bold text-white">{{ category.name.charAt(0).toUpperCase() }}</span>
+        </div>
+        <span class="text-sm font-medium text-center text-sky-900 group-hover:text-sky-600 transition-colors">
+          {{ category.name }}
+        </span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured categories section -->
+  <section class="py-12 mb-12 bg-sky-100">
+    <div class="container mx-auto px-4">
       <div class="flex justify-between items-center mb-8">
-        <h2 class="text-2xl font-bold text-sky-900">Shop By Category</h2>
+        <h2 class="text-3xl font-bold text-sky-900">Categories You Might Like</h2>
         <a routerLink="/categories" class="text-sky-600 hover:text-sky-800 flex items-center group">
           View all
           <svg xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none"
-            viewBox="0 0 24 24" stroke="currentColor">
+            class="h-5 w-5 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
         </a>
       </div>
-      <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-6 justify-items-center">
-        <div *ngFor="let category of categories.slice(0, 7); trackBy: trackById"
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <!-- Featured category cards -->
+        <div *ngFor="let category of categories.slice(0, 4); trackBy: trackById"
           (click)="navigateToCategory(category.categoryId || category.id)"
-          class="cursor-pointer flex flex-col items-center group">
-          <div
-            class="w-28 h-28 rounded-full overflow-hidden mb-3 border-2 border-sky-200 shadow-md hover:shadow-lg transition-all duration-300 group-hover:border-sky-500 transform group-hover:scale-105">
-            <img *ngIf="category.imageUrl" [src]="category.imageUrl" alt="{{ category.name }}"
-              class="w-full h-full object-cover">
-            <!-- Placeholder if no image -->
-            <div *ngIf="!category.imageUrl"
-              class="w-full h-full bg-sky-100 flex items-center justify-center text-sky-800">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            </div>
-          </div>
-          <span class="text-sm font-medium text-center text-sky-900 group-hover:text-sky-600 transition-colors">{{
-            category.name }}</span>
-        </div>
-      </div>
-    </section>
+          class="relative rounded-xl overflow-hidden shadow-lg group cursor-pointer transform transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
 
-    <!-- Featured categories section -->
-    <section class="py-12 mb-12 bg-sky-100">
-      <div class="container mx-auto px-4">
-        <div class="flex justify-between items-center mb-8">
-          <h2 class="text-3xl font-bold text-sky-900">Categories You Might Like</h2>
-          <a routerLink="/categories" class="text-sky-600 hover:text-sky-800 flex items-center group">
-            View all
-            <svg xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </a>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          <!-- Featured category cards -->
-          <div *ngFor="let category of categories.slice(0, 4); trackBy: trackById"
-            (click)="navigateToCategory(category.categoryId || category.id)"
-            class="relative rounded-xl overflow-hidden shadow-lg group cursor-pointer transform transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
-            <div class="aspect-w-3 aspect-h-4">
-              <img *ngIf="category.imageUrl" [src]="category.imageUrl" alt="{{ category.name }}"
-                class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
-              <!-- Placeholder if no image -->
-              <div *ngIf="!category.imageUrl"
-                class="w-full h-full bg-sky-200 flex items-center justify-center text-sky-800">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-20 w-20" fill="none" viewBox="0 0 24 24"
-                  stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+          <!-- Gradient background with icon -->
+          <div class="aspect-w-3 aspect-h-4 h-64">
+            <div class="w-full h-full flex items-center justify-center" [ngClass]="getCategoryGradient(category)">
+              <div class="text-white p-8 text-center">
+                <div class="mb-4">
+                  <svg [ngSwitch]="getCategoryIcon(category.name)" class="h-16 w-16 mx-auto">
+                    <!-- Electronics -->
+                    <svg *ngSwitchCase="'electronics'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z" />
+                    </svg>
+                    <!-- Clothing -->
+                    <svg *ngSwitchCase="'clothing'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    <!-- Home -->
+                    <svg *ngSwitchCase="'home'" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                    </svg>
+                    <!-- Default -->
+                    <svg *ngSwitchDefault xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                      stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                  </svg>
+                </div>
+                <h3 class="text-xl font-bold text-white">{{ category.name }}</h3>
               </div>
             </div>
-            <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black to-transparent text-white">
-              <h3
-                class="text-xl font-bold mb-3 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                {{ category.name }}
-              </h3>
-              <p class="mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100 text-sm">
-                Explore our collection of {{ category.name.toLowerCase() }}
-              </p>
-              <button
-                class="bg-sky-500 hover:bg-sky-600 text-white py-2 px-6 rounded-lg text-sm font-medium transition-all hover:shadow-md transform translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 duration-300 delay-150 flex items-center">
-                Shop Now
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24"
+          </div>
+
+          <!-- Overlay content -->
+          <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/70 to-transparent text-white">
+            <h3
+              class="text-xl font-bold mb-3 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+              {{ category.name }}
+            </h3>
+            <p class="mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 delay-100 text-sm">
+              Explore our collection of {{ category.name.toLowerCase() }}
+            </p>
+            <button
+              class="bg-white/90 hover:bg-white text-sky-800 py-2 px-6 rounded-lg text-sm font-medium transition-all hover:shadow-md transform translate-y-2 group-hover:translate-y-0 opacity-0 group-hover:opacity-100 duration-300 delay-150 flex items-center">
+              Shop Now
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 ml-2" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Products Section -->
+  <section class="py-12 mb-12 container mx-auto px-4">
+    <div class="flex justify-between items-center mb-8">
+      <h2 class="text-3xl font-bold text-sky-900">Featured Products</h2>
+      <a [routerLink]="['/products']" class="text-sky-600 hover:text-sky-800 flex items-center group">
+        View all
+        <svg xmlns="http://www.w3.org/2000/svg"
+          class="h-5 w-5 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+        </svg>
+      </a>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
+      <!-- Product cards -->
+      <div *ngFor="let product of featuredProducts; trackBy: trackById"
+        class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer"
+        [routerLink]="['/products', product.productId]">
+        <!-- Sale badge -->
+        <div *ngIf="getDiscountPercentage(product) > 0"
+          class="absolute top-3 left-3 bg-rose-500 text-white text-xs font-bold uppercase px-3 py-1.5 rounded-full z-10 shadow-sm animate-pulse">
+          {{ getDiscountPercentage(product) }}% Off
+        </div>
+
+        <div class="relative overflow-hidden">
+          <img
+            [src]="product.imageUrl || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8cHJvZHVjdHxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60'"
+            alt="{{ product.name }}"
+            class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110">
+
+          <!-- Quick actions -->
+          <div
+            class="absolute right-3 top-3 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
+            <button (click)="$event.stopPropagation()"
+              class="bg-white p-2 rounded-full shadow hover:bg-sky-50 hover:text-sky-600 transition-all transform hover:scale-110">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              </svg>
+            </button>
+            <button (click)="$event.stopPropagation()"
+              class="bg-white p-2 rounded-full shadow hover:bg-sky-50 hover:text-sky-600 transition-all transform hover:scale-110">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Add to cart button -->
+          <button (click)="addToCart(product); $event.stopPropagation()"
+            class="absolute bottom-0 left-0 right-0 bg-sky-600 hover:bg-sky-700 text-white py-3 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center font-medium">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            Add to cart
+          </button>
+        </div>
+
+        <div class="p-5">
+          <div class="flex items-center mb-2">
+            <!-- Rating stars -->
+            <div class="flex text-yellow-400">
+              <svg *ngFor="let star of [1, 2, 3, 4, 5]" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
+                viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </div>
+            <span class="text-xs text-gray-500 ml-2">({{ 10 + (product.productId % 90) }} reviews)</span>
+          </div>
+
+          <h3 class="text-lg font-semibold mb-1 text-sky-900 truncate group-hover:text-sky-600 transition-colors">{{
+            product.name }}</h3>
+          <p class="text-gray-600 text-sm mb-3 truncate flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-sky-500" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+            </svg>
+            {{ getCategoryName(product.categoryId) }}
+          </p>
+
+          <div class="flex items-center justify-between">
+            <div>
+              <span *ngIf="getDiscountPercentage(product) > 0" class="text-gray-400 line-through text-sm">₹{{
+                product.price.toFixed(2) }}</span>
+              <span class="text-xl font-bold text-sky-800">₹{{ (product.price * (1 -
+                getDiscountPercentage(product)/100)).toFixed(2) }}</span>
+            </div>
+
+            <!-- Stock status -->
+            <div *ngIf="product.stockQuantity !== undefined"
+              [ngClass]="{'text-emerald-600 bg-emerald-100': product.stockQuantity > 0, 'text-rose-600 bg-rose-100': product.stockQuantity === 0}"
+              class="text-xs font-medium px-2.5 py-1 rounded-full">
+              <span *ngIf="product.stockQuantity > 0" class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
                   stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                 </svg>
-              </button>
+                In Stock
+              </span>
+              <span *ngIf="product.stockQuantity === 0" class="flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Out of Stock
+              </span>
             </div>
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Featured Products Section -->
-    <section class="py-12 mb-12 container mx-auto px-4">
+  <!-- Latest Arrivals Section - Fixed to appear only once -->
+  <section class="py-12 mb-12 bg-gradient-to-br from-sky-100 to-white">
+    <div class="container mx-auto px-4">
       <div class="flex justify-between items-center mb-8">
-        <h2 class="text-3xl font-bold text-sky-900">Featured Products</h2>
+        <h2 class="text-3xl font-bold text-sky-900">Latest Arrivals</h2>
         <a [routerLink]="['/products']" class="text-sky-600 hover:text-sky-800 flex items-center group">
           View all
           <svg xmlns="http://www.w3.org/2000/svg"
-            class="h-5 w-5 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none"
-            viewBox="0 0 24 24" stroke="currentColor">
+            class="h-5 w-5 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
         </a>
@@ -207,21 +351,20 @@
 
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
         <!-- Product cards -->
-        <!-- Product cards in Featured Products Section -->
-        <div *ngFor="let product of featuredProducts; trackBy: trackById" 
-        class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer"
-        [routerLink]="['/products', product.productId]">
-          <!-- Sale badge -->
-          <div *ngIf="getDiscountPercentage(product) > 0"
-            class="absolute top-3 left-3 bg-rose-500 text-white text-xs font-bold uppercase px-3 py-1.5 rounded-full z-10 shadow-sm animate-pulse">
-            {{ getDiscountPercentage(product) }}% Off
+        <div *ngFor="let product of latestProducts; trackBy: trackById"
+          class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer"
+          [routerLink]="['/products', product.productId]">
+          <!-- New badge -->
+          <div
+            class="absolute top-3 left-3 bg-sky-500 text-white text-xs font-bold uppercase px-3 py-1.5 rounded-full z-10 shadow-sm">
+            New
           </div>
 
           <div class="relative overflow-hidden">
             <img
-              [src]="product.imageUrl || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8cHJvZHVjdHxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60'"
+              [src]="product.imageUrl || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHByb2R1Y3R8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60'"
               alt="{{ product.name }}"
-              class="w-full h-72 object-cover transition-transform duration-500 group-hover:scale-110">
+              class="w-full h-64 object-cover transition-transform duration-500 group-hover:scale-110">
 
             <!-- Quick actions -->
             <div
@@ -247,13 +390,15 @@
             </div>
 
             <!-- Add to cart button -->
-            <button (click)="addToCart(product)" 
-        class="absolute bottom-0 left-0 right-0 bg-sky-600 hover:bg-sky-700 text-white py-3 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center font-medium">
-  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-  </svg>
-  Add to cart
-</button>
+            <button (click)="addToCart(product); $event.stopPropagation()"
+              class="absolute bottom-0 left-0 right-0 bg-sky-600 hover:bg-sky-700 text-white py-3 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center font-medium">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Add to cart
+            </button>
           </div>
 
           <div class="p-5">
@@ -269,15 +414,18 @@
               <span class="text-xs text-gray-500 ml-2">({{ 10 + (product.productId % 90) }} reviews)</span>
             </div>
 
-            <h3 class="text-lg font-semibold mb-1 text-sky-900 truncate group-hover:text-sky-600 transition-colors">{{
-              product.name }}</h3>
+            <h3 class="text-lg font-semibold mb-1 text-sky-900 truncate group-hover:text-sky-600 transition-colors">
+              {{ product.name }}
+            </h3>
+            
+            <!-- Fixed category display from categories - fixed from 'this' to show proper category name -->
             <p class="text-gray-600 text-sm mb-3 truncate flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-sky-500" fill="none" viewBox="0 0 24 24"
                 stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
               </svg>
-              {{ product.categoryName || 'General' }}
+              {{ getCategoryName(product.categoryId) }}
             </p>
 
             <div class="flex items-center justify-between">
@@ -291,7 +439,7 @@
               <!-- Stock status -->
               <div *ngIf="product.stockQuantity !== undefined"
                 [ngClass]="{'text-emerald-600 bg-emerald-100': product.stockQuantity > 0, 'text-rose-600 bg-rose-100': product.stockQuantity === 0}"
-                class="text-xs font-medium px-2 py-1 rounded-full">
+                class="text-xs font-medium px-2.5 py-1 rounded-full">
                 <span *ngIf="product.stockQuantity > 0" class="flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
                     stroke="currentColor">
@@ -311,76 +459,58 @@
           </div>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Latest Arrivals Section -->
-    <section class="py-12 mb-12 bg-gradient-to-br from-sky-100 to-white">
-      <div class="container mx-auto px-4">
-        <div class="flex justify-between items-center mb-8">
-          <h2 class="text-3xl font-bold text-sky-900">Latest Arrivals</h2>
-          <a [routerLink]="['/products']" class="text-sky-600 hover:text-sky-800 flex items-center group">
-            View all
-            <svg xmlns="http://www.w3.org/2000/svg"
-              class="h-5 w-5 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none"
-              viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </a>
+  <!-- Deals of the Day Section -->
+  <section class="py-12 mb-12 bg-gradient-to-br from-sky-100 to-white relative overflow-hidden">
+    <!-- Removed absolute positioned elements that were causing scrolling issues -->
+    <div class="container mx-auto px-4 relative z-10">
+      <div class="flex flex-col md:flex-row justify-between items-center mb-10">
+        <div>
+          <h2 class="text-3xl font-bold text-sky-900 mb-2">Deals of the Day</h2>
+          <p class="text-gray-600">Hurry up! These amazing offers end soon.</p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-          <!-- Product cards -->
-          <div *ngFor="let product of featuredProducts; trackBy: trackById" 
-          class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer"
-          [routerLink]="['/products', product.productId]">
-            <!-- New badge -->
-            <div
-              class="absolute top-3 left-3 bg-sky-500 text-white text-xs font-bold uppercase px-3 py-1.5 rounded-full z-10 shadow-sm">
-              New
-            </div>
+        <div
+          class="mt-4 md:mt-0 flex space-x-3 text-sky-900 font-mono font-bold bg-white p-3 rounded-lg shadow-md">
+          <div class="flex flex-col items-center">
+            <span class="text-2xl">23</span>
+            <span class="text-xs text-gray-500">Hours</span>
+          </div>
+          <div class="text-xl">:</div>
+          <div class="flex flex-col items-center">
+            <span class="text-2xl">45</span>
+            <span class="text-xs text-gray-500">Mins</span>
+          </div>
+          <div class="text-xl">:</div>
+          <div class="flex flex-col items-center">
+            <span class="text-2xl">19</span>
+            <span class="text-xs text-gray-500">Secs</span>
+          </div>
+        </div>
+      </div>
 
-            <div class="relative overflow-hidden">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Featured deal cards -->
+        <div *ngFor="let product of featuredProducts.slice(0, 3); trackBy: trackById"
+          class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1 group relative">
+          <!-- Discount badge -->
+          <div
+            class="absolute top-3 right-3 bg-rose-500 text-white text-lg font-bold px-4 py-1 rounded-full z-10 shadow-md animate-pulse">
+            -{{ 30 + (product.productId % 20) }}%
+          </div>
+
+          <div class="flex flex-col md:flex-row">
+            <div class="w-full md:w-2/5 relative overflow-hidden">
               <img
-                [src]="product.imageUrl || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHByb2R1Y3R8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60'"
+                [src]="product.imageUrl || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8cHJvZHVjdHxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60'"
                 alt="{{ product.name }}"
-                class="w-full h-72 object-cover transition-transform duration-500 group-hover:scale-110">
-
-              <!-- Quick actions -->
-              <div
-                class="absolute right-3 top-3 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                <button
-                  class="bg-white p-2 rounded-full shadow hover:bg-sky-50 hover:text-sky-600 transition-all transform hover:scale-110">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                </button>
-                <button
-                  class="bg-white p-2 rounded-full shadow hover:bg-sky-50 hover:text-sky-600 transition-all transform hover:scale-110">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </button>
-              </div>
-
-              <!-- Add to cart button -->
-              <button (click)="addToCart(product)" 
-        class="absolute bottom-0 left-0 right-0 bg-sky-600 hover:bg-sky-700 text-white py-3 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center font-medium">
-  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-  </svg>
-  Add to cart
-</button>
+                class="w-full h-64 md:h-full object-cover transition-transform duration-500 group-hover:scale-110">
             </div>
 
-            <div class="p-5">
+            <div class="w-full md:w-3/5 p-6">
               <div class="flex items-center mb-2">
-                <!-- Rating stars -->
                 <div class="flex text-yellow-400">
                   <svg *ngFor="let star of [1, 2, 3, 4, 5]" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
                     viewBox="0 0 20 20" fill="currentColor">
@@ -388,992 +518,550 @@
                       d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                   </svg>
                 </div>
-                <span class="text-xs text-gray-500 ml-2">({{ 10 + (product.productId % 90) }} reviews)</span>
+                <span class="text-sm text-gray-500 ml-2">({{ 50 + (product.productId % 150) }} reviews)</span>
               </div>
 
-              <h3 class="text-lg font-semibold mb-1 text-sky-900 truncate group-hover:text-sky-600 transition-colors">{{
-                product.name }}</h3>
-              <p class="text-gray-600 text-sm mb-3 truncate flex items-center">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-sky-500" fill="none"
-                  viewBox="0 0 24 24" stroke="currentColor">
+              <h3 class="text-xl font-bold mb-2 text-sky-900">{{ product.name }}</h3>
+              <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ product.description || 'Premium quality
+                product with exceptional features. Get it now at an amazing price!' }}</p>
+
+              <div class="flex items-center mb-4">
+                <span class="text-3xl font-bold text-sky-600">₹{{ (product.price * 0.7).toFixed(2) }}</span>
+                <span class="text-lg text-gray-400 line-through ml-3">₹{{ product.price.toFixed(2) }}</span>
+              </div>
+
+              <button (click)="addToCart(product); $event.stopPropagation()"
+                class="bg-sky-600 hover:bg-sky-700 text-white py-2 px-5 rounded-lg shadow-md hover:shadow-lg transition-all duration-300 flex items-center mt-4">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
+                  stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                {{ product.categoryName || 'General' }}
-              </p>
+                Add to cart
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-              <div class="flex items-center justify-between">
-                <div>
-                  <span *ngIf="getDiscountPercentage(product) > 0" class="text-gray-400 line-through text-sm">₹{{
-                    product.price.toFixed(2) }}</span>
-                  <span class="text-xl font-bold text-sky-800">₹{{ (product.price * (1 -
-                    getDiscountPercentage(product)/100)).toFixed(2) }}</span>
-                </div>
+  <!-- Testimonials Section -->
+  <section class="py-12 mb-12 bg-gradient-to-b from-white to-sky-50">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl font-bold mb-10 text-center text-sky-900">What Our Customers Say</h2>
 
-                <!-- Stock status -->
-                <div *ngIf="product.stockQuantity !== undefined"
-                  [ngClass]="{'text-emerald-600 bg-emerald-100': product.stockQuantity > 0, 'text-rose-600 bg-rose-100': product.stockQuantity === 0}"
-                  class="text-xs font-medium px-2 py-1 rounded-full">
-                  <span *ngIf="product.stockQuantity > 0" class="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                    In Stock
-                  </span>
-                  <span *ngIf="product.stockQuantity === 0" class="flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                    Out of Stock
-                  </span>
-                </div>
-              </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- Testimonial card 1 -->
+        <div
+          class="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-l-4 border-sky-500 flex flex-col transform hover:-translate-y-2">
+          <div class="flex items-center mb-4">
+            <div class="flex text-yellow-400 mb-2">
+              <svg *ngFor="let star of [1, 2, 3, 4, 5]" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </div>
+          </div>
+
+          <div class="text-sky-500 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+            </svg>
+          </div>
+
+          <p class="text-gray-600 mb-6 flex-grow italic">"I've been shopping here for years and the quality
+            never disappoints. The customer service is exceptional and delivery is always on time. Highly
+            recommend!"</p>
+
+          <div class="flex items-center mt-4">
+            <div
+              class="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center text-sky-800 font-bold text-lg mr-3">
+              RS
+            </div>
+            <div>
+              <h4 class="font-bold text-sky-900">Rahul Sharma</h4>
+              <p class="text-sm text-gray-500">Loyal Customer</p>
             </div>
           </div>
         </div>
 
-
-        <!-- Latest Arrivals Section -->
-        <section class="py-12 mb-12 bg-gradient-to-br from-sky-100 to-white">
-          <div class="container mx-auto px-4">
-            <div class="flex justify-between items-center mb-8">
-              <h2 class="text-3xl font-bold text-sky-900">Latest Arrivals</h2>
-              <a [routerLink]="['/products']" class="text-sky-600 hover:text-sky-800 flex items-center group">
-                View all
-                <svg xmlns="http://www.w3.org/2000/svg"
-                  class="h-5 w-5 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none"
-                  viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                </svg>
-              </a>
+        <!-- Testimonial card 2 -->
+        <div
+          class="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-l-4 border-sky-500 flex flex-col transform hover:-translate-y-2">
+          <div class="flex items-center mb-4">
+            <div class="flex text-yellow-400 mb-2">
+              <svg *ngFor="let star of [1, 2, 3, 4, 5]" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
             </div>
+          </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8">
-              <!-- Product cards -->
-              <div *ngFor="let product of featuredProducts; trackBy: trackById" 
-     class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer"
-     [routerLink]="['/products', product.productId]">
-                <!-- New badge -->
-                <div
-                  class="absolute top-3 left-3 bg-sky-500 text-white text-xs font-bold uppercase px-3 py-1.5 rounded-full z-10 shadow-sm">
-                  New
-                </div>
-
-                <div class="relative overflow-hidden">
-                  <img
-                    [src]="product.imageUrl || 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fHByb2R1Y3R8ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60'"
-                    alt="{{ product.name }}"
-                    class="w-full h-72 object-cover transition-transform duration-500 group-hover:scale-110">
-
-                  <!-- Quick actions -->
-                  <div
-                    class="absolute right-3 top-3 flex flex-col space-y-2 opacity-0 group-hover:opacity-100 transition-all duration-300">
-                    <button
-                      class="bg-white p-2 rounded-full shadow hover:bg-sky-50 hover:text-sky-600 transition-all transform hover:scale-110">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                    </button>
-                    <button
-                      class="bg-white p-2 rounded-full shadow hover:bg-sky-50 hover:text-sky-600 transition-all transform hover:scale-110">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  <!-- Add to cart button -->
-                  <button (click)="addToCart(product)" 
-                  class="absolute bottom-0 left-0 right-0 bg-sky-600 hover:bg-sky-700 text-white py-3 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center font-medium">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+          <div class="text-sky-500 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
             </svg>
-            Add to cart
-          </button>
-                </div>
+          </div>
 
-                <div class="p-5">
-                  <div class="flex items-center mb-2">
-                    <!-- Rating stars -->
-                    <div class="flex text-yellow-400">
-                      <svg *ngFor="let star of [1, 2, 3, 4, 5]" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                        viewBox="0 0 20 20" fill="currentColor">
-                        <path
-                          d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    </div>
-                    <span class="text-xs text-gray-500 ml-2">({{ 10 + (product.productId % 90) }} reviews)</span>
-                  </div>
+          <p class="text-gray-600 mb-6 flex-grow italic">"The website is so easy to navigate and the products
+            are exactly as described. I received my order in just 2 days! Will definitely shop again."</p>
 
-                  <h3
-                    class="text-lg font-semibold mb-1 text-sky-900 truncate group-hover:text-sky-600 transition-colors">
-                    {{ product.name }}</h3>
-                  <p class="text-gray-600 text-sm mb-3 truncate flex items-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 text-sky-500" fill="none"
-                      viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
-                    {{ product.categoryName || 'General' }}
-                  </p>
-
-                  <div class="flex items-center justify-between">
-                    <div>
-                      <span *ngIf="getDiscountPercentage(product) > 0" class="text-gray-400 line-through text-sm">₹{{
-                        product.price.toFixed(2) }}</span>
-                      <span class="text-xl font-bold text-sky-800">₹{{ (product.price * (1 -
-                        getDiscountPercentage(product)/100)).toFixed(2) }}</span>
-                    </div>
-
-                    <!-- Stock status -->
-                    <div *ngIf="product.stockQuantity !== undefined"
-                      [ngClass]="{'text-emerald-600 bg-emerald-100': product.stockQuantity > 0, 'text-rose-600 bg-rose-100': product.stockQuantity === 0}"
-                      class="text-xs font-medium px-2 py-1 rounded-full">
-                      <span *ngIf="product.stockQuantity > 0" class="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
-                          stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                        </svg>
-                        In Stock
-                      </span>
-                      <span *ngIf="product.stockQuantity === 0" class="flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24"
-                          stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                        Out of Stock
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+          <div class="flex items-center mt-4">
+            <div
+              class="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center text-sky-800 font-bold text-lg mr-3">
+              AP
             </div>
-
-
-            <!-- Features Section with Animations -->
-            <section class="py-12 mb-12 bg-gradient-to-r from-sky-50 to-white">
-              <div class="container mx-auto px-4">
-                <h2 class="text-3xl font-bold mb-10 text-center text-sky-900">Why Shop With Us</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                  <div
-                    class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-t-4 border-sky-500">
-                    <div class="text-sky-500 mb-6 flex justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                      </svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3 text-sky-900 text-center">Free Shipping</h3>
-                    <p class="text-gray-600 text-center">Enjoy free shipping on all orders over ₹999. Fast delivery to
-                      your doorstep.</p>
-                  </div>
-
-                  <div
-                    class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-t-4 border-sky-500">
-                    <div class="text-sky-500 mb-6 flex justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
-                      </svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3 text-sky-900 text-center">24/7 Support</h3>
-                    <p class="text-gray-600 text-center">Our dedicated customer service team is available around the
-                      clock to assist you.</p>
-                  </div>
-
-                  <div
-                    class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-t-4 border-sky-500">
-                    <div class="text-sky-500 mb-6 flex justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
-                      </svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3 text-sky-900 text-center">30 Days Return</h3>
-                    <p class="text-gray-600 text-center">Not satisfied? Return any item within 30 days for a full refund
-                      or exchange.</p>
-                  </div>
-
-                  <div
-                    class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-t-4 border-sky-500">
-                    <div class="text-sky-500 mb-6 flex justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
-                    </div>
-                    <h3 class="text-xl font-bold mb-3 text-sky-900 text-center">Secure Payments</h3>
-                    <p class="text-gray-600 text-center">Shop with confidence using our 100% secure payment gateway
-                      system.</p>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <!-- Deals of the Day Section -->
-            <section class="py-12 mb-12 bg-gradient-to-br from-sky-100 to-white relative overflow-hidden">
-              <div class="absolute -top-24 -left-24 w-64 h-64 bg-sky-200 rounded-full opacity-50"></div>
-              <div class="absolute -bottom-32 -right-32 w-96 h-96 bg-sky-200 rounded-full opacity-30"></div>
-
-              <div class="container mx-auto px-4 relative z-10">
-                <div class="flex flex-col md:flex-row justify-between items-center mb-10">
-                  <div>
-                    <h2 class="text-3xl font-bold text-sky-900 mb-2">Deals of the Day</h2>
-                    <p class="text-gray-600">Hurry up! These amazing offers end soon.</p>
-                  </div>
-
-                  <div
-                    class="mt-4 md:mt-0 flex space-x-3 text-sky-900 font-mono font-bold bg-white p-3 rounded-lg shadow-md">
-                    <div class="flex flex-col items-center">
-                      <span class="text-2xl">23</span>
-                      <span class="text-xs text-gray-500">Hours</span>
-                    </div>
-                    <div class="text-xl">:</div>
-                    <div class="flex flex-col items-center">
-                      <span class="text-2xl">45</span>
-                      <span class="text-xs text-gray-500">Mins</span>
-                    </div>
-                    <div class="text-xl">:</div>
-                    <div class="flex flex-col items-center">
-                      <span class="text-2xl">19</span>
-                      <span class="text-xs text-gray-500">Secs</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <!-- Featured deal cards -->
-                  <div *ngFor="let product of featuredProducts.slice(0, 3); trackBy: trackById"
-                    class="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform group relative">
-                    <!-- Discount badge -->
-                    <div
-                      class="absolute top-3 right-3 bg-rose-500 text-white text-lg font-bold px-4 py-1 rounded-full z-10 shadow-md animate-pulse">
-                      -{{ 30 + (product.productId % 20) }}%
-                    </div>
-
-                    <div class="flex flex-col md:flex-row">
-                      <div class="w-full md:w-2/5 relative overflow-hidden">
-                        <img
-                          [src]="product.imageUrl || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8cHJvZHVjdHxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60'"
-                          alt="{{ product.name }}"
-                          class="w-full h-64 md:h-full object-cover transition-transform duration-500 group-hover:scale-110">
-                      </div>
-
-                      <div class="w-full md:w-3/5 p-6">
-                        <div class="flex items-center mb-2">
-                          <div class="flex text-yellow-400">
-                            <svg *ngFor="let star of [1, 2, 3, 4, 5]" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4"
-                              viewBox="0 0 20 20" fill="currentColor">
-                              <path
-                                d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                          </div>
-                          <span class="text-sm text-gray-500 ml-2">({{ 50 + (product.productId % 150) }} reviews)</span>
-                        </div>
-
-                        <h3 class="text-xl font-bold mb-2 text-sky-900">{{ product.name }}</h3>
-                        <p class="text-gray-600 text-sm mb-4 line-clamp-2">{{ product.description || 'Premium quality
-                          product with exceptional features. Get it now at an amazing price!' }}</p>
-
-                        <div class="flex items-center mb-4">
-                          <span class="text-3xl font-bold text-sky-600">₹{{ (product.price * 0.7).toFixed(2) }}</span>
-                          <span class="text-lg text-gray-400 line-through ml-3">₹{{ product.price.toFixed(2) }}</span>
-                        </div>
-
-                        <button (click)="addToCart(product)" 
-        class="absolute bottom-0 left-0 right-0 bg-sky-600 hover:bg-sky-700 text-white py-3 opacity-0 group-hover:opacity-100 transition-all duration-300 flex items-center justify-center font-medium">
-  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-  </svg>
-  Add to cart
-</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <!-- Enhanced Search Section with Sky Blue Theme -->
-            <section class="py-12 mb-12 bg-sky-800 relative overflow-hidden">
-              <div class="absolute inset-0 opacity-10">
-                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-                  <defs>
-                    <pattern id="search-pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
-                      <path
-                        d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z"
-                        stroke="white" stroke-width="2" />
-                    </pattern>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#search-pattern)" />
-                </svg>
-              </div>
-
-              <div class="container mx-auto px-4 relative z-10">
-                <div class="max-w-3xl mx-auto">
-                  <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold mb-3 text-white">Find the Perfect Product</h2>
-                    <p class="text-sky-100 mb-8">Explore our vast collection of high-quality products tailored to your
-                      needs</p>
-                  </div>
-
-                  <div class="bg-white p-6 rounded-xl shadow-xl">
-                    <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-3">
-                      <div class="flex-grow relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
-                            viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                          </svg>
-                        </div>
-                        <input type="text" [(ngModel)]="searchQuery" (keyup.enter)="searchProducts()"
-                          placeholder="What are you looking for today?"
-                          class="pl-10 pr-4 py-3 w-full rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500">
-                      </div>
-
-                      <select
-                        class="py-3 px-4 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white text-gray-700">
-                        <option value="">All Categories</option>
-                        <option *ngFor="let category of categories.slice(0, 7)"
-                          [value]="category.categoryId || category.id">
-                          {{ category.name }}
-                        </option>
-                      </select>
-
-                      <button (click)="searchProducts()"
-                        class="bg-sky-600 hover:bg-sky-700 text-white px-8 py-3 rounded-lg transition-all duration-300 transform hover:scale-105 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24"
-                          stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        Search
-                      </button>
-                    </div>
-
-                    <div class="mt-4 flex flex-wrap gap-2">
-                      <span class="text-sm text-gray-500 mr-2">Popular:</span>
-                      <button (click)="quickSearch('shirts')"
-                        class="text-sm px-3 py-1 bg-sky-100 hover:bg-sky-200 text-sky-800 rounded-full transition-colors">Shirts</button>
-                      <button (click)="quickSearch('jeans')"
-                        class="text-sm px-3 py-1 bg-sky-100 hover:bg-sky-200 text-sky-800 rounded-full transition-colors">Jeans</button>
-                      <button (click)="quickSearch('shoes')"
-                        class="text-sm px-3 py-1 bg-sky-100 hover:bg-sky-200 text-sky-800 rounded-full transition-colors">Shoes</button>
-                      <button (click)="quickSearch('electronics')"
-                        class="text-sm px-3 py-1 bg-sky-100 hover:bg-sky-200 text-sky-800 rounded-full transition-colors">Electronics</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <!-- Newsletter Subscription with Animation -->
-            <section class="py-12 mb-12 bg-gradient-to-r from-sky-900 to-sky-700 relative overflow-hidden">
-              <div class="absolute inset-0">
-                <svg xmlns="http://www.w3.org/2000/svg" width="100%" height="100%">
-                  <defs>
-                    <pattern id="email-pattern" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
-                      <path
-                        d="M22 6C22 4.9 21.1 4 20 4H4C2.9 4 2 4.9 2 6M22 6V18C22 19.1 21.1 20 20 20H4C2.9 20 2 19.1 2 18V6M22 6L12 13L2 6"
-                        stroke="white" stroke-width="0.5" stroke-opacity="0.2" />
-                    </pattern>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#email-pattern)" />
-                </svg>
-              </div>
-
-              <div class="container mx-auto px-4 relative z-10">
-                <div class="max-w-3xl mx-auto text-center">
-                  <div class="inline-block bg-sky-500 p-3 rounded-full mb-4 text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <h2 class="text-3xl md:text-4xl font-bold mb-3 text-white">Subscribe to Our Newsletter</h2>
-                  <p class="text-sky-100 mb-8 text-lg">Stay updated with our latest products, offers, and style tips</p>
-
-                  <div class="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
-                    <div class="relative flex-grow">
-                      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none"
-                          viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                        </svg>
-                      </div>
-                      <input type="email" placeholder="Enter your email address"
-                        class="pl-10 pr-4 py-4 w-full rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-300 shadow-md">
-                    </div>
-                    <button
-                      class="bg-white text-sky-800 hover:bg-sky-50 font-bold px-8 py-4 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md">
-                      Subscribe Now
-                    </button>
-                  </div>
-
-                  <p class="text-sky-200 text-sm mt-4">We respect your privacy. Unsubscribe at any time.</p>
-                </div>
-              </div>
-            </section>
-
-            <!-- Testimonials Section -->
-            <section class="py-12 mb-12 bg-gradient-to-b from-white to-sky-50">
-              <div class="container mx-auto px-4">
-                <h2 class="text-3xl font-bold mb-10 text-center text-sky-900">What Our Customers Say</h2>
-
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                  <!-- Testimonial card 1 -->
-                  <div
-                    class="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-l-4 border-sky-500 flex flex-col transform hover:-translate-y-2">
-                    <div class="flex items-center mb-4">
-                      <div class="flex text-yellow-400 mb-2">
-                        <svg *ngFor="let star of [1, 2, 3, 4, 5]" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                          viewBox="0 0 20 20" fill="currentColor">
-                          <path
-                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      </div>
-                    </div>
-
-                    <div class="text-sky-500 mb-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                      </svg>
-                    </div>
-
-                    <p class="text-gray-600 mb-6 flex-grow italic">"I've been shopping here for years and the quality
-                      never disappoints. The customer service is exceptional and delivery is always on time. Highly
-                      recommend!"</p>
-
-                    <div class="flex items-center mt-4">
-                      <div
-                        class="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center text-sky-800 font-bold text-lg mr-3">
-                        RS
-                      </div>
-                      <div>
-                        <h4 class="font-bold text-sky-900">Rahul Sharma</h4>
-                        <p class="text-sm text-gray-500">Loyal Customer</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Testimonial card 2 -->
-                  <div
-                    class="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-l-4 border-sky-500 flex flex-col transform hover:-translate-y-2">
-                    <div class="flex items-center mb-4">
-                      <div class="flex text-yellow-400 mb-2">
-                        <svg *ngFor="let star of [1, 2, 3, 4, 5]" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                          viewBox="0 0 20 20" fill="currentColor">
-                          <path
-                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      </div>
-                    </div>
-
-                    <div class="text-sky-500 mb-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                      </svg>
-                    </div>
-
-                    <p class="text-gray-600 mb-6 flex-grow italic">"The website is so easy to navigate and the products
-                      are exactly as described. I received my order in just 2 days! Will definitely shop again."</p>
-
-                    <div class="flex items-center mt-4">
-                      <div
-                        class="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center text-sky-800 font-bold text-lg mr-3">
-                        AP
-                      </div>
-                      <div>
-                        <h4 class="font-bold text-sky-900">Anjali Patel</h4>
-                        <p class="text-sm text-gray-500">New Customer</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Testimonial card 3 -->
-                  <div
-                    class="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-l-4 border-sky-500 flex flex-col transform hover:-translate-y-2">
-                    <div class="flex items-center mb-4">
-                      <div class="flex text-yellow-400 mb-2">
-                        <svg *ngFor="let star of [1, 2, 3, 4, 5]" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
-                          viewBox="0 0 20 20" fill="currentColor">
-                          <path
-                            d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                      </div>
-                    </div>
-
-                    <div class="text-sky-500 mb-4">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                      </svg>
-                    </div>
-
-                    <p class="text-gray-600 mb-6 flex-grow italic">"Great selection of products at very competitive
-                      prices. The return process was simple and hassle-free when I needed to exchange a size."</p>
-
-                    <div class="flex items-center mt-4">
-                      <div
-                        class="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center text-sky-800 font-bold text-lg mr-3">
-                        VK
-                      </div>
-                      <div>
-                        <h4 class="font-bold text-sky-900">Vikram Kumar</h4>
-                        <p class="text-sm text-gray-500">Regular Shopper</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <!-- Brands We Partner With -->
-            <section class="py-12 mb-12 bg-white">
-              <div class="container mx-auto px-4">
-                <h2 class="text-3xl font-bold mb-10 text-center text-sky-900">Brands We Partner With</h2>
-
-                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                  <!-- Brand logos -->
-                  <div
-                    class="flex items-center justify-center p-6 bg-white rounded-lg border border-gray-200 hover:border-sky-300 hover:shadow-md transition-all duration-300 grayscale hover:grayscale-0">
-                    <img src="https://logowik.com/content/uploads/images/nike-black3883.jpg" alt="Nike" class="h-12">
-                  </div>
-                  <div
-                    class="flex items-center justify-center p-6 bg-white rounded-lg border border-gray-200 hover:border-sky-300 hover:shadow-md transition-all duration-300 grayscale hover:grayscale-0">
-                    <img src="https://logowik.com/content/uploads/images/adidas-black6902.jpg" alt="Adidas"
-                      class="h-12">
-                  </div>
-                  <div
-                    class="flex items-center justify-center p-6 bg-white rounded-lg border border-gray-200 hover:border-sky-300 hover:shadow-md transition-all duration-300 grayscale hover:grayscale-0">
-                    <img src="https://logowik.com/content/uploads/images/puma-black8205.jpg" alt="Puma" class="h-12">
-                  </div>
-                  <div
-                    class="flex items-center justify-center p-6 bg-white rounded-lg border border-gray-200 hover:border-sky-300 hover:shadow-md transition-all duration-300 grayscale hover:grayscale-0">
-                    <img src="https://logowik.com/content/uploads/images/samsung-black6865.jpg" alt="Samsung"
-                      class="h-12">
-                  </div>
-                  <div
-                    class="flex items-center justify-center p-6 bg-white rounded-lg border border-gray-200 hover:border-sky-300 hover:shadow-md transition-all duration-300 grayscale hover:grayscale-0">
-                    <img src="https://logowik.com/content/uploads/images/apple-black1949.jpg" alt="Apple" class="h-12">
-                  </div>
-                  <div
-                    class="flex items-center justify-center p-6 bg-white rounded-lg border border-gray-200 hover:border-sky-300 hover:shadow-md transition-all duration-300 grayscale hover:grayscale-0">
-                    <img src="https://logowik.com/content/uploads/images/sony-black8162.jpg" alt="Sony" class="h-12">
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <!-- Mobile App Download -->
-            <section class="py-12 mb-12 bg-gradient-to-r from-sky-800 to-sky-600 relative overflow-hidden">
-              <div class="absolute top-0 right-0 w-full h-full opacity-10">
-                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="25" cy="25" r="20" fill="white" />
-                  <circle cx="75" cy="75" r="20" fill="white" />
-                  <circle cx="75" cy="25" r="10" fill="white" />
-                  <circle cx="25" cy="75" r="10" fill="white" />
-                </svg>
-              </div>
-
-              <div class="container mx-auto px-4 relative z-10">
-                <div class="flex flex-col lg:flex-row items-center">
-                  <div class="w-full lg:w-1/2 mb-8 lg:mb-0">
-                    <h2 class="text-3xl md:text-4xl font-bold mb-4 text-white">Download Our Mobile App</h2>
-                    <p class="text-sky-100 mb-6 text-lg">Get exclusive app-only offers and shop on the go. Enjoy a
-                      seamless shopping experience wherever you are.</p>
-
-                    <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4">
-                      <a href="#"
-                        class="flex items-center bg-white text-sky-900 px-6 py-3 rounded-lg hover:bg-sky-100 transition-all duration-300 group">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3" viewBox="0 0 24 24"
-                          fill="currentColor">
-                          <path
-                            d="M17.6,13.3c0-0.2,0-0.3,0-0.5c0-0.2,0-0.4,0-0.6c0-0.6,0-1.1,0-1.7c0-0.6,0-1.1,0-1.7c0-0.2,0-0.4,0-0.6c0-0.2,0-0.3,0-0.5 c0-0.6-0.2-1.1-0.7-1.5c-0.4-0.4-1-0.6-1.6-0.6c-0.2,0-0.3,0-0.5,0c-0.2,0-0.3,0-0.5,0c-0.6,0-1.1,0-1.7,0c-0.6,0-1.1,0-1.7,0 c-0.2,0-0.3,0-0.5,0c-0.2,0-0.3,0-0.5,0c-0.6,0-1.1,0.2-1.5,0.6c-0.4,0.4-0.6,0.9-0.6,1.5c0,0.2,0,0.3,0,0.5c0,0.2,0,0.4,0,0.6 c0,0.6,0,1.1,0,1.7c0,0.6,0,1.1,0,1.7c0,0.2,0,0.4,0,0.6c0,0.2,0,0.3,0,0.5c0,0.6,0.2,1.1,0.6,1.5c0.4,0.4,0.9,0.6,1.5,0.6 c0.2,0,0.3,0,0.5,0c0.2,0,0.3,0,0.5,0c0.6,0,1.1,0,1.7,0c0.6,0,1.1,0,1.7,0c0.2,0,0.3,0,0.5,0c0.2,0,0.3,0,0.5,0 c0.6,0,1.1-0.2,1.6-0.6C17.4,14.4,17.6,13.9,17.6,13.3z M13.9,10.6l-3.9,2.3c-0.1,0-0.1,0.1-0.2,0.1c-0.1,0-0.2,0-0.3-0.1 c-0.1-0.1-0.1-0.1-0.1-0.2c0-0.1,0-0.2,0-0.2V8.2c0-0.1,0-0.2,0-0.2c0-0.1,0.1-0.2,0.1-0.2c0.1-0.1,0.2-0.1,0.3-0.1 c0.1,0,0.1,0,0.2,0.1l3.9,2.3c0.1,0,0.1,0.1,0.1,0.2c0,0.1,0,0.2,0,0.2C14,10.5,14,10.5,13.9,10.6z" />
-                        </svg>
-                        <div>
-                          <div class="text-xs">GET IT ON</div>
-                          <div class="text-lg font-bold">Google Play</div>
-                        </div>
-                      </a>
-
-                      <a href="#"
-                        class="flex items-center bg-white text-sky-900 px-6 py-3 rounded-lg hover:bg-sky-100 transition-all duration-300 group">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 mr-3" viewBox="0 0 24 24"
-                          fill="currentColor">
-                          <path
-                            d="M18.71,19.5c-0.83,1.24-1.71,1.5-2.83,1.5c-1.16,0-1.93-0.37-2.83-0.37c-0.93,0-1.7,0.38-2.83,0.38 c-1.15,0-2.1-1.05-2.95-2.32C5.5,15.56,5.27,12.85,6.3,11.07c0.57-0.99,1.6-1.65,2.7-1.65c1.11,0,1.8,0.38,2.71,0.38 c0.92,0,1.48-0.38,2.81-0.38c1.01,0,1.92,0.55,2.48,1.4C16.26,12.4,16.06,15.75,18.71,19.5z M10.77,9.32 c0.97-1.16,1.63-2.76,1.37-4.32c-1.32,0.09-2.94,0.92-3.87,1.98c-0.9,1.01-1.67,2.61-1.37,4.14C8.31,11.16,9.84,10.44,10.77,9.32z" />
-                        </svg>
-                        <div>
-                          <div class="text-xs">Download on the</div>
-                          <div class="text-lg font-bold">App Store</div>
-                        </div>
-                      </a>
-                    </div>
-                  </div>
-
-                  <div class="w-full lg:w-1/2 flex justify-center">
-                    <img src="https://cdn.pixabay.com/photo/2017/01/06/17/49/shopping-cart-1958281_1280.png"
-                      alt="Mobile App" class="max-h-80 object-contain animate-float">
-                  </div>
-                </div>
-              </div>
-            </section>
-
-            <!-- Instagram Feed Section -->
-            <section class="py-12 mb-12">
-              <div class="container mx-auto px-4">
-                <div class="text-center mb-10">
-                  <h2 class="text-3xl font-bold mb-4 text-sky-900">Follow Us on Instagram</h2>
-                  <p class="text-gray-600 max-w-2xl mx-auto">Get inspired by our latest styles and customer favorites.
-                    Tag us with #CliQShop for a chance to be featured!</p>
-                </div>
-
-                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                  <!-- Instagram images -->
-                  <a href="#" class="block overflow-hidden rounded-lg group relative">
-                    <img
-                      src="https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8ZmFzaGlvbnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60"
-                      alt="Instagram post"
-                      class="w-full h-52 object-cover transition-transform duration-500 group-hover:scale-110">
-                    <div
-                      class="absolute inset-0 bg-sky-900 bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-100">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      <span class="text-white font-medium ml-2">256</span>
-                    </div>
-                  </a>
-
-                  <a href="#" class="block overflow-hidden rounded-lg group relative">
-                    <img
-                      src="https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8ZmFzaGlvbnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60"
-                      alt="Instagram post"
-                      class="w-full h-52 object-cover transition-transform duration-500 group-hover:scale-110">
-                    <div
-                      class="absolute inset-0 bg-sky-900 bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-100">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      <span class="text-white font-medium ml-2">312</span>
-                    </div>
-                  </a>
-
-                  <a href="#" class="block overflow-hidden rounded-lg group relative">
-                    <img
-                      src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGZhc2hpb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60"
-                      alt="Instagram post"
-                      class="w-full h-52 object-cover transition-transform duration-500 group-hover:scale-110">
-                    <div
-                      class="absolute inset-0 bg-sky-900 bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-100">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      <span class="text-white font-medium ml-2">189</span>
-                    </div>
-                  </a>
-
-                  <a href="#" class="block overflow-hidden rounded-lg group relative">
-                    <img
-                      src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZmFzaGlvbnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60"
-                      alt="Instagram post"
-                      class="w-full h-52 object-cover transition-transform duration-500 group-hover:scale-110">
-                    <div
-                      class="absolute inset-0 bg-sky-900 bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-100">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      <span class="text-white font-medium ml-2">437</span>
-                    </div>
-                  </a>
-
-                  <a href="#" class="block overflow-hidden rounded-lg group relative">
-                    <img
-                      src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fGZhc2hpb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60"
-                      alt="Instagram post"
-                      class="w-full h-52 object-cover transition-transform duration-500 group-hover:scale-110">
-                    <div
-                      class="absolute inset-0 bg-sky-900 bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-100">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      <span class="text-white font-medium ml-2">285</span>
-                    </div>
-                  </a>
-
-                  <a href="#" class="block overflow-hidden rounded-lg group relative">
-                    <img
-                      src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8ZmFzaGlvbnxlbnwwfDB8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60"
-                      alt="Instagram post"
-                      class="w-full h-52 object-cover transition-transform duration-500 group-hover:scale-110">
-                    <div
-                      class="absolute inset-0 bg-sky-900 bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-100">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                      <span class="text-white font-medium ml-2">328</span>
-                    </div>
-                  </a>
-                </div>
-
-                <div class="text-center mt-8">
-                  <a href="#"
-                    class="inline-flex items-center text-sky-600 hover:text-sky-800 font-semibold transition-colors">
-                    <span>Follow us &#64;cliqshop</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                  </a>
-                </div>
-              </div>
-            </section>
-
-            <!-- Back To Top Button -->
-            <button (click)="scrollToTop()"
-              class="fixed right-6 bottom-6 bg-sky-600 text-white p-3 rounded-full shadow-lg hover:bg-sky-700 transition-all duration-300 z-50 transform hover:scale-110 animate-bounce"
-              [ngClass]="{'opacity-100': showScrollTop, 'opacity-0': !showScrollTop}">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l7-7 7 7M5 19l7-7 7 7" />
-              </svg>
-            </button>
-
-            <!-- Chat Support Button -->
-            <button (click)="toggleChat()"
-              class="fixed right-6 bottom-20 bg-sky-600 text-white p-3 rounded-full shadow-lg hover:bg-sky-700 transition-all duration-300 z-50 transform hover:scale-110 group">
-              <svg *ngIf="!isChatOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-                viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-              </svg>
-              <svg *ngIf="isChatOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              <span
-                class="absolute top-0 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center group-hover:animate-ping-once">1</span>
-            </button>
-
-            <!-- Chat Support Widget -->
-            <div *ngIf="isChatOpen"
-              class="fixed right-6 bottom-24 w-80 bg-white rounded-lg shadow-2xl overflow-hidden z-50 animate-slideUp">
-              <div class="bg-sky-600 text-white p-4 flex justify-between items-center">
-                <div class="flex items-center">
-                  <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
-                  <h3 class="font-medium">Customer Support</h3>
-                </div>
-                <button (click)="toggleChat()" class="text-white hover:text-sky-200">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                    stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-
-              <div class="h-80 overflow-y-auto p-4 bg-gray-50" #chatMessages>
-                <!-- Chat messages -->
-                <div class="flex flex-col space-y-3">
-                  <div class="flex items-start">
-                    <div
-                      class="w-8 h-8 rounded-full bg-sky-600 flex items-center justify-center text-white mr-2 flex-shrink-0">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                      </svg>
-                    </div>
-                    <div class="bg-white p-3 rounded-lg shadow-sm max-w-xs">
-                      <p class="text-sm text-gray-800">Hi there! Welcome to CliQShop. How can I help you today?</p>
-                      <span class="text-xs text-gray-500 mt-1 block">10:32 AM</span>
-                    </div>
-                  </div>
-
-                  <div class="flex items-start justify-end">
-                    <div class="bg-sky-100 p-3 rounded-lg shadow-sm max-w-xs">
-                      <p class="text-sm text-gray-800">Hi! I'm looking for information about shipping.</p>
-                      <span class="text-xs text-gray-500 mt-1 block">10:33 AM</span>
-                    </div>
-                  </div>
-
-                  <div class="flex items-start">
-                    <div
-                      class="w-8 h-8 rounded-full bg-sky-600 flex items-center justify-center text-white mr-2 flex-shrink-0">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
-                        stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                          d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                      </svg>
-                    </div>
-                    <div class="bg-white p-3 rounded-lg shadow-sm max-w-xs">
-                      <p class="text-sm text-gray-800">Of course! We offer free shipping on all orders over ₹999.
-                        Standard delivery takes 2-4 business days. Would you like more information?</p>
-                      <span class="text-xs text-gray-500 mt-1 block">10:34 AM</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="p-3 border-t">
-                <div class="relative">
-                  <input type="text" placeholder="Type your message..."
-                    class="w-full px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 pr-10">
-                  <button class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sky-600 hover:text-sky-800">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                      stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                    </svg>
-                  </button>
-                </div>
-              </div>
+            <div>
+              <h4 class="font-bold text-sky-900">Anjali Patel</h4>
+              <p class="text-sm text-gray-500">New Customer</p>
             </div>
+          </div>
+        </div>
 
-            <!-- Custom CSS for Animations -->
-            <style>
-              @keyframes float {
-                0% {
-                  transform: translateY(0px);
-                }
+        <!-- Testimonial card 3 -->
+        <div
+          class="bg-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-l-4 border-sky-500 flex flex-col transform hover:-translate-y-2">
+          <div class="flex items-center mb-4">
+            <div class="flex text-yellow-400 mb-2">
+              <svg *ngFor="let star of [1, 2, 3, 4, 5]" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5"
+                viewBox="0 0 20 20" fill="currentColor">
+                <path
+                  d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            </div>
+          </div>
 
-                50% {
-                  transform: translateY(-10px);
-                }
+          <div class="text-sky-500 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
+            </svg>
+          </div>
 
-                100% {
-                  transform: translateY(0px);
-                }
-              }
+          <p class="text-gray-600 mb-6 flex-grow italic">"Great selection of products at very competitive
+            prices. The return process was simple and hassle-free when I needed to exchange a size."</p>
 
-              @keyframes fadeIn {
-                from {
-                  opacity: 0;
-                }
+          <div class="flex items-center mt-4">
+            <div
+              class="w-12 h-12 bg-sky-100 rounded-full flex items-center justify-center text-sky-800 font-bold text-lg mr-3">
+              VK
+            </div>
+            <div>
+              <h4 class="font-bold text-sky-900">Vikram Kumar</h4>
+              <p class="text-sm text-gray-500">Regular Shopper</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-                to {
-                  opacity: 1;
-                }
-              }
+  <!-- Instagram Feed Section -->
+  <section class="py-12 mb-12">
+    <div class="container mx-auto px-4">
+      <div class="text-center mb-10">
+        <h2 class="text-3xl font-bold mb-4 text-sky-900">Follow Us on Instagram</h2>
+        <p class="text-gray-600 max-w-2xl mx-auto">Get inspired by our latest styles and customer favorites.
+          Tag us with #CliQShop for a chance to be featured!</p>
+      </div>
 
-              @keyframes slideDown {
-                from {
-                  transform: translateY(-20px);
-                  opacity: 0;
-                }
+      <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <!-- Instagram images -->
+        <a href="#" class="block overflow-hidden rounded-lg group relative">
+          <img
+            src="https://images.unsplash.com/photo-1485230895905-ec40ba36b9bc?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8ZmFzaGlvbnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60"
+            alt="Instagram post"
+            class="w-full h-40 sm:h-52 object-cover transition-transform duration-500 group-hover:scale-110">
+          <div
+            class="absolute inset-0 bg-sky-900 bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            <span class="text-white font-medium ml-2">256</span>
+          </div>
+        </a>
 
-                to {
-                  transform: translateY(0);
-                  opacity: 1;
-                }
-              }
+        <a href="#" class="block overflow-hidden rounded-lg group relative">
+          <img
+            src="https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8M3x8ZmFzaGlvbnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60"
+            alt="Instagram post"
+            class="w-full h-40 sm:h-52 object-cover transition-transform duration-500 group-hover:scale-110">
+          <div
+            class="absolute inset-0 bg-sky-900 bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            <span class="text-white font-medium ml-2">312</span>
+          </div>
+        </a>
 
-              @keyframes slideUp {
-                from {
-                  transform: translateY(20px);
-                  opacity: 0;
-                }
+        <a href="#" class="block overflow-hidden rounded-lg group relative">
+          <img
+            src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTB8fGZhc2hpb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60"
+            alt="Instagram post"
+            class="w-full h-40 sm:h-52 object-cover transition-transform duration-500 group-hover:scale-110">
+          <div
+            class="absolute inset-0 bg-sky-900 bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            <span class="text-white font-medium ml-2">189</span>
+          </div>
+        </a>
 
-                to {
-                  transform: translateY(0);
-                  opacity: 1;
-                }
-              }
+        <a href="#" class="block overflow-hidden rounded-lg group relative">
+          <img
+            src="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8ZmFzaGlvbnxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60"
+            alt="Instagram post"
+            class="w-full h-40 sm:h-52 object-cover transition-transform duration-500 group-hover:scale-110">
+          <div
+            class="absolute inset-0 bg-sky-900 bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            <span class="text-white font-medium ml-2">437</span>
+          </div>
+        </a>
 
-              @keyframes slideInRight {
-                from {
-                  transform: translateX(30px);
-                  opacity: 0;
-                }
+        <a href="#" class="block overflow-hidden rounded-lg group relative">
+          <img
+            src="https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTd8fGZhc2hpb258ZW58MHx8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60"
+            alt="Instagram post"
+            class="w-full h-40 sm:h-52 object-cover transition-transform duration-500 group-hover:scale-110">
+          <div
+            class="absolute inset-0 bg-sky-900 bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            <span class="text-white font-medium ml-2">285</span>
+          </div>
+        </a>
 
-                to {
-                  transform: translateX(0);
-                  opacity: 1;
-                }
-              }
+        <a href="#" class="block overflow-hidden rounded-lg group relative">
+          <img
+            src="https://images.unsplash.com/photo-1539109136881-3be0616acf4b?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Nnx8ZmFzaGlvbnxlbnwwfDB8MHx8fDA%3D&auto=format&fit=crop&w=500&q=60"
+            alt="Instagram post"
+            class="w-full h-40 sm:h-52 object-cover transition-transform duration-500 group-hover:scale-110">
+          <div
+            class="absolute inset-0 bg-sky-900 bg-opacity-0 group-hover:bg-opacity-60 flex items-center justify-center transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+            </svg>
+            <span class="text-white font-medium ml-2">328</span>
+          </div>
+        </a>
+      </div>
 
-              @keyframes ping-once {
-                0% {
-                  transform: scale(1);
-                  opacity: 1;
-                }
+      <div class="text-center mt-8">
+        <a href="#"
+          class="inline-flex items-center text-sky-600 hover:text-sky-800 font-semibold transition-colors">
+          <span>Follow us &#64;cliqshop</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </a>
+      </div>
+    </div>
+  </section>
 
-                50% {
-                  transform: scale(1.5);
-                  opacity: 0.8;
-                }
+  <!-- Why Shop With Us Section -->
+  <section class="py-12 mb-12 bg-gradient-to-r from-sky-50 to-white">
+    <div class="container mx-auto px-4">
+      <h2 class="text-3xl font-bold mb-10 text-center text-sky-900">Why Shop With Us</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div
+          class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-t-4 border-sky-500">
+          <div class="text-sky-500 mb-6 flex justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-3 text-sky-900 text-center">Free Shipping</h3>
+          <p class="text-gray-600 text-center">Enjoy free shipping on all orders over ₹999. Fast delivery to
+            your doorstep.</p>
+        </div>
 
-                100% {
-                  transform: scale(1);
-                  opacity: 1;
-                }
-              }
+        <div
+          class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-t-4 border-sky-500">
+          <div class="text-sky-500 mb-6 flex justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-3 text-sky-900 text-center">24/7 Support</h3>
+          <p class="text-gray-600 text-center">Our dedicated customer service team is available around the
+            clock to assist you.</p>
+        </div>
 
-              .animate-float {
-                animation: float 3s ease-in-out infinite;
-              }
+        <div
+          class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-t-4 border-sky-500">
+          <div class="text-sky-500 mb-6 flex justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M16 15v-1a4 4 0 00-4-4H8m0 0l3 3m-3-3l3-3m9 14V5a2 2 0 00-2-2H6a2 2 0 00-2 2v16l4-2 4 2 4-2 4 2z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-3 text-sky-900 text-center">30 Days Return</h3>
+          <p class="text-gray-600 text-center">Not satisfied? Return any item within 30 days for a full refund
+            or exchange.</p>
+        </div>
 
-              .animate-fadeIn {
-                animation: fadeIn 0.5s ease-in-out;
-              }
+        <div
+          class="bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border-t-4 border-sky-500">
+          <div class="text-sky-500 mb-6 flex justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+          </div>
+          <h3 class="text-xl font-bold mb-3 text-sky-900 text-center">Secure Payments</h3>
+          <p class="text-gray-600 text-center">Shop with confidence using our 100% secure payment gateway
+            system.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-              .animate-slideDown {
-                animation: slideDown 0.5s ease-in-out;
-              }
+  <!-- Back To Top Button -->
+  <button (click)="scrollToTop()"
+    class="fixed right-6 bottom-6 bg-sky-600 text-white p-3 rounded-full shadow-lg hover:bg-sky-700 transition-all duration-300 z-50 transform hover:scale-110"
+    [ngClass]="{'opacity-100 visible': showScrollTop, 'opacity-0 invisible': !showScrollTop}">
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+      stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l7-7 7 7M5 19l7-7 7 7" />
+    </svg>
+  </button>
 
-              .animate-slideUp {
-                animation: slideUp 0.3s ease-in-out;
-              }
+  <!-- Chat Support Button -->
+  <button (click)="toggleChat()"
+    class="fixed right-6 bottom-20 bg-sky-600 text-white p-3 rounded-full shadow-lg hover:bg-sky-700 transition-all duration-300 z-50 transform hover:scale-110 group">
+    <svg *ngIf="!isChatOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+      viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+        d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+    </svg>
+    <svg *ngIf="isChatOpen" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+      stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+    <span
+      class="absolute top-0 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">1</span>
+  </button>
 
-              .animate-slideInRight {
-                animation: slideInRight 0.5s ease-in-out;
-              }
+  <!-- Chat Support Widget -->
+  <div *ngIf="isChatOpen"
+    class="fixed right-6 bottom-24 w-80 bg-white rounded-lg shadow-2xl overflow-hidden z-50 animate-slideUp">
+    <div class="bg-sky-600 text-white p-4 flex justify-between items-center">
+      <div class="flex items-center">
+        <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+        <h3 class="font-medium">Customer Support</h3>
+      </div>
+      <button (click)="toggleChat()" class="text-white hover:text-sky-200">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+          stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
 
-              .animation-delay-100 {
-                animation-delay: 0.1s;
-              }
+    <div class="h-80 overflow-y-auto p-4 bg-gray-50" #chatMessages>
+      <!-- Chat messages -->
+      <div class="flex flex-col space-y-3">
+        <div class="flex items-start">
+          <div
+            class="w-8 h-8 rounded-full bg-sky-600 flex items-center justify-center text-white mr-2 flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+          </div>
+          <div class="bg-white p-3 rounded-lg shadow-sm max-w-xs">
+            <p class="text-sm text-gray-800">Hi there! Welcome to CliQShop. How can I help you today?</p>
+            <span class="text-xs text-gray-500 mt-1 block">10:32 AM</span>
+          </div>
+        </div>
 
-              .animation-delay-200 {
-                animation-delay: 0.2s;
-              }
+        <div class="flex items-start justify-end">
+          <div class="bg-sky-100 p-3 rounded-lg shadow-sm max-w-xs">
+            <p class="text-sm text-gray-800">Hi! I'm looking for information about shipping.</p>
+            <span class="text-xs text-gray-500 mt-1 block">10:33 AM</span>
+          </div>
+        </div>
 
-              .animate-ping-once:hover {
-                animation: ping-once 0.5s ease-in-out;
-              }
-            </style>
+        <div class="flex items-start">
+          <div
+            class="w-8 h-8 rounded-full bg-sky-600 flex items-center justify-center text-white mr-2 flex-shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+            </svg>
+          </div>
+          <div class="bg-white p-3 rounded-lg shadow-sm max-w-xs">
+            <p class="text-sm text-gray-800">Of course! We offer free shipping on all orders over ₹999.
+              Standard delivery takes 2-4 business days. Would you like more information?</p>
+            <span class="text-xs text-gray-500 mt-1 block">10:34 AM</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-            <!-- Footer -->
-            <app-footer></app-footer>
+    <div class="p-3 border-t">
+      <div class="relative">
+        <input type="text" placeholder="Type your message..."
+          class="w-full px-4 py-2 rounded-full border border-gray-300 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 pr-10">
+        <button class="absolute right-2 top-1/2 transform -translate-y-1/2 text-sky-600 hover:text-sky-800">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+            stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Custom CSS for Animations -->
+  <style>
+    @keyframes float {
+      0% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
+
+      100% {
+        transform: translateY(0px);
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(30px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes ping-once {
+      0% {
+        transform: scale(1);
+        opacity: 1;
+      }
+
+      50% {
+        transform: scale(1.5);
+        opacity: 0.8;
+      }
+
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    .animate-float {
+      animation: float 3s ease-in-out infinite;
+    }
+
+    .animate-fadeIn {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .animate-slideDown {
+      animation: slideDown 0.5s ease-in-out;
+    }
+
+    .animate-slideUp {
+      animation: slideUp 0.3s ease-in-out;
+    }
+
+    .animate-slideInRight {
+      animation: slideInRight 0.5s ease-in-out;
+    }
+
+    .animation-delay-100 {
+      animation-delay: 0.1s;
+    }
+
+    .animation-delay-200 {
+      animation-delay: 0.2s;
+    }
+
+    .animate-ping-once:hover {
+      animation: ping-once 0.5s ease-in-out;
+    }
+  </style>
+</main>
+
+<!-- Footer -->
+<app-footer></app-footer>
