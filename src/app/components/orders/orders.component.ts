@@ -29,7 +29,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     private orderService: OrderService,
     private cartService: CartService,
     private authService: AuthService,
-    private router: Router,
+    public router: Router,
     private dialog: MatDialog,
     private toastr: ToastrService
   ) { }

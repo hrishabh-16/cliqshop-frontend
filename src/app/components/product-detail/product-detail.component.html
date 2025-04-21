@@ -59,7 +59,7 @@
 
         <!-- Main Image -->
         <div class="h-96 relative overflow-hidden">
-          <img [src]="product.imageUrl || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80'" 
+          <img [src]="product.imageUrl" 
                [alt]="product.name" 
                class="w-full h-full object-contain transition-all duration-500 hover:scale-105"
                #mainImage>
@@ -68,7 +68,7 @@
         <!-- Thumbnail Navigation -->
         <div class="flex justify-center p-4 space-x-2 border-t border-gray-100">
           <button class="w-16 h-16 border border-gray-200 rounded-md overflow-hidden opacity-70 hover:opacity-100 hover:border-sky-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-sky-500">
-            <img [src]="product.imageUrl || 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1000&q=80'" 
+            <img [src]="product.imageUrl" 
                  [alt]="product.name" 
                  class="w-full h-full object-cover">
           </button>
@@ -135,41 +135,38 @@
           <!-- Quantity Selector and Add to Cart Button -->
           <div class="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 mb-6">
             <div class="flex items-center border border-gray-300 rounded-lg overflow-hidden w-36">
-              <button 
-                (click)="decreaseQuantity()" 
+              <button (click)="decreaseQuantity()" 
                 [disabled]="quantity <= 1"
                 [ngClass]="{'opacity-50 cursor-not-allowed': quantity <= 1}"
                 class="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors">
                 -
               </button>
-              <input 
-                type="number" 
-                [(ngModel)]="quantity" 
-                min="1" 
+              <input type="number" [(ngModel)]="quantity" min="1"
                 class="w-full px-2 py-2 text-center border-none focus:outline-none focus:ring-0">
-              <button 
-                (click)="increaseQuantity()" 
-                [disabled]="!product || !product.stockQuantity || quantity >= product.stockQuantity || product.stockQuantity === 0"
-                [ngClass]="{'opacity-50 cursor-not-allowed': !product.stockQuantity || quantity >= product.stockQuantity || product.stockQuantity === 0}"
+              <button (click)="increaseQuantity()"
+                [disabled]="!isProductInStock() || quantity >= (product.stockQuantity || 0)"
+                [ngClass]="{'opacity-50 cursor-not-allowed': !isProductInStock() || quantity >= (product.stockQuantity || 0)}"
                 class="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors">
                 +
               </button>
             </div>
-            
-            <button 
-  (click)="addToCart()" 
-  [disabled]="!product || (product.stockQuantity !== undefined && product.stockQuantity === 0)"
-  [ngClass]="{'opacity-50 cursor-not-allowed': !product || (product.stockQuantity !== undefined && product.stockQuantity === 0)}"
-  class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-6 rounded-lg transition-colors flex items-center justify-center">
-  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-  </svg>
-  Add to Cart
-</button>
-            
+          
+            <button (click)="addToCart()"
+              [disabled]="!isProductInStock()"
+              [ngClass]="{'opacity-50 cursor-not-allowed': !isProductInStock()}"
+              class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-6 rounded-lg transition-colors flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Add to Cart
+            </button>
+          
             <button class="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24"
+                stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
             </button>
           </div>
@@ -178,6 +175,7 @@
           <div class="text-sm text-gray-600">
             <p *ngIf="product.sku" class="mb-1">SKU: {{ product.sku }}</p>
             <p *ngIf="product.categoryName" class="mb-1">Category: {{ product.categoryName }}</p>
+            <p *ngIf="product.brand" class="mb-1">Brand: {{ product.brand }}</p>
           </div>
         </div>
         
@@ -243,6 +241,7 @@
             <ul class="list-disc pl-5 text-gray-700">
               <li>Category: {{ product.categoryName }}</li>
               <li *ngIf="product.sku">SKU: {{ product.sku }}</li>
+              <li *ngIf="product.brand">Brand: {{ product.brand }}</li>
             </ul>
           </div>
         </div>
@@ -313,7 +312,7 @@
           </div>
           
           <div class="relative overflow-hidden">
-            <img [src]="relatedProduct.imageUrl || 'https://images.unsplash.com/photo-1560343090-f0409e92791a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8NXx8cHJvZHVjdHxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=crop&w=500&q=60'" 
+            <img [src]="relatedProduct.imageUrl" 
                  alt="{{ relatedProduct.name }}" 
                  class="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110">
           </div>
