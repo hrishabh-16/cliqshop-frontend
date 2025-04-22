@@ -31,6 +31,7 @@ import { FooterComponent } from './shared/footer/footer.component';
 import { LoadingSpinnerComponent } from './shared/loading-spinner/loading-spinner.component';
 import { AuthGuard } from './guards/auth/auth.guard';
 import { AdminGuard } from './guards/admin/admin.guard';
+
 import { CommonModule, DatePipe } from '@angular/common'; 
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
@@ -108,6 +109,7 @@ export function preloadCategories(categoryService: CategoryService) {
   imports: [
     BrowserModule,
     AppRoutingModule,
+    
     HttpClientModule,
     ReactiveFormsModule,
     RouterModule,

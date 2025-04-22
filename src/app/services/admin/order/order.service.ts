@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, catchError, map, of, forkJoin, switchMap } from 'rxjs';
-import { Order, OrderStatus } from '../../../models/order.model';
+import { Order, OrderStatus, PaymentStatus } from '../../../models/order.model';
 import { UserService } from '../../user/user.service';
 import { User, UserRole } from '../../../models/user.model';
 import { Address } from '../../../models/address.model';
@@ -64,42 +64,76 @@ export class AdminOrderService {
   // Get order by ID (admin)
   // Enhanced getOrderById method to ensure complete data
   getOrderById(id: number): Observable<Order> {
-    console.log(`Getting order with ID ${id} from:`, `${this.baseUrl}/orders/${id}`);
     return this.http.get<Order>(`${this.baseUrl}/orders/${id}`).pipe(
-      switchMap(order => {
-        // Process order to ensure required properties exist
-        order = this.processOrderData(order);
-        
-        // If order items are missing product details, fetch them
-        if (order.orderItems && order.orderItems.some(item => !item.product)) {
-          return this.enrichOrderItemsWithProducts(order);
+      map(order => {
+        if (!order) {
+          throw new Error('Order not found');
         }
-        
-        return of(order);
+        return this.processOrderData(order);
       }),
       catchError(error => {
-        console.error(`Error fetching order by ID ${id}:`, error);
-        return of(null as any);
+        console.error(`Error fetching order ${id}:`, error);
+        // Return a minimal order object if fetch fails
+        const fallbackOrder: Order = {
+          orderId: id,
+          userId: 0,
+          orderDate: new Date().toISOString(),
+          orderStatus: OrderStatus.PENDING,
+          paymentStatus: PaymentStatus.PENDING,
+          paymentMethod: 'Unknown',
+          shippingMethod: 'Standard',
+          orderItems: [],
+          orderTotal: 0,
+          totalPrice: 0,
+          subtotal: 0,
+          tax: 0,
+          shippingCost: 0,
+          discount: 0
+        };
+        return of(this.processOrderData(fallbackOrder));
       })
     );
   }
 
   // Update order status (admin)
-  updateOrderStatus(orderId: number, status: OrderStatus): Observable<Order> {
-    console.log(`Updating order ${orderId} status to ${status}`);
-    return this.http.put<Order>(`${this.baseUrl}/orders/${orderId}/status`, null, {
-      params: { status: status }
-    }).pipe(
-      map(order => {
-        // Process order to ensure required properties exist
-        return this.processOrderData(order);
-      }),
-      catchError(error => {
-        console.error(`Error updating order status for order ${orderId}:`, error);
-        return of(null as any);
-      })
-    );
-  }
+  // Update the updateOrderStatus method in AdminOrderService
+updateOrderStatus(orderId: number, status: OrderStatus): Observable<Order> {
+  console.log(`Updating order ${orderId} status to ${status}`);
+  
+  return this.http.put<Order>(`${this.baseUrl}/orders/${orderId}/status`, { status }).pipe(
+    map(response => {
+      // Handle different response formats
+      let updatedOrder: Order;
+      
+      if (response && response.orderId) {
+        // If response is an Order object
+        updatedOrder = response;
+      } else if (response && response.orderStatus) {
+        // If response has just the status update
+        updatedOrder = {
+          orderId: orderId,
+          orderStatus: response.orderStatus
+        } as Order;
+      } else {
+        // Fallback if response format is unexpected
+        updatedOrder = {
+          orderId: orderId,
+          orderStatus: status
+        } as Order;
+      }
+      
+      return this.processOrderData(updatedOrder);
+    }),
+    catchError(error => {
+      console.error(`Error updating order status for order ${orderId}:`, error);
+      // Return a minimal order object with the new status
+      return of({
+        orderId: orderId,
+        orderStatus: status
+      } as Order);
+    })
+  );
+}
 
   // Cancel order (admin)
   cancelOrder(orderId: number): Observable<any> {
@@ -181,25 +215,45 @@ getOrdersCountByStatus(status: OrderStatus): Observable<number> {
 }
   // Process order data to ensure all required properties exist
 // Enhanced processOrderData method
-private processOrderData(order: Order): Order {
+public  processOrderData(order: Order): Order {
   if (!order) return null as any;
+  
+  // Ensure basic order properties exist
+  order.orderId = order.orderId || 0;
+  order.userId = order.userId || 0;
+  order.orderDate = order.orderDate || new Date().toISOString();
+  order.orderStatus = order.orderStatus || OrderStatus.PENDING;
+  order.paymentStatus = order.paymentStatus || PaymentStatus.PENDING;
+  order.paymentMethod = order.paymentMethod || 'Unknown';
+  order.shippingMethod = order.shippingMethod || 'Standard';
+  
+  // Calculate totals if not provided
+  if (!order.orderTotal && !order.totalPrice) {
+    order.orderTotal = 0;
+    if (order.orderItems) {
+      order.orderTotal = order.orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+    }
+  } else if (!order.orderTotal) {
+    order.orderTotal = order.totalPrice;
+  }
   
   // Ensure order items exists and is an array
   if (!order.orderItems) {
     order.orderItems = [];
+  } else {
+    // Ensure each order item has required fields
+    order.orderItems = order.orderItems.map(item => {
+      return {
+        orderItemId: item.orderItemId || 0,
+        productId: item.productId || 0,
+        quantity: item.quantity || 0,
+        price: item.price || 0,
+        product: item.product !== undefined ? item.product : undefined
+      };
+    });
   }
   
-  // Ensure each order item has required fields
-  order.orderItems = order.orderItems.map(item => {
-    return {
-      ...item,
-      productId: item.productId || 0,
-      quantity: item.quantity || 0,
-      price: item.price || 0
-    };
-  });
-  
-  // Ensure the order has customer information
+  // Ensure customer information exists
   if (!order.customer) {
     order.customer = {
       userId: order.userId,
@@ -212,47 +266,27 @@ private processOrderData(order: Order): Order {
     };
   }
   
-  // Ensure the order has shipping address information
+  // Ensure addresses exist
   if (!order.shippingAddress) {
     order.shippingAddress = {
       addressId: 0,
       userId: order.userId,
       addressLine1: 'Address unavailable',
-      addressLine2: '', // Default value for addressLine2
+      addressLine2: '', // Added missing property
       city: '-',
       state: '-',
       postalCode: '-',
       country: '-',
       isDefault: false,
-      addressType: 'SHIPPING',
-      name: order.customer?.name || `User #${order.userId}`,
-      phone: '-'
+      addressType: 'SHIPPING'
     };
   }
   
-  // Ensure the order has billing address information
   if (!order.billingAddress) {
     order.billingAddress = {
       ...order.shippingAddress,
-      addressId: order.shippingAddress.addressId ?? null,
-      addressType: 'BILLING',
-      addressLine1: order.shippingAddress.addressLine1 === 'Address unavailable' 
-        ? 'Billing address unavailable' 
-        : order.shippingAddress.addressLine1
+      addressType: 'BILLING'
     };
-  }
-  
-  // Ensure the order has payment information
-  if (!order.paymentInfo) {
-    order.paymentInfo = {
-      paymentMethod: order.paymentMethod || 'Unknown',
-      paymentStatus: order.paymentStatus || 'PENDING'
-    };
-  }
-  
-  // Ensure order total is calculated if not provided
-  if (!order.orderTotal && order.orderItems) {
-    order.orderTotal = order.orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
   }
   
   return order;

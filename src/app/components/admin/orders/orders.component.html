@@ -76,14 +76,13 @@
             <div class="col-span-1 font-medium text-gray-900">#{{ order.orderId }}</div>
             <div class="col-span-2 text-gray-600">{{ order.orderDate | date:'short' }}</div>
             <div class="col-span-2 text-gray-900">
-              {{ order.customer?.name || 'User #' + order.userId }}
+              {{ order.customer?.name || ('User #' + (order.userId || 'N/A')) }}
             </div>
-            <div class="col-span-1 text-gray-600">{{ order.orderItems.length || 0 }}</div>
+            <div class="col-span-1 text-gray-600">  {{ (order.orderItems ? order.orderItems.length : 0) | number }}</div>
             <div class="col-span-2 font-medium text-gray-900">₹{{ order.totalPrice || order.orderTotal | number:'1.2-2' }}</div>
             <div class="col-span-2">
-              <span
-                [class]="'inline-flex rounded-full px-3 py-1 text-xs font-medium ' + getStatusClass(order.orderStatus)">
-                {{ order.orderStatus }}
+              <span [class]="'inline-flex rounded-full px-3 py-1 text-xs font-medium ' + getStatusClass(order.orderStatus || 'PENDING')">
+                {{ order.orderStatus || 'PENDING' }}
               </span>
             </div>
             <div class="col-span-2 text-right">
@@ -198,7 +197,7 @@
           <div class="p-4 text-sm">
             <div class="flex justify-between mb-2">
               <span class="text-gray-600">Name:</span>
-              <span class="font-medium">{{ selectedOrder.customer?.name || 'User #' + selectedOrder.userId }}</span>
+              <span class="font-medium">{{ selectedOrder.customer?.name || ('User #' + (selectedOrder.userId || 'N/A')) }}</span>
             </div>
             <div class="flex justify-between mb-2">
               <span class="text-gray-600">Email:</span>
@@ -298,21 +297,22 @@
                 <td colspan="5" class="px-6 py-4 text-center text-gray-500">No items in this order</td>
               </tr>
               <tr *ngFor="let item of selectedOrder.orderItems">
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.productId }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.productId || 'N/A' }}</td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center">
                     <div *ngIf="item.product?.imageUrl" class="flex-shrink-0 h-10 w-10 mr-3">
                       <img [src]="item.product?.imageUrl" alt="Product" class="h-10 w-10 rounded-md object-cover">
                     </div>
                     <div class="text-sm font-medium text-gray-900">
-                      {{ item.product?.name || 'Product #' + item.productId }}
+                      {{ item.product?.name || ('Product #' + (item.productId || 'N/A')) }}
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.quantity }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{{ item.price | number:'1.2-2' }}</td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">₹{{ (item.price *
-                  item.quantity) | number:'1.2-2' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ item.quantity || 0 }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">₹{{ (item.price || 0) | number:'1.2-2' }}</td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-medium">
+                  ₹{{ ((item.price || 0) * (item.quantity || 0)) | number:'1.2-2' }}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -355,17 +355,19 @@
           <div class="mb-4">
             <label for="status" class="block text-sm font-medium text-gray-700 mb-2">Update Order Status:</label>
             <div class="flex">
-              <select id="status" #statusSelect
+              <select id="status" [(ngModel)]="selectedStatus" 
                 class="flex-1 rounded-l-md border border-gray-300 py-2 px-3 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500">
                 <option value="">Select Status</option>
-                <option *ngFor="let status of orderStatuses" [value]="status.value"
+                <option *ngFor="let status of orderStatuses" 
+                  [value]="status.value"
                   [disabled]="status.value === 'ALL' || status.value === selectedOrder.orderStatus">
                   {{ status.label }}
                 </option>
               </select>
               <button
                 class="inline-flex items-center px-4 py-2 border border-l-0 border-gray-300 rounded-r-md bg-blue-600 text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                [disabled]="!statusSelect.value" (click)="updateOrderStatus(selectedOrder.orderId, statusSelect.value)">
+                [disabled]="!selectedStatus" 
+                (click)="updateOrderStatus(selectedOrder.orderId, selectedStatus)">
                 Update
               </button>
             </div>

@@ -5,7 +5,8 @@ import { ToastrService } from 'ngx-toastr';
 import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { UserService } from '../../../services/user/user.service';
-import { finalize, forkJoin } from 'rxjs';
+import { finalize, forkJoin, of } from 'rxjs';
+import { map, catchError, switchMap } from 'rxjs/operators';
 import { User, UserRole } from '../../../models/user.model';
 
 @Component({
@@ -24,7 +25,8 @@ export class OrdersComponent implements OnInit {
   loading = true;
   currentStatus: string = 'ALL';
   searchTerm: string = '';
-  
+  // Add this to your component class
+selectedStatus: string = '';
   // Pagination
   currentPage = 1;
   itemsPerPage = 10;
@@ -194,35 +196,45 @@ export class OrdersComponent implements OnInit {
     console.log('Order selected, fetching full details:', order.orderId);
     this.loading = true;
     
-    // Fetch complete order details
-    forkJoin([
-      this.orderService.getOrderById(order.orderId),
-      this.userService.getUserById(order.userId)
-    ]).pipe(
-      finalize(() => {
-        this.loading = false;
-      })
-    ).subscribe({
-      next: ([orderDetails, userData]) => {
-        if (orderDetails) {
-          console.log('Full order details fetched:', orderDetails);
-          this.selectedOrder = orderDetails;
-          
-          // Ensure orderItems exists and has product data
-          if (!this.selectedOrder.orderItems) {
-            this.selectedOrder.orderItems = [];
-          }
-
-          // Set customer information from user data
-          if (userData) {
-            this.selectedOrder.customer = {
-              ...userData,
-              name: userData.name || userData.username || `User #${userData.userId}`,
-              email: userData.email || 'N/A'
-            };
-          } else {
-            // Fallback customer info
-            this.selectedOrder.customer = {
+    // First get the order details
+    this.orderService.getOrderById(order.orderId).pipe(
+      switchMap(orderDetails => {
+        if (!orderDetails) {
+          // If no details returned, use the order from the list
+          console.log('Using order from list as detailed fetch failed');
+          return of(order as Order);
+        }
+        
+        // Process the order data to ensure all required fields exist
+        orderDetails = this.orderService.processOrderData(orderDetails);
+        
+        // Then get user data
+        return this.userService.getUserById(order.userId).pipe(
+          map(user => {
+            if (user) {
+              orderDetails.customer = {
+                ...user,
+                name: user.name || user.username || `User #${user.userId}`,
+                email: user.email || 'N/A'
+              };
+            } else {
+              // Fallback customer info
+              orderDetails.customer = {
+                userId: order.userId,
+                username: `user${order.userId}`,
+                name: `User #${order.userId}`,
+                email: 'N/A',
+                role: UserRole.USER,
+                enabled: true,
+                createdAt: new Date().toISOString()
+              };
+            }
+            return orderDetails as Order;
+          }),
+          catchError(userError => {
+            console.error('Error fetching user data:', userError);
+            // Use fallback customer info if user fetch fails
+            orderDetails.customer = {
               userId: order.userId,
               username: `user${order.userId}`,
               name: `User #${order.userId}`,
@@ -231,36 +243,27 @@ export class OrdersComponent implements OnInit {
               enabled: true,
               createdAt: new Date().toISOString()
             };
-          }
-        } else {
-          // If no details returned, use the order from the list with enhanced customer info
-          console.log('Using order from list as detailed fetch failed');
-          this.selectedOrder = order;
-          this.selectedOrder.customer = {
-            userId: order.userId,
-            username: `user${order.userId}`,
-            name: `User #${order.userId}`,
-            email: 'N/A',
-            role: UserRole.USER,
-            enabled: true,
-            createdAt: new Date().toISOString()
-          };
+            return of(orderDetails as Order);
+          })
+        );
+      }),
+      finalize(() => {
+        this.loading = false;
+      })
+    ).subscribe({
+      next: (orderDetails: Order) => {
+        this.selectedOrder = orderDetails;
+        
+        // Ensure orderItems exists and has product data
+        if (!this.selectedOrder.orderItems) {
+          this.selectedOrder.orderItems = [];
         }
+        
+        console.log('Order details loaded:', this.selectedOrder);
       },
       error: (error) => {
         console.error('Error fetching order details:', error);
-        // If error, use the order from the list with enhanced customer info
-        this.selectedOrder = order;
-        this.selectedOrder.customer = {
-          userId: order.userId,
-          username: `user${order.userId}`,
-          name: `User #${order.userId}`,
-          email: 'N/A',
-          role: UserRole.USER,
-          enabled: true,
-          createdAt: new Date().toISOString()
-        };
-        this.toastr.warning('Using limited order details', 'Unable to fetch complete order information');
+        this.toastr.error('Could not load order details', 'Error');
       }
     });
   }
@@ -275,53 +278,77 @@ export class OrdersComponent implements OnInit {
       this.toastr.warning('Please select a status to update', 'No Status Selected');
       return;
     }
-    
+  
     console.log(`Updating order ${orderId} status to ${statusValue}`);
     
-    // Convert string status to enum
     const status = statusValue as OrderStatus;
     
+    this.toastr.info(`Updating order status to ${status}...`, 'Processing', {
+      timeOut: 0,  // Show until manually cleared
+      disableTimeOut: true
+    });
+    const toastRef = this.toastr.info(`Updating order status to ${status}...`, 'Processing', {
+      disableTimeOut: true
+    });
+  
     this.orderService.updateOrderStatus(orderId, status).subscribe({
       next: (updatedOrder) => {
+        this.toastr.remove(toastRef.toastId); // Remove processing toast
+        
         if (updatedOrder) {
           console.log('Order status updated successfully:', updatedOrder);
           
-          // Update local data
+          // Update the order in the orders list
           const index = this.orders.findIndex(o => o.orderId === orderId);
           if (index !== -1) {
-            // Keep customer info from original order if not in updated order
-            if (!updatedOrder.customer && this.orders[index].customer) {
-              updatedOrder.customer = this.orders[index].customer;
-            }
-            
-            this.orders[index] = updatedOrder;
-            
-            // If an order is selected and it's the one being updated, update it
-            if (this.selectedOrder && this.selectedOrder.orderId === orderId) {
-              // Keep customer info in selected order
-              if (!updatedOrder.customer && this.selectedOrder.customer) {
-                updatedOrder.customer = this.selectedOrder.customer;
-              }
-              
-              this.selectedOrder = updatedOrder;
-              
-              // Ensure orderItems exists
-              if (!this.selectedOrder.orderItems) {
-                this.selectedOrder.orderItems = [];
-              }
-            }
-            
-            this.filterOrders();
+            this.orders[index] = {
+              ...this.orders[index],
+              ...updatedOrder
+            };
           }
           
-          this.toastr.success(`Order #${orderId} updated to ${status}`, 'Status Updated');
+          // If we're viewing this order, update the selected order
+          if (this.selectedOrder && this.selectedOrder.orderId === orderId) {
+            this.selectedOrder = {
+              ...this.selectedOrder,
+              ...updatedOrder
+            };
+          }
+          
+          // Re-filter the orders
+          this.filterOrders();
+          
+          // Success toast with checkmark icon
+          this.toastr.success(
+            `<div class="flex items-center">
+              <i class="fas fa-check-circle mr-2"></i>
+              Order #${orderId} status updated to ${status}
+            </div>`, 
+            'Success!',
+            {
+              enableHtml: true,
+              timeOut: 3000,
+              progressBar: true
+            }
+          );
         } else {
           this.toastr.error('Failed to update order status', 'Error');
         }
       },
       error: (error) => {
+        this.toastr.remove(toastRef.toastId); // Remove processing toast
         console.error('Error updating order status', error);
-        this.toastr.error('Could not update order status', 'Error');
+        this.toastr.error(
+          `<div class="flex items-center">
+            <i class="fas fa-exclamation-circle mr-2"></i>
+            Could not update order status
+          </div>`,
+          'Error',
+          {
+            enableHtml: true,
+            timeOut: 3000
+          }
+        );
       }
     });
   }
@@ -425,3 +452,4 @@ export class OrdersComponent implements OnInit {
     }
   }
 }
+
