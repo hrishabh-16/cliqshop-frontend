@@ -95,8 +95,11 @@ export class CheckoutService {
   }
 
   placeOrder(orderRequest: OrderRequest): Observable<Order> {
+    // Ensure orderRequest has all required fields
+    const validatedOrderRequest = this.validateOrderRequest(orderRequest);
+    
     // Clean the object to match backend expectations
-    const cleanedOrderRequest = this.cleanObject(orderRequest);
+    const cleanedOrderRequest = this.cleanObject(validatedOrderRequest);
     
     // Create headers that match what the backend expects
     const headers = new HttpHeaders()
@@ -112,8 +115,44 @@ export class CheckoutService {
     ).pipe(
       timeout(15000),
       tap(order => console.log('Order placed successfully:', order)),
-      catchError(this.handleError)
+      catchError(error => {
+        console.error('Error placing order:', error);
+        
+        // For debugging - log detailed error information
+        if (error.error) {
+          console.error('Error details:', error.error);
+        }
+        
+        return this.handleError(error);
+      })
     );
+  }
+
+  // Validate order request before sending to API
+  private validateOrderRequest(orderRequest: OrderRequest): OrderRequest {
+    // Create a copy to avoid mutating the original
+    const validatedRequest = { ...orderRequest };
+    
+    // Ensure items array is valid
+    if (!Array.isArray(validatedRequest.items) || validatedRequest.items.length === 0) {
+      console.error('Invalid or empty items array in order request');
+      validatedRequest.items = validatedRequest.items || [];
+    }
+    
+    // Validate each item
+    validatedRequest.items = validatedRequest.items.map(item => ({
+      productId: item.productId || 0,
+      quantity: item.quantity || 1,
+      price: typeof item.price === 'number' ? item.price : 0
+    }));
+    
+    // Ensure other required fields
+    validatedRequest.userId = validatedRequest.userId || 0;
+    validatedRequest.totalPrice = validatedRequest.totalPrice || 0;
+    validatedRequest.shippingMethod = validatedRequest.shippingMethod || 'standard';
+    validatedRequest.paymentMethod = validatedRequest.paymentMethod || 'card';
+    
+    return validatedRequest;
   }
 
   getOrderById(orderId: number): Observable<Order> {
@@ -135,7 +174,7 @@ export class CheckoutService {
   }
 
   cancelOrder(orderId: number, userId: number): Observable<any> {
-    return this.http.put<any>(
+    return this.http.put<any>( 
       `${this.apiUrl}/orders/${orderId}/cancel`,
       null,
       { params: new HttpParams().set('userId', userId.toString()) }

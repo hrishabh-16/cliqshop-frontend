@@ -1,132 +1,214 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError } from 'rxjs';
-import { catchError, tap, retry, timeout } from 'rxjs/operators';
-import { Order, OrderRequest, OrderResponse, OrderStatus } from '../../models/order.model';
+import { Observable, throwError, of } from 'rxjs';
+import { catchError, tap, retry, timeout, map } from 'rxjs/operators';
+import { Order, OrderResponse } from '../../models/order.model';
+import { Address } from '../../models/address.model';
 import { AuthService } from '../auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
 })
 export class OrderService {
-  // Consider making this configurable via environment.ts
   private apiUrl = 'http://localhost:9000/api';
-  
+
   constructor(
     private http: HttpClient,
     private authService: AuthService
-  ) { }
+  ) {}
 
   getOrderById(orderId: number): Observable<Order> {
-    const headers = this.authService.isLoggedIn() ? this.getAuthHeaders() : new HttpHeaders();
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
     
     return this.http.get<Order>(`${this.apiUrl}/orders/${orderId}`, { headers }).pipe(
-      timeout(10000),
+      timeout(15000), // Increase timeout for potentially slow connections
       retry(1),
       tap(order => console.log(`Fetched order: ${orderId}`, order)),
+      map(order => this.processOrderData(order)), // Process and validate order data
       catchError(this.handleError)
     );
   }
 
-  getOrdersByUser(userId: number, page: number = 1, size: number = 10): Observable<OrderResponse> {
-    const headers = this.getAuthHeaders();
+  // Method to get all orders for a user - used for order count
+  getUserOrders(userId: number): Observable<OrderResponse | Order[]> {
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+    
+    return this.http.get<any>(`${this.apiUrl}/orders/user/${userId}`, { headers }).pipe(
+      timeout(15000),
+      retry(1),
+      tap(response => console.log('Fetched user orders:', response)),
+      catchError(error => {
+        console.error('Error fetching user orders:', error);
+        return of({ orders: [], totalItems: 0 });
+      })
+    );
+  }
+
+  getOrdersByUser(userId: number, page: number = 1, pageSize: number = 10): Observable<{ orders: Order[], totalItems: number }> {
     const params = new HttpParams()
       .set('page', page.toString())
-      .set('size', size.toString());
-      
-    return this.http.get<OrderResponse>(`${this.apiUrl}/orders/user/${userId}`, { headers, params }).pipe(
-      timeout(10000),
-      retry(2), // Increased retries for reliability
-      tap(response => console.log(`Fetched orders for user: ${userId}`, response)),
-      catchError(this.handleError)
-    );
-  }
+      .set('size', pageSize.toString());
 
-  createOrder(orderRequest: OrderRequest): Observable<Order> {
-    const headers = this.getAuthHeaders();
-    
-    return this.http.post<Order>(`${this.apiUrl}/orders`, orderRequest, { headers }).pipe(
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+
+    // First try to get paginated results
+    return this.http.get<any>(`${this.apiUrl}/orders/user/${userId}`, { params, headers }).pipe(
       timeout(15000),
-      tap(order => console.log('Order created:', order)),
-      catchError(this.handleError)
-    );
-  }
-
-  updateOrderStatus(orderId: number, status: OrderStatus): Observable<Order> {
-    const headers = this.getAuthHeaders();
-    
-    return this.http.put<Order>(`${this.apiUrl}/orders/${orderId}/status`, { status }, { headers }).pipe(
-      timeout(10000),
-      tap(order => console.log(`Updated order ${orderId} status to ${status}:`, order)),
-      catchError(this.handleError)
+      retry(1),
+      map(response => {
+        console.log('Raw orders response:', response);
+        
+        // Handle both paginated and non-paginated responses
+        if (response && Array.isArray(response)) {
+          // API returns array directly
+          const processedOrders = response.map((order: any) => this.processOrderData(order));
+          return {
+            orders: processedOrders,
+            totalItems: processedOrders.length
+          };
+        } else if (response && response.orders) {
+          // API returns pagination object
+          const processedOrders = response.orders.map((order: any) => this.processOrderData(order));
+          return {
+            orders: processedOrders,
+            totalItems: response.totalItems
+          };
+        } else if (response && response.content) {
+          // Spring Data pagination format
+          const processedOrders = response.content.map((order: any) => this.processOrderData(order));
+          return {
+            orders: processedOrders,
+            totalItems: response.totalElements || processedOrders.length
+          };
+        } else {
+          // Single order or unexpected format - try to handle gracefully
+          if (response && response.orderId) {
+            return {
+              orders: [this.processOrderData(response)],
+              totalItems: 1
+            };
+          }
+          
+          console.error('Unexpected response format:', response);
+          return { orders: [], totalItems: 0 };
+        }
+      }),
+      catchError(error => {
+        console.error('Error fetching orders:', error);
+        return of({ orders: [], totalItems: 0 });
+      })
     );
   }
 
   cancelOrder(orderId: number, userId: number): Observable<any> {
-    const headers = this.getAuthHeaders();
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
     const params = new HttpParams().set('userId', userId.toString());
     
-    return this.http.put<any>(`${this.apiUrl}/orders/${orderId}/cancel`, null, { headers, params }).pipe(
+    return this.http.put<any>(
+      `${this.apiUrl}/orders/${orderId}/cancel`, 
+      null,
+      { headers, params }
+    ).pipe(
       timeout(10000),
+      retry(1),
       tap(() => console.log(`Cancelled order: ${orderId}`)),
       catchError(this.handleError)
     );
   }
-
-  getOrdersCount(userId: number): Observable<number> {
-    const headers = this.getAuthHeaders();
+  
+  // Reorder functionality
+  reorderItems(orderId: number, userId: number): Observable<any> {
+    const headers = new HttpHeaders().set('Content-Type', 'application/json');
+    const params = new HttpParams().set('userId', userId.toString());
     
-    return this.http.get<number>(`${this.apiUrl}/orders/user/${userId}/count`, { headers }).pipe(
-      timeout(10000), // Increased timeout
-      retry(3), // More retries for this critical endpoint
-      tap(count => console.log(`User ${userId} has ${count} orders`)),
-      catchError(this.handleError)
-    );
-  }
-
-  getRecentOrders(userId: number, limit: number = 5): Observable<Order[]> {
-    const headers = this.getAuthHeaders();
-    const params = new HttpParams().set('limit', limit.toString());
-    
-    return this.http.get<Order[]>(`${this.apiUrl}/orders/user/${userId}/recent`, { headers, params }).pipe(
-      timeout(10000),
-      retry(2),
-      tap(orders => console.log(`Fetched recent orders for user: ${userId}`, orders)),
-      catchError(this.handleError)
-    );
-  }
-
-  trackOrder(orderId: number, email: string): Observable<Order> {
-    const params = new HttpParams()
-      .set('email', email);
-      
-    return this.http.get<Order>(`${this.apiUrl}/orders/track/${orderId}`, { params }).pipe(
+    return this.http.post<any>(
+      `${this.apiUrl}/orders/${orderId}/reorder`,
+      null,
+      { headers, params }
+    ).pipe(
       timeout(10000),
       retry(1),
-      tap(order => console.log(`Tracked order: ${orderId}`, order)),
+      tap(response => console.log(`Reordered items from order: ${orderId}`, response)),
       catchError(this.handleError)
     );
   }
 
-  /**
-   * Get auth headers for API requests
-   */
-  getAuthHeaders(): HttpHeaders {
-    const token = localStorage.getItem('token');
-    let headers = new HttpHeaders()
-      .set('Content-Type', 'application/json')
-      .set('Accept', 'application/json');
-    
-    if (token) {
-      headers = headers.set('Authorization', `Bearer ${token}`);
+  // Helper method to process and normalize order data
+  private processOrderData(order: any): Order {
+    if (!order) return {} as Order;
+
+    // Handle missing or empty fields
+    const processedOrder: Order = {
+      ...order,
+      orderId: order.orderId || 0,
+      userId: order.userId || 0,
+      orderDate: order.orderDate || new Date().toISOString(),
+      orderItems: Array.isArray(order.orderItems) ? order.orderItems.map((item: any) => ({
+        ...item,
+        orderItemId: item.orderItemId || 0,
+        productId: item.productId || (item.product ? item.product.productId : 0),
+        quantity: item.quantity || 1,
+        price: item.price || 0,
+        product: item.product || null
+      })) : [],
+      orderTotal: this.parseNumber(order.orderTotal),
+      totalPrice: this.parseNumber(order.totalPrice || order.orderTotal),
+      subtotal: this.parseNumber(order.subtotal),
+      tax: this.parseNumber(order.tax),
+      shippingCost: this.parseNumber(order.shippingCost),
+      discount: this.parseNumber(order.discount),
+      orderStatus: order.orderStatus || 'PENDING',
+      paymentStatus: order.paymentStatus || 'PENDING',
+      paymentMethod: order.paymentMethod || '',
+      shippingMethod: order.shippingMethod || ''
+    };
+
+    // Handle missing shipping/billing address
+    if (!order.shippingAddress) {
+      processedOrder.shippingAddress = {
+        addressId: 0,
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: '',
+        isDefault: false,
+        addressType: 'SHIPPING',
+        userId: order.userId || 0
+      } as Address;
     }
     
-    return headers;
+    if (!order.billingAddress) {
+      processedOrder.billingAddress = order.shippingAddress || {
+        addressId: 0,
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: '',
+        isDefault: false,
+        addressType: 'BILLING',
+        userId: order.userId || 0
+      } as Address;
+    }
+
+    console.log('Processed order:', processedOrder);
+    return processedOrder;
   }
 
-  /**
-   * Handle HTTP errors
-   */
+  // Helper to safely parse numeric values
+  private parseNumber(value: any): number {
+    if (value === undefined || value === null) return 0;
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value);
+      return isNaN(parsed) ? 0 : parsed;
+    }
+    return 0;
+  }
+
   private handleError(error: HttpErrorResponse) {
     let errorMessage = 'An unknown error occurred';
     
@@ -134,20 +216,17 @@ export class OrderService {
       // Client-side error
       errorMessage = `Error: ${error.error.message}`;
     } else if (error.status === 0) {
-      errorMessage = 'Could not connect to the server. Please make sure the backend service is running at ' + this.apiUrl;
+      errorMessage = 'Could not connect to the server. Please check your internet connection and try again.';
     } else if (error.status === 404) {
       errorMessage = 'The requested order was not found.';
-    } else if (error.status === 403) {
-      errorMessage = 'You do not have permission to access this order.';
-    } else if (error.status === 400) {
-      errorMessage = 'Invalid order data. Please check your information and try again.';
-    } else if (error.error && typeof error.error.message === 'string') {
-      errorMessage = error.error.message;
+    } else if (error.status === 500) {
+      errorMessage = 'Server error. Please try again later.';
     } else {
-      errorMessage = `Error ${error.status}: ${error.statusText}`;
+      // Server-side error
+      errorMessage = `Error Code: ${error.status}\nMessage: ${error.message}`;
     }
     
-    console.error('Order service error:', errorMessage, error);
+    console.error(errorMessage, error);
     return throwError(() => new Error(errorMessage));
   }
 }

@@ -6,6 +6,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ActivatedRoute } from '@angular/router';
 import { UserService } from '../../../services/user/user.service';
 import { finalize, forkJoin } from 'rxjs';
+import { User, UserRole } from '../../../models/user.model';
 
 @Component({
   selector: 'app-admin-orders',
@@ -76,34 +77,43 @@ export class OrdersComponent implements OnInit {
 
   loadOrders(): void {
     this.loading = true;
-    console.log(`Loading orders. Current status: ${this.currentStatus}, Page: ${this.currentPage}`);
     
-    // Use the updated service method following dashboard pattern
-    this.orderService.getAllOrders(this.currentPage, this.itemsPerPage).subscribe({
-      next: (data) => {
-        console.log('Orders loaded successfully:', data);
+    // First get the total count of orders
+    this.orderService.getOrdersCount().subscribe({
+      next: (count) => {
+        this.totalOrders = count;
+        this.calculatePagination();
         
-        // Ensure we have order items array for each order
-        this.orders = data.map(order => {
-          // Make sure orderItems is an array
-          if (!order.orderItems) {
-            order.orderItems = [];
+        // Then fetch the paginated orders
+        this.orderService.getAllOrders(this.currentPage, this.itemsPerPage).subscribe({
+          next: (data) => {
+            this.orders = data.map(order => {
+              if (!order.orderItems) {
+                order.orderItems = [];
+              }
+              return order;
+            });
+            
+            this.filterOrders();
+            this.loading = false;
+          },
+          error: (error) => {
+            console.error('Error loading orders', error);
+            this.toastr.error('Could not load orders', 'Error');
+            this.loading = false;
+            this.orders = [];
+            this.filteredOrders = [];
           }
-          return order;
         });
-        
-        this.filterOrders();
-        this.loading = false;
       },
       error: (error) => {
-        console.error('Error loading orders', error);
-        this.toastr.error('Could not load orders', 'Error');
+        console.error('Error getting order count', error);
+        this.toastr.error('Could not load order count', 'Error');
         this.loading = false;
-        this.orders = [];
-        this.filteredOrders = [];
       }
     });
   }
+  
 
   filterOrders(): void {
     console.log('Filtering orders. Current status:', this.currentStatus);
@@ -132,44 +142,42 @@ export class OrdersComponent implements OnInit {
   }
 
   filterByStatus(status: string): void {
-    console.log('Status filter changed to:', status);
     this.currentStatus = status;
+    this.currentPage = 1; // Reset to first page when changing filters
     
-    // When changing status filter, go back to first page
-    this.currentPage = 1;
-    
-    // If filtering by status other than ALL, use the specific endpoint
     if (status !== 'ALL') {
       this.loading = true;
-      this.orderService.getOrdersByStatus(status as OrderStatus, this.currentPage, this.itemsPerPage).subscribe({
-        next: (data) => {
-          console.log(`Loaded ${data.length} orders with status ${status}`);
-          
-          // Ensure we have order items array for each order
-          this.orders = data.map(order => {
-            // Make sure orderItems is an array
-            if (!order.orderItems) {
-              order.orderItems = [];
-            }
-            return order;
-          });
-          
-          this.filteredOrders = [...this.orders];
-          this.loading = false;
-        },
-        error: (error) => {
-          console.error(`Error loading orders with status ${status}:`, error);
-          this.toastr.error('Could not load filtered orders', 'Error');
-          this.orders = [];
-          this.filteredOrders = [];
-          this.loading = false;
-        }
-      });
+      this.orderService.getOrdersByStatus(status as OrderStatus, this.currentPage, this.itemsPerPage)
+        .subscribe({
+          next: (data) => {
+            this.orders = data.map(order => {
+              if (!order.orderItems) {
+                order.orderItems = [];
+              }
+              return order;
+            });
+            
+            // Get count for this status
+            this.orderService.getOrdersCountByStatus(status as OrderStatus).subscribe(count => {
+              this.totalOrders = count;
+              this.calculatePagination();
+              this.filteredOrders = [...this.orders];
+              this.loading = false;
+            });
+          },
+          error: (error) => {
+            console.error(`Error loading orders with status ${status}:`, error);
+            this.toastr.error('Could not load filtered orders', 'Error');
+            this.orders = [];
+            this.filteredOrders = [];
+            this.loading = false;
+          }
+        });
     } else {
-      // For ALL status, reload all orders
       this.loadOrders();
     }
   }
+  
 
   search(): void {
     console.log('Search triggered with term:', this.searchTerm);
@@ -200,28 +208,58 @@ export class OrdersComponent implements OnInit {
           console.log('Full order details fetched:', orderDetails);
           this.selectedOrder = orderDetails;
           
-          // Ensure orderItems exists
+          // Ensure orderItems exists and has product data
           if (!this.selectedOrder.orderItems) {
             this.selectedOrder.orderItems = [];
           }
-          
+
           // Set customer information from user data
           if (userData) {
             this.selectedOrder.customer = {
               ...userData,
-              name: userData.name || userData.username || `User #${userData.userId}`
+              name: userData.name || userData.username || `User #${userData.userId}`,
+              email: userData.email || 'N/A'
+            };
+          } else {
+            // Fallback customer info
+            this.selectedOrder.customer = {
+              userId: order.userId,
+              username: `user${order.userId}`,
+              name: `User #${order.userId}`,
+              email: 'N/A',
+              role: UserRole.USER,
+              enabled: true,
+              createdAt: new Date().toISOString()
             };
           }
         } else {
-          // If no details returned, use the order from the list
+          // If no details returned, use the order from the list with enhanced customer info
           console.log('Using order from list as detailed fetch failed');
           this.selectedOrder = order;
+          this.selectedOrder.customer = {
+            userId: order.userId,
+            username: `user${order.userId}`,
+            name: `User #${order.userId}`,
+            email: 'N/A',
+            role: UserRole.USER,
+            enabled: true,
+            createdAt: new Date().toISOString()
+          };
         }
       },
       error: (error) => {
         console.error('Error fetching order details:', error);
-        // If error, use the order from the list as fallback
+        // If error, use the order from the list with enhanced customer info
         this.selectedOrder = order;
+        this.selectedOrder.customer = {
+          userId: order.userId,
+          username: `user${order.userId}`,
+          name: `User #${order.userId}`,
+          email: 'N/A',
+          role: UserRole.USER,
+          enabled: true,
+          createdAt: new Date().toISOString()
+        };
         this.toastr.warning('Using limited order details', 'Unable to fetch complete order information');
       }
     });
@@ -330,7 +368,13 @@ export class OrdersComponent implements OnInit {
     }
     
     this.currentPage = page;
-    this.loadOrders();
+    
+    // Load orders based on current status filter
+    if (this.currentStatus === 'ALL') {
+      this.loadOrders();
+    } else {
+      this.filterByStatus(this.currentStatus);
+    }
   }
   
   calculatePagination(): void {
@@ -343,14 +387,11 @@ export class OrdersComponent implements OnInit {
     let pages: number[] = [];
     
     if (totalPages <= maxPagesToShow) {
-      // Show all pages if there are few
       pages = Array.from({ length: totalPages }, (_, i) => i + 1);
     } else {
-      // Calculate which pages to show
       let startPage = Math.max(1, currentPage - 2);
       let endPage = Math.min(totalPages, startPage + maxPagesToShow - 1);
       
-      // Adjust if near end
       if (endPage - startPage < maxPagesToShow - 1) {
         startPage = Math.max(1, endPage - maxPagesToShow + 1);
       }

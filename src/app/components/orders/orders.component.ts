@@ -35,6 +35,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
   ) { }
 
   ngOnInit(): void {
+    console.log('Orders component initialized');
     this.checkAuth();
     this.loadOrders();
   }
@@ -46,12 +47,14 @@ export class OrdersComponent implements OnInit, OnDestroy {
   private checkAuth(): void {
     const user = this.authService.getCurrentUser();
     if (!user || !user.userId) {
+      console.log('User not authenticated, redirecting to login');
       this.router.navigate(['/login'], { 
         queryParams: { returnUrl: this.router.url } 
       });
       return;
     }
     this.userId = user.userId;
+    console.log('Authenticated user ID:', this.userId);
   }
 
   loadOrders(page: number = 1): void {
@@ -63,6 +66,8 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.currentPage = page;
     
+    console.log(`Loading orders for user ${this.userId}, page ${page}, size ${this.pageSize}`);
+    
     // Add retry logic to handle temporary connection issues
     const maxRetries = 3;
     let retryCount = 0;
@@ -71,21 +76,46 @@ export class OrdersComponent implements OnInit, OnDestroy {
       const sub = this.orderService.getOrdersByUser(this.userId!, this.currentPage, this.pageSize)
         .subscribe({
           next: (response) => {
-            this.orders = response.orders;
-            this.totalOrders = response.totalItems;
-            this.totalPages = Math.ceil(this.totalOrders / this.pageSize);
+            console.log('Orders response:', response);
+            this.orders = response.orders || [];
+            this.totalOrders = response.totalItems || 0;
+            this.totalPages = Math.ceil(this.totalOrders / this.pageSize) || 1;
             this.isLoading = false;
             
             // Debug information
             console.log(`Loaded ${this.orders.length} orders. Total: ${this.totalOrders}, Pages: ${this.totalPages}`);
+            
+            // Log order details for debugging
+            this.orders.forEach((order, index) => {
+              console.log(`Order ${index + 1}:`, order);
+              console.log(`  Status: ${order.orderStatus || order.orderStatus}`);
+              console.log(`  Total: ${order.orderTotal || order.totalPrice}`);
+              console.log(`  Items: ${order.orderItems?.length || order.orderItems?.length || 0}`);
+            });
+            
+            // If orders array is empty but we have totalItems, try again
+            if (this.orders.length === 0 && this.totalOrders > 0 && retryCount < maxRetries) {
+              retryCount++;
+              this.toastr.info(`Loading orders... Attempt ${retryCount}/${maxRetries}`);
+              setTimeout(() => {
+                console.log(`Empty orders array but totalItems > 0. Retrying (${retryCount}/${maxRetries})...`);
+                attemptLoad();
+              }, retryCount * 1000);
+              return;
+            }
+            
+            if (this.orders.length === 0) {
+              this.toastr.info('You have no orders yet');
+            }
           },
           error: (error) => {
             console.error('Error loading orders:', error);
             
             // Retry logic for connection errors
-            if (error.status === 0 && retryCount < maxRetries) {
+            if ((error.status === 0 || error.status === 500) && retryCount < maxRetries) {
               retryCount++;
               const timeout = retryCount * 1000; // Increasing backoff
+              this.toastr.warning(`Connection issue. Retrying... (${retryCount}/${maxRetries})`);
               console.log(`Retrying in ${timeout}ms (${retryCount}/${maxRetries})...`);
               
               setTimeout(() => {
@@ -96,11 +126,6 @@ export class OrdersComponent implements OnInit, OnDestroy {
             
             this.toastr.error('Failed to load your orders. Please try again later.');
             this.isLoading = false;
-            
-            // If we have no connection, create dummy data for testing UI
-            if (error.status === 0) {
-              this.handleOfflineMode();
-            }
           }
         });
 
@@ -108,15 +133,6 @@ export class OrdersComponent implements OnInit, OnDestroy {
     };
     
     attemptLoad();
-  }
-  
-  // If we're offline, show some mock data for UI testing
-  private handleOfflineMode(): void {
-    console.log('Using offline mode with mock data');
-    // Only use this in development for testing UI
-    this.orders = [];
-    this.totalOrders = 0;
-    this.totalPages = 0;
   }
   
   getPageNumbers(): number[] {
@@ -154,80 +170,86 @@ export class OrdersComponent implements OnInit, OnDestroy {
     this.loadOrders(page);
   }
 
-  getPaginationArray(): (number | string)[] {
-    const result: (number | string)[] = [];
-    
-    if (this.totalPages <= 7) {
-      for (let i = 1; i <= this.totalPages; i++) {
-        result.push(i);
-      }
-    } else {
-      // Always include first page
-      result.push(1);
-      
-      // Calculate start and end of current window
-      let startPage = Math.max(2, this.currentPage - 1);
-      let endPage = Math.min(this.totalPages - 1, this.currentPage + 1);
-      
-      // Adjust to show 3 pages in the middle
-      if (startPage > 2) {
-        result.push('...');
-      }
-      
-      // Add the window
-      for (let i = startPage; i <= endPage; i++) {
-        result.push(i);
-      }
-      
-      // Add ellipsis if needed
-      if (endPage < this.totalPages - 1) {
-        result.push('...');
-      }
-      
-      // Always include last page
-      result.push(this.totalPages);
+  reorderItems(order: Order): void {
+    if (!this.userId) {
+      this.toastr.warning('You must be logged in to reorder items.');
+      return;
     }
     
-    return result;
-  }
-
-  reorderItems(order: Order): void {
-    if (!this.userId || !order.orderItems || order.orderItems.length === 0) {
+    const items = order.orderItems || order.orderItems || [];
+    
+    if (!items || items.length === 0) {
       this.toastr.warning('Cannot reorder items at this time.');
       return;
     }
 
     this.isLoading = true;
+    this.toastr.info('Preparing to reorder items...');
     
     // First clear the cart
     const clearSub = this.cartService.clearCart(this.userId).subscribe({
       next: () => {
+        console.log('Cart cleared successfully');
         let addedItems = 0;
+        const totalItems = items.length;
+        
+        if (totalItems === 0) {
+          this.isLoading = false;
+          this.toastr.error('No valid items to add to cart');
+          return;
+        }
         
         // Add each item to cart
-        order.orderItems.forEach(item => {
+        items.forEach(item => {
           // Handle both cases: where product is an object or just a productId
-          const productId = typeof item.product === 'object' ? item.product?.productId : item.productId;
+          const productId = item.product?.productId || item.productId;
           
           if (!productId) {
+            console.warn('Skipping item without product ID:', item);
+            // Count skipped items as "added" to maintain progress count
+            addedItems++;
+            
+            // Check if we're done (even with skips)
+            if (addedItems === totalItems) {
+              this.isLoading = false;
+              if (addedItems > 0) {
+                this.toastr.success('Items have been added to your cart.');
+                this.router.navigate(['/cart']);
+              } else {
+                this.toastr.error('Could not add any items to cart');
+              }
+            }
             return;
           }
           
-          this.cartService.addToCart(this.userId!, productId, item.quantity).subscribe({
-            next: () => {
+          const quantity = item.quantity || 1;
+          console.log(`Adding product ${productId} with quantity ${quantity} to cart`);
+          
+          this.cartService.addToCart(this.userId!, productId, quantity).subscribe({
+            next: (response) => {
+              console.log(`Added item ${productId} to cart:`, response);
               addedItems++;
               
               // When all items are added, navigate to cart
-              if (addedItems === order.orderItems.length) {
+              if (addedItems === totalItems) {
                 this.isLoading = false;
                 this.toastr.success('All items have been added to your cart.');
                 this.router.navigate(['/cart']);
               }
             },
             error: (error) => {
-              console.error('Error adding item to cart:', error);
-              this.isLoading = false;
-              this.toastr.error('Failed to add some items to your cart.');
+              console.error(`Error adding item ${productId} to cart:`, error);
+              addedItems++;
+              
+              // If this was the last item, proceed to cart anyway
+              if (addedItems === totalItems) {
+                this.isLoading = false;
+                this.toastr.warning('Some items could not be added to your cart.');
+                if (addedItems > totalItems / 2) {
+                  // If more than half the items were added successfully, go to cart
+                  this.router.navigate(['/cart']);
+                }
+              }
             }
           });
         });
@@ -244,8 +266,11 @@ export class OrdersComponent implements OnInit, OnDestroy {
 
   cancelOrder(orderId: number): void {
     if (!this.userId) {
+      this.toastr.error('You must be logged in to cancel an order');
       return;
     }
+    
+    console.log(`Attempting to cancel order ${orderId} for user ${this.userId}`);
     
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       width: '400px',
@@ -260,15 +285,26 @@ export class OrdersComponent implements OnInit, OnDestroy {
     dialogRef.afterClosed().subscribe(result => {
       if (result) {
         this.isLoading = true;
+        this.toastr.info('Processing your cancellation request...');
         
         const cancelSub = this.orderService.cancelOrder(orderId, this.userId!).subscribe({
-          next: () => {
+          next: (response) => {
+            console.log('Order cancelled successfully:', response);
             this.toastr.success('Your order has been cancelled successfully.');
             this.loadOrders(this.currentPage);
           },
           error: (error) => {
             console.error('Error cancelling order:', error);
-            this.toastr.error('Failed to cancel your order. Please try again later.');
+            
+            // Try to provide more specific error messages
+            if (error.status === 400) {
+              this.toastr.error('This order cannot be cancelled. It may already be processed or shipped.');
+            } else if (error.status === 404) {
+              this.toastr.error('Order not found. It may have been already cancelled or removed.');
+            } else {
+              this.toastr.error('Failed to cancel your order. Please try again later or contact customer support.');
+            }
+            
             this.isLoading = false;
           }
         });
@@ -276,5 +312,44 @@ export class OrdersComponent implements OnInit, OnDestroy {
         this.subscriptions.push(cancelSub);
       }
     });
+  }
+  
+  // Helper method to calculate subtotal for the order
+  calculateSubtotal(order: Order): number {
+    // First check if subtotal is directly available
+    if (order.subtotal) {
+      return order.subtotal;
+    }
+    
+    // Calculate from items if available
+    const items = order.orderItems || order.orderItems || [];
+    if (items && items.length > 0) {
+      return items.reduce((sum, item) => {
+        const price = item.price || 0;
+        const quantity = item.quantity || 1;
+        return sum + (price * quantity);
+      }, 0);
+    }
+    
+    // Last resort: if orderTotal is available, use approximate calculation
+    if (order.orderTotal || order.totalPrice) {
+      const total = order.orderTotal || order.totalPrice || 0;
+      // Reverse calculate: assume tax is ~18% and shipping is negligible
+      return total / 1.18;
+    }
+    
+    return 0;
+  }
+  
+  // Helper method to calculate tax for the order
+  calculateTax(order: Order): number {
+    // First check if tax is directly available
+    if (order.tax) {
+      return order.tax;
+    }
+    
+    // Approximate tax as 18% of subtotal
+    const subtotal = this.calculateSubtotal(order);
+    return subtotal * 0.18;
   }
 }

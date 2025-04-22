@@ -62,12 +62,20 @@ export class AdminOrderService {
   }
 
   // Get order by ID (admin)
+  // Enhanced getOrderById method to ensure complete data
   getOrderById(id: number): Observable<Order> {
     console.log(`Getting order with ID ${id} from:`, `${this.baseUrl}/orders/${id}`);
     return this.http.get<Order>(`${this.baseUrl}/orders/${id}`).pipe(
-      map(order => {
+      switchMap(order => {
         // Process order to ensure required properties exist
-        return this.processOrderData(order);
+        order = this.processOrderData(order);
+        
+        // If order items are missing product details, fetch them
+        if (order.orderItems && order.orderItems.some(item => !item.product)) {
+          return this.enrichOrderItemsWithProducts(order);
+        }
+        
+        return of(order);
       }),
       catchError(error => {
         console.error(`Error fetching order by ID ${id}:`, error);
@@ -102,6 +110,13 @@ export class AdminOrderService {
         return of({ success: false });
       })
     );
+  }
+
+  // Helper method to enrich order items with product details
+  private enrichOrderItemsWithProducts(order: Order): Observable<Order> {
+    // In a real implementation, you would fetch product details for each item
+    // Here we just return the order as-is since the backend should provide this
+    return of(order);
   }
 
   // Get orders by status - Following dashboard service pattern
@@ -151,77 +166,97 @@ export class AdminOrderService {
     );
   }
 
+
+  // Add this method to your AdminOrderService
+getOrdersCountByStatus(status: OrderStatus): Observable<number> {
+  return this.http.get<any>(`${this.baseUrl}/orders/count`, {
+    params: { status }
+  }).pipe(
+    map(response => response.count || 0),
+    catchError(error => {
+      console.error('Error getting orders count by status:', error);
+      return of(0);
+    })
+  );
+}
   // Process order data to ensure all required properties exist
-  private processOrderData(order: Order): Order {
-    if (!order) return null as any;
-    
-    // Ensure order items exists and is an array
-    if (!order.orderItems) {
-      order.orderItems = [];
-    }
-    
-    // Ensure the order has customer information (basic placeholder)
-    if (!order.customer) {
-      const defaultUser: User = {
-        userId: order.userId,
-        username: `user${order.userId}`,
-        name: `User #${order.userId}`,
-        email: '-',
-        role: UserRole.USER,
-        enabled: true,
-        createdAt: new Date().toISOString()
-      };
-      order.customer = defaultUser;
-    }
-    
-    // Ensure the order has shipping address information
-    if (!order.shippingAddress) {
-      const defaultAddress: Address = {
-        addressId: 0,
-        userId: order.userId,
-        addressLine1: 'Address unavailable',
-        addressLine2: null,
-        city: '-',
-        state: '-',
-        postalCode: '-',
-        country: '-',
-        isDefault: false,
-        addressType: 'SHIPPING',
-        name: `User #${order.userId}`,
-        phone: '-'
-      };
-      order.shippingAddress = defaultAddress;
-    }
-    
-    // Ensure the order has billing address information if different from shipping
-    if (!order.billingAddress && order.billingAddressId) {
-      const defaultAddress: Address = {
-        addressId: order.billingAddressId,
-        userId: order.userId,
-        addressLine1: 'Billing address unavailable',
-        addressLine2: null,
-        city: '-',
-        state: '-',
-        postalCode: '-',
-        country: '-',
-        isDefault: false,
-        addressType: 'BILLING',
-        name: `User #${order.userId}`,
-        phone: '-'
-      };
-      order.billingAddress = defaultAddress;
-    }
-    
-    // Ensure the order has payment information
-    if (!order.paymentInfo) {
-      order.paymentInfo = {
-        paymentMethod: order.paymentMethod || 'card',
-        paymentStatus: order.paymentStatus || 'PENDING'
-      };
-    }
-    
-    return order;
+// Enhanced processOrderData method
+private processOrderData(order: Order): Order {
+  if (!order) return null as any;
+  
+  // Ensure order items exists and is an array
+  if (!order.orderItems) {
+    order.orderItems = [];
   }
+  
+  // Ensure each order item has required fields
+  order.orderItems = order.orderItems.map(item => {
+    return {
+      ...item,
+      productId: item.productId || 0,
+      quantity: item.quantity || 0,
+      price: item.price || 0
+    };
+  });
+  
+  // Ensure the order has customer information
+  if (!order.customer) {
+    order.customer = {
+      userId: order.userId,
+      username: `user${order.userId}`,
+      name: `User #${order.userId}`,
+      email: 'N/A',
+      role: UserRole.USER,
+      enabled: true,
+      createdAt: new Date().toISOString()
+    };
+  }
+  
+  // Ensure the order has shipping address information
+  if (!order.shippingAddress) {
+    order.shippingAddress = {
+      addressId: 0,
+      userId: order.userId,
+      addressLine1: 'Address unavailable',
+      addressLine2: '', // Default value for addressLine2
+      city: '-',
+      state: '-',
+      postalCode: '-',
+      country: '-',
+      isDefault: false,
+      addressType: 'SHIPPING',
+      name: order.customer?.name || `User #${order.userId}`,
+      phone: '-'
+    };
+  }
+  
+  // Ensure the order has billing address information
+  if (!order.billingAddress) {
+    order.billingAddress = {
+      ...order.shippingAddress,
+      addressId: order.shippingAddress.addressId ?? null,
+      addressType: 'BILLING',
+      addressLine1: order.shippingAddress.addressLine1 === 'Address unavailable' 
+        ? 'Billing address unavailable' 
+        : order.shippingAddress.addressLine1
+    };
+  }
+  
+  // Ensure the order has payment information
+  if (!order.paymentInfo) {
+    order.paymentInfo = {
+      paymentMethod: order.paymentMethod || 'Unknown',
+      paymentStatus: order.paymentStatus || 'PENDING'
+    };
+  }
+  
+  // Ensure order total is calculated if not provided
+  if (!order.orderTotal && order.orderItems) {
+    order.orderTotal = order.orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  }
+  
+  return order;
+}
 
   // Enrich orders with user data
   private enrichOrdersWithUserData(orders: Order[]): Observable<Order[]> {

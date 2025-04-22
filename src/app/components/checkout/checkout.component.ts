@@ -518,7 +518,13 @@ export class CheckoutComponent implements OnInit {
         totalPrice: this.calculateTotal(),
         shippingMethod: formValue.shippingMethod?.method || 'standard',
         paymentMethod: formValue.payment?.method || 'card',
-        orderNotes: formValue.orderNotes || null
+        orderNotes: formValue.orderNotes || null,
+        
+        // Add additional fields needed by the backend
+        subtotal: this.cart.totalPrice,
+        tax: this.calculateTax(),
+        shippingCost: this.getShippingCostValue(),
+        discount: 0 // Assuming no discount for now
       };
       
       console.log('Order request prepared:', orderRequest);
@@ -594,7 +600,11 @@ export class CheckoutComponent implements OnInit {
       postalCode: formData.postalCode || '',
       country: formData.country || '',
       isDefault: formData.saveAddress || false,
-      addressType: addressType
+      addressType: addressType,
+      // Add name property for better display in order confirmation
+      name: `${formData.firstName} ${formData.lastName}`.trim(),
+      // Include phone for shipping purposes
+      phone: formData.phone || ''
     };
   }
 
@@ -608,7 +618,11 @@ export class CheckoutComponent implements OnInit {
       next: (orderResponse) => {
         console.log('Order placed successfully:', orderResponse);
         this.ngZone.run(() => {
-          this.orderId = orderResponse.orderId;
+          // Store order details for potential session recovery
+          localStorage.setItem('lastOrderId', orderResponse.orderId?.toString() || '');
+          localStorage.setItem('lastOrderTime', new Date().toISOString());
+          
+          this.orderId = orderResponse.orderId ?? null;
           this.isSubmitting = false;
           
           if (paymentMethod === 'card') {
@@ -672,7 +686,15 @@ export class CheckoutComponent implements OnInit {
       this.paymentSuccessful = true;
       this.showNotification('Payment successful!', 'success');
       
-      // Note: Cart is already cleared in the payment component
+      // Get the user ID
+      const user = this.authService.getCurrentUser();
+      if (user && user.userId) {
+        // Clear the cart
+        this.cartService.clearCart(user.userId).subscribe({
+          next: () => console.log('Cart cleared successfully after payment'),
+          error: (err) => console.error('Error clearing cart after payment:', err)
+        });
+      }
       
       // Redirect to order confirmation page
       setTimeout(() => {
