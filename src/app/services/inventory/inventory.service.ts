@@ -30,11 +30,11 @@ export class InventoryService {
   constructor(private http: HttpClient) {}
 
   getAllInventory(): Observable<Inventory[]> {
-    return this.http.get<Inventory[]>(`${API_URL}`).pipe(
+    return this.http.get<Inventory[]>(`${ADMIN_API_URL}`).pipe(
       catchError(error => {
         console.error('Error fetching all inventory:', error);
         // Try with admin API if regular fails
-        return this.http.get<Inventory[]>(`${ADMIN_API_URL}`).pipe(
+        return this.http.get<Inventory[]>(`${API_URL}`).pipe(
           catchError(adminError => {
             console.error('Error fetching all inventory from admin API:', adminError);
             return of([]);

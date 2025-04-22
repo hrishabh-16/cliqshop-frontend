@@ -1,713 +1,948 @@
 <!-- Inventory Management Component -->
 <div class="min-h-screen bg-ivory-50 dark:bg-slate-800 transition-colors duration-300">
-    <!-- Container -->
-    <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
-      <!-- Page Header -->
-      <div class="mb-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div class="flex items-center">
-              <button (click)="navigateBack()" class="mr-3 text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-500 transition-colors">
-                <i class="fas fa-arrow-left"></i>
-              </button>
-              <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">
-                {{ isStockView ? 'Inventory Management' : isLowStockView ? 'Low Stock Items' : 'Warehouse Locations' }}
-              </h2>
-            </div>
-            <nav class="mt-2">
-              <ol class="flex text-sm text-gray-500 dark:text-gray-400">
-                <li><a routerLink="/admin/dashboard" class="hover:text-sky-600 dark:hover:text-sky-400">Dashboard</a></li>
-                <li class="mx-2">&rsaquo;</li>
-                <li class="text-gray-700 dark:text-gray-200">
-                  {{ isStockView ? 'Inventory Management' : isLowStockView ? 'Low Stock Items' : 'Warehouse Locations' }}
-                </li>
-              </ol>
-            </nav>
+  <!-- Container -->
+  <div class="container mx-auto py-6 px-4 sm:px-6 lg:px-8">
+    <!-- Page Header -->
+    <div class="mb-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <div class="flex items-center">
+            <button (click)="navigateBack()" class="mr-3 text-sky-600 dark:text-sky-400 hover:text-sky-700 dark:hover:text-sky-500 transition-colors">
+              <i class="fas fa-arrow-left"></i>
+            </button>
+            <h2 class="text-2xl font-semibold text-gray-800 dark:text-white">
+              {{ isStockView ? 'Inventory Management' : isLowStockView ? 'Low Stock Items' : isProductView ? 'Product Stock Management' : 'Warehouse Locations' }}
+            </h2>
           </div>
-          <!-- Actions Buttons -->
-          <div class="mt-4 sm:mt-0 flex space-x-3">
-            <div class="relative ml-2">
-              <select [(ngModel)]="currentView" (change)="changeView(currentView)" 
-                      class="bg-white dark:bg-slate-700 text-gray-700 dark:text-white border border-gray-300 dark:border-slate-600 rounded-lg py-2 pl-3 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
-                <option value="stock">All Inventory</option>
-                <option value="lowStock">Low Stock Items</option>
-                <option value="warehouse">Warehouse Locations</option>
-              </select>
-              <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
-                <i class="fas fa-chevron-down"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-  
-      <!-- Loading Spinner -->
-      <div *ngIf="loading" class="flex justify-center items-center h-64">
-        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600"></div>
-      </div>
-  
-      <!-- Error Message -->
-      <div *ngIf="error" class="text-center text-red-600 my-8">
-        {{ error }}
-      </div>
-      
-      <!-- Inventory List View -->
-      <div *ngIf="isStockView && !loading && !error" class="bg-white dark:bg-slate-700 rounded-xl shadow overflow-hidden">
-        <div class="px-6 py-5 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
-          <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Inventory Stock Levels</h3>
-          
-          <!-- Search Bar -->
-          <div class="relative">
-            <input type="text" [(ngModel)]="searchQuery" (input)="searchInventory()" placeholder="Search products..." 
-                   class="w-64 pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-slate-600 border border-transparent
-                          focus:bg-white dark:focus:bg-slate-700 focus:border-sky-500 text-sm text-gray-900 dark:text-gray-100
-                          transition-colors duration-200">
-            <span class="absolute left-3 top-2.5 text-gray-400 dark:text-gray-500">
-              <i class="fas fa-search"></i>
-            </span>
-          </div>
-        </div>
-  
-        <!-- Inventory Table -->
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-600">
-            <thead class="bg-gray-50 dark:bg-slate-800">
-              <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Product
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  SKU
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Current Stock
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Threshold
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Location
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Last Updated
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white dark:bg-slate-700 divide-y divide-gray-200 dark:divide-slate-600">
-              <tr *ngFor="let item of filteredInventory" class="hover:bg-gray-50 dark:hover:bg-slate-600/50 transition-colors">
-                <td class="px-6 py-4">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10">
-                      <img *ngIf="item.product?.imageUrl" [src]="item.product?.imageUrl" class="h-10 w-10 rounded-md object-cover" alt="{{ item.product?.name || 'Product' }}">
-                      <div *ngIf="!item.product?.imageUrl" class="h-10 w-10 rounded-md bg-gray-200 dark:bg-slate-600 flex items-center justify-center">
-                        <i class="fas fa-box text-gray-400 dark:text-gray-500"></i>
-                      </div>
-                    </div>
-                    <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900 dark:text-white">
-                        {{ item.product?.name || 'Unnamed Product' }}
-                      </div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400">
-                        ID: {{ item.product?.productId || 'N/A' }}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="text-sm text-gray-900 dark:text-white font-mono">{{ item.sku || 'N/A' }}</span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="px-3 py-1 inline-flex text-sm rounded-full" 
-                        [ngClass]="{
-                          'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300': item.quantity <= 0,
-                          'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300': item.quantity > 0 && item.quantity <= (item.lowStockThreshold || 10),
-                          'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300': item.quantity > (item.lowStockThreshold || 10)
-                        }">
-                    {{ item.quantity }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="text-sm text-gray-900 dark:text-white">{{ item.lowStockThreshold || '10 (Default)' }}</span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="text-sm text-gray-900 dark:text-white">{{ item.warehouseLocation || 'Not specified' }}</span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="text-sm text-gray-900 dark:text-white">{{ formatDate(item.lastUpdated) }}</span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap flex items-center space-x-3">
-                  <button (click)="openUpdateStockModal(item)" class="text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300" title="Update Stock">
-                    <i class="fas fa-edit"></i>
-                  </button>
-                  <button (click)="openUpdateThresholdModal(item)" class="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300" title="Set Threshold">
-                    <i class="fas fa-exclamation-triangle"></i>
-                  </button>
-                  <button (click)="openUpdateLocationModal(item)" class="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300" title="Set Location">
-                    <i class="fas fa-map-marker-alt"></i>
-                  </button>
-                </td>
-              </tr>
-              
-              <!-- Empty state -->
-              <tr *ngIf="filteredInventory.length === 0">
-                <td colspan="7" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
-                  <div class="flex flex-col items-center">
-                    <i class="fas fa-boxes text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
-                    <p>No inventory items found.</p>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-        
-        <!-- Pagination -->
-        <div *ngIf="filteredInventory.length > 0" class="px-6 py-4 flex items-center justify-between border-t border-gray-200 dark:border-slate-600">
-          <div class="text-sm text-gray-500 dark:text-gray-400">
-            Showing {{ filteredInventory.length }} of {{ totalInventoryItems }} items
-          </div>
-          
-          <nav aria-label="Pagination" *ngIf="totalPages > 1">
-            <ul class="pagination flex items-center space-x-1">
-              <li>
-                <button (click)="previousPage()" [disabled]="currentPage === 1"
-                        class="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 dark:border-slate-600 
-                               text-gray-600 dark:text-gray-300 bg-white dark:bg-slate-700 
-                               hover:bg-gray-100 dark:hover:bg-slate-600 
-                               disabled:opacity-50 disabled:cursor-not-allowed">
-                  <i class="fas fa-chevron-left text-xs"></i>
-                </button>
+          <nav class="mt-2">
+            <ol class="flex text-sm text-gray-500 dark:text-gray-400">
+              <li><a routerLink="/admin/dashboard" class="hover:text-sky-600 dark:hover:text-sky-400">Dashboard</a></li>
+              <li class="mx-2">&rsaquo;</li>
+              <li class="text-gray-700 dark:text-gray-200">
+                {{ isStockView ? 'Inventory Management' : isLowStockView ? 'Low Stock Items' : isProductView ? 'Product Stock Management' : 'Warehouse Locations' }}
               </li>
-              
-              <ng-container *ngFor="let page of pages">
-                <li>
-                  <button (click)="goToPage(page)" 
-                          [ngClass]="page === currentPage ? 
-                                    'bg-sky-600 text-white hover:bg-sky-700' : 
-                                    'bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 border border-gray-300 dark:border-slate-600'"
-                          class="flex items-center justify-center w-8 h-8 rounded-full font-medium text-sm transition-colors">
-                    {{ page }}
-                  </button>
-                </li>
-              </ng-container>
-              
-              <li>
-                <button (click)="nextPage()" [disabled]="currentPage === totalPages"
-                        class="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 dark:border-slate-600 
-                               text-gray-600 dark:text-gray-300 bg-white dark:bg-slate-700 
-                               hover:bg-gray-100 dark:hover:bg-slate-600 
-                               disabled:opacity-50 disabled:cursor-not-allowed">
-                  <i class="fas fa-chevron-right text-xs"></i>
-                </button>
-              </li>
-            </ul>
+            </ol>
           </nav>
         </div>
-      </div>
-  
-      <!-- Low Stock Items View -->
-      <div *ngIf="isLowStockView && !loading && !error" class="bg-white dark:bg-slate-700 rounded-xl shadow overflow-hidden">
-        <div class="px-6 py-5 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
-          <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Low Stock Items</h3>
-          
-          <!-- Filter Dropdown -->
-          <div class="relative">
-            <select [(ngModel)]="lowStockFilter" (change)="filterLowStockItems()" 
+        <!-- Actions Buttons -->
+        <div class="mt-4 sm:mt-0 flex space-x-3">
+          <div class="relative ml-2">
+            <select [(ngModel)]="currentView" (change)="changeView(currentView)" 
                     class="bg-white dark:bg-slate-700 text-gray-700 dark:text-white border border-gray-300 dark:border-slate-600 rounded-lg py-2 pl-3 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
-              <option value="all">All Low Stock</option>
-              <option value="outOfStock">Out of Stock</option>
-              <option value="critical">Critical (≤ 5)</option>
-              <option value="warning">Warning (≤ 10)</option>
+              <option value="products">Add Product Stock</option>
+              <option value="stock">All Inventory</option>
+              <option value="lowStock">Low Stock Items</option>
+              <option value="warehouse">Warehouse Locations</option>
             </select>
             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
               <i class="fas fa-chevron-down"></i>
             </div>
           </div>
         </div>
-  
-        <!-- Low Stock Items Table -->
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-600">
-            <thead class="bg-gray-50 dark:bg-slate-800">
-              <tr>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Product
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  SKU
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Current Stock
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Threshold
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody class="bg-white dark:bg-slate-700 divide-y divide-gray-200 dark:divide-slate-600">
-              <tr *ngFor="let item of filteredLowStockItems" class="hover:bg-gray-50 dark:hover:bg-slate-600/50 transition-colors">
-                <td class="px-6 py-4">
-                  <div class="flex items-center">
-                    <div class="flex-shrink-0 h-10 w-10">
-                      <img *ngIf="item.product?.imageUrl" [src]="item.product?.imageUrl" class="h-10 w-10 rounded-md object-cover" alt="{{ item.product?.name || 'Product' }}">
-                      <div *ngIf="!item.product?.imageUrl" class="h-10 w-10 rounded-md bg-gray-200 dark:bg-slate-600 flex items-center justify-center">
-                        <i class="fas fa-box text-gray-400 dark:text-gray-500"></i>
-                      </div>
-                    </div>
-                    <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900 dark:text-white">
-                        {{ item.product?.name || 'Unnamed Product' }}
-                      </div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400">
-                        ID: {{ item.product?.productId || 'N/A' }}
-                      </div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="text-sm text-gray-900 dark:text-white font-mono">{{ item.sku || 'N/A' }}</span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="px-3 py-1 inline-flex text-sm rounded-full" 
-                        [ngClass]="{
-                          'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300': item.quantity <= 0,
-                          'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300': item.quantity > 0 && item.quantity <= (item.lowStockThreshold || 10)
-                        }">
-                    {{ item.quantity }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="text-sm text-gray-900 dark:text-white">{{ item.lowStockThreshold || '10 (Default)' }}</span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
-                        [ngClass]="{
-                          'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300': item.quantity <= 0,
-                          'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300': item.quantity > 0 && item.quantity <= 5,
-                          'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300': item.quantity > 5
-                        }">
-                    {{ item.quantity <= 0 ? 'Out of Stock' : item.quantity <= 5 ? 'Critical' : 'Low Stock' }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap flex items-center space-x-3">
-                  <button (click)="openUpdateStockModal(item)" class="text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300" title="Update Stock">
-                    <i class="fas fa-plus-circle"></i>
-                  </button>
-                  <button (click)="openUpdateThresholdModal(item)" class="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300" title="Set Threshold">
-                    <i class="fas fa-exclamation-triangle"></i>
-                  </button>
-                </td>
-              </tr>
-              
-              <!-- Empty state -->
-              <tr *ngIf="filteredLowStockItems.length === 0">
-                <td colspan="6" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
-                  <div class="flex flex-col items-center">
-                    <i class="fas fa-check-circle text-5xl text-green-300 dark:text-green-600 mb-4"></i>
-                    <p>No low stock items found.</p>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+      </div>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div *ngIf="loading" class="flex justify-center items-center h-64">
+      <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600"></div>
+    </div>
+
+    <!-- Error Message -->
+    <div *ngIf="error" class="text-center text-red-600 my-8">
+      {{ error }}
+    </div>
+    
+    <!-- Products List View -->
+    <div *ngIf="isProductView && !loading && !error" class="bg-white dark:bg-slate-700 rounded-xl shadow overflow-hidden">
+      <div class="px-6 py-5 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Add Stock to Products</h3>
+        
+        <!-- Search Bar -->
+        <div class="relative">
+          <input type="text" [(ngModel)]="productSearchQuery" (input)="searchProducts()" placeholder="Search products..." 
+                 class="w-64 pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-slate-600 border border-transparent
+                        focus:bg-white dark:focus:bg-slate-700 focus:border-sky-500 text-sm text-gray-900 dark:text-gray-100
+                        transition-colors duration-200">
+          <span class="absolute left-3 top-2.5 text-gray-400 dark:text-gray-500">
+            <i class="fas fa-search"></i>
+          </span>
         </div>
       </div>
-  
-      <!-- Warehouse Locations View -->
-      <div *ngIf="isWarehouseView && !loading && !error" class="bg-white dark:bg-slate-700 rounded-xl shadow overflow-hidden">
-        <div class="px-6 py-5 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
-          <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Warehouse Locations</h3>
-          
-          <!-- Add New Location Button -->
-          <button (click)="openAddLocationModal()" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg flex items-center text-sm transition-colors duration-200">
-            <i class="fas fa-plus mr-2"></i> Add Location
-          </button>
+
+      <!-- Products Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-600">
+          <thead class="bg-gray-50 dark:bg-slate-800">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Product
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Price
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Current Stock
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Category
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white dark:bg-slate-700 divide-y divide-gray-200 dark:divide-slate-600">
+            <tr *ngFor="let product of filteredProducts" class="hover:bg-gray-50 dark:hover:bg-slate-600/50 transition-colors">
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-10 w-10">
+                    <img *ngIf="product.imageUrl" [src]="product.imageUrl" class="h-10 w-10 rounded-md object-cover" alt="{{ product.name || 'Product' }}">
+                    <div *ngIf="!product.imageUrl" class="h-10 w-10 rounded-md bg-gray-200 dark:bg-slate-600 flex items-center justify-center">
+                      <i class="fas fa-box text-gray-400 dark:text-gray-500"></i>
+                    </div>
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{ product.name || 'Unnamed Product' }}
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                      ID: {{ product.productId || 'N/A' }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm text-gray-900 dark:text-white">₹{{ product.price || '0.00' }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-3 py-1 inline-flex text-sm rounded-full" 
+                      [ngClass]="{
+                        'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300': (product.inventoryQuantity ?? 0) <= 0,
+                        'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300': (product.inventoryQuantity ?? 0) > 0 && (product.inventoryQuantity ?? 0) <= 10,
+                        'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300': (product.inventoryQuantity ?? 0) > 10
+                      }">
+                  {{ product.inventoryQuantity != null ? product.inventoryQuantity : 'Not set' }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm text-gray-900 dark:text-white">{{ product.categoryName || 'None' }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <button (click)="openAddStockModal(product)" class="px-3 py-1 bg-sky-600 hover:bg-sky-700 text-white text-sm rounded-md transition-colors">
+                  <i class="fas fa-plus mr-1"></i> Add Stock
+                </button>
+              </td>
+            </tr>
+            
+            <!-- Empty state -->
+            <tr *ngIf="filteredProducts.length === 0">
+              <td colspan="5" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+                <div class="flex flex-col items-center">
+                  <i class="fas fa-boxes text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                  <p>No products found.</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination -->
+      <div *ngIf="filteredProducts.length > 0" class="px-6 py-4 flex items-center justify-between border-t border-gray-200 dark:border-slate-600">
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          Showing {{ filteredProducts.length }} of {{ totalProducts }} products
         </div>
-  
-        <!-- Locations Grid -->
-        <div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div *ngFor="let location of warehouseLocations" class="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 border border-gray-200 dark:border-slate-600 transition duration-200 hover:shadow-md">
-            <div class="flex justify-between items-start mb-3">
-              <h4 class="text-lg font-medium text-gray-800 dark:text-white">{{ location.name }}</h4>
-              <div class="flex space-x-2">
-                <button (click)="editLocation(location)" class="text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300">
+        
+        <nav aria-label="Pagination" *ngIf="totalProductPages > 1">
+          <ul class="pagination flex items-center space-x-1">
+            <li>
+              <button (click)="previousProductPage()" [disabled]="currentProductPage === 1"
+                      class="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 dark:border-slate-600 
+                             text-gray-600 dark:text-gray-300 bg-white dark:bg-slate-700 
+                             hover:bg-gray-100 dark:hover:bg-slate-600 
+                             disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-left text-xs"></i>
+              </button>
+            </li>
+            
+            <ng-container *ngFor="let page of productPages">
+              <li>
+                <button (click)="goToProductPage(page)" 
+                        [ngClass]="page === currentProductPage ? 
+                                  'bg-sky-600 text-white hover:bg-sky-700' : 
+                                  'bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 border border-gray-300 dark:border-slate-600'"
+                        class="flex items-center justify-center w-8 h-8 rounded-full font-medium text-sm transition-colors">
+                  {{ page }}
+                </button>
+              </li>
+            </ng-container>
+            
+            <li>
+              <button (click)="nextProductPage()" [disabled]="currentProductPage === totalProductPages"
+                      class="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 dark:border-slate-600 
+                             text-gray-600 dark:text-gray-300 bg-white dark:bg-slate-700 
+                             hover:bg-gray-100 dark:hover:bg-slate-600 
+                             disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-right text-xs"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    
+    <!-- Inventory List View -->
+    <div *ngIf="isStockView && !loading && !error" class="bg-white dark:bg-slate-700 rounded-xl shadow overflow-hidden">
+      <div class="px-6 py-5 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Inventory Stock Levels</h3>
+        
+        <!-- Search Bar -->
+        <div class="relative">
+          <input type="text" [(ngModel)]="searchQuery" (input)="searchInventory()" placeholder="Search products..." 
+                 class="w-64 pl-10 pr-4 py-2 rounded-lg bg-gray-100 dark:bg-slate-600 border border-transparent
+                        focus:bg-white dark:focus:bg-slate-700 focus:border-sky-500 text-sm text-gray-900 dark:text-gray-100
+                        transition-colors duration-200">
+          <span class="absolute left-3 top-2.5 text-gray-400 dark:text-gray-500">
+            <i class="fas fa-search"></i>
+          </span>
+        </div>
+      </div>
+
+      <!-- Inventory Table -->
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-600">
+          <thead class="bg-gray-50 dark:bg-slate-800">
+            <tr>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Product
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                SKU
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Current Stock
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Threshold
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Location
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Last Updated
+              </th>
+              <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white dark:bg-slate-700 divide-y divide-gray-200 dark:divide-slate-600">
+            <tr *ngFor="let item of filteredInventory" class="hover:bg-gray-50 dark:hover:bg-slate-600/50 transition-colors">
+              <td class="px-6 py-4">
+                <div class="flex items-center">
+                  <div class="flex-shrink-0 h-10 w-10">
+                    <img *ngIf="item.product?.imageUrl" [src]="item.product?.imageUrl" class="h-10 w-10 rounded-md object-cover" alt="{{ item.product?.name || 'Product' }}">
+                    <div *ngIf="!item.product?.imageUrl" class="h-10 w-10 rounded-md bg-gray-200 dark:bg-slate-600 flex items-center justify-center">
+                      <i class="fas fa-box text-gray-400 dark:text-gray-500"></i>
+                    </div>
+                  </div>
+                  <div class="ml-4">
+                    <div class="text-sm font-medium text-gray-900 dark:text-white">
+                      {{ item.product?.name || 'Unnamed Product' }}
+                    </div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                      ID: {{ item.product?.productId || 'N/A' }}
+                    </div>
+                  </div>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm text-gray-900 dark:text-white font-mono">{{ item.sku || 'N/A' }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-3 py-1 inline-flex text-sm rounded-full" 
+                      [ngClass]="{
+                        'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300': item.quantity <= 0,
+                        'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300': item.quantity > 0 && item.quantity <= (item.lowStockThreshold || 10),
+                        'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300': item.quantity > (item.lowStockThreshold || 10)
+                      }">
+                  {{ item.quantity }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm text-gray-900 dark:text-white">{{ item.lowStockThreshold || '10 (Default)' }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm text-gray-900 dark:text-white">{{ item.warehouseLocation || 'Not specified' }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="text-sm text-gray-900 dark:text-white">{{ formatDate(item.lastUpdated) }}</span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap flex items-center space-x-3">
+                <button (click)="openUpdateStockModal(item)" class="text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300" title="Update Stock">
                   <i class="fas fa-edit"></i>
                 </button>
-                <button (click)="confirmDeleteLocation(location)" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300">
-                  <i class="fas fa-trash"></i>
+                <button (click)="openUpdateThresholdModal(item)" class="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300" title="Set Threshold">
+                  <i class="fas fa-exclamation-triangle"></i>
                 </button>
+                <button (click)="openUpdateLocationModal(item)" class="text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300" title="Set Location">
+                  <i class="fas fa-map-marker-alt"></i>
+                </button>
+              </td>
+            </tr>
+            
+            <!-- Empty state -->
+            <tr *ngIf="filteredInventory.length === 0">
+              <td colspan="7" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+                <div class="flex flex-col items-center">
+                  <i class="fas fa-boxes text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                  <p>No inventory items found.</p>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Pagination -->
+      <div *ngIf="filteredInventory.length > 0" class="px-6 py-4 flex items-center justify-between border-t border-gray-200 dark:border-slate-600">
+        <div class="text-sm text-gray-500 dark:text-gray-400">
+          Showing {{ filteredInventory.length }} of {{ totalInventoryItems }} items
+        </div>
+        
+        <nav aria-label="Pagination" *ngIf="totalPages > 1">
+          <ul class="pagination flex items-center space-x-1">
+            <li>
+              <button (click)="previousPage()" [disabled]="currentPage === 1"
+                      class="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 dark:border-slate-600 
+                             text-gray-600 dark:text-gray-300 bg-white dark:bg-slate-700 
+                             hover:bg-gray-100 dark:hover:bg-slate-600 
+                             disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-left text-xs"></i>
+              </button>
+            </li>
+            
+            <ng-container *ngFor="let page of pages">
+              <li>
+                <button (click)="goToPage(page)" 
+                        [ngClass]="page === currentPage ? 
+                                  'bg-sky-600 text-white hover:bg-sky-700' : 
+                                  'bg-white dark:bg-slate-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 border border-gray-300 dark:border-slate-600'"
+                        class="flex items-center justify-center w-8 h-8 rounded-full font-medium text-sm transition-colors">
+                  {{ page }}
+                </button>
+              </li>
+            </ng-container>
+            
+            <li>
+              <button (click)="nextPage()" [disabled]="currentPage === totalPages"
+                      class="flex items-center justify-center w-8 h-8 rounded-full border border-gray-300 dark:border-slate-600 
+                             text-gray-600 dark:text-gray-300 bg-white dark:bg-slate-700 
+                             hover:bg-gray-100 dark:hover:bg-slate-600 
+                             disabled:opacity-50 disabled:cursor-not-allowed">
+                <i class="fas fa-chevron-right text-xs"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Low Stock Items View -->
+    <div *ngIf="isLowStockView && !loading && !error" class="bg-white dark:bg-slate-700 rounded-xl shadow overflow-hidden">
+      <div class="px-6 py-5 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Low Stock Items</h3>
+        
+        <!-- Filter Dropdown -->
+        <div class="relative">
+          <select [(ngModel)]="lowStockFilter" (change)="filterLowStockItems()" 
+                  class="bg-white dark:bg-slate-700 text-gray-700 dark:text-white border border-gray-300 dark:border-slate-600 rounded-lg py-2 pl-3 pr-10 appearance-none focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 text-sm">
+            <option value="all">All Low Stock</option>
+            <option value="outOfStock">Out of Stock</option>
+            <option value="critical">Critical (≤ 5)</option>
+            <option value="warning">Warning (≤ 10)</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500 dark:text-gray-400">
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Low Stock Items Table -->
+<div class="overflow-x-auto">
+  <table class="min-w-full divide-y divide-gray-200 dark:divide-slate-600">
+    <thead class="bg-gray-50 dark:bg-slate-800">
+      <tr>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          Product
+        </th>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          SKU
+        </th>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          Current Stock
+        </th>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          Threshold
+        </th>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          Status
+        </th>
+        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+          Actions
+        </th>
+      </tr>
+    </thead>
+    <tbody class="bg-white dark:bg-slate-700 divide-y divide-gray-200 dark:divide-slate-600">
+      <tr *ngFor="let item of filteredLowStockItems" class="hover:bg-gray-50 dark:hover:bg-slate-600/50 transition-colors">
+        <td class="px-6 py-4">
+          <div class="flex items-center">
+            <div class="flex-shrink-0 h-10 w-10">
+              <img *ngIf="item.product?.imageUrl" [src]="item.product?.imageUrl" class="h-10 w-10 rounded-md object-cover" alt="{{ item.product?.name || 'Product' }}">
+              <div *ngIf="!item.product?.imageUrl" class="h-10 w-10 rounded-md bg-gray-200 dark:bg-slate-600 flex items-center justify-center">
+                <i class="fas fa-box text-gray-400 dark:text-gray-500"></i>
               </div>
             </div>
-            
-            <div class="text-sm text-gray-600 dark:text-gray-300 mb-2">
-              <span class="text-gray-500 dark:text-gray-400">Items: </span>
-              <span class="font-medium">{{ getItemCountForLocation(location.name) }}</span>
+            <div class="ml-4">
+              <div class="text-sm font-medium text-gray-900 dark:text-white">
+                {{ item.product?.name || 'Unnamed Product' }}
+              </div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">
+                ID: {{ item.product?.productId || 'N/A' }}
+              </div>
             </div>
-            
-            <div class="text-sm text-gray-600 dark:text-gray-300">
-              <span class="text-gray-500 dark:text-gray-400">Code: </span>
-              <span class="font-medium font-mono">{{ location.code }}</span>
+          </div>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <span class="text-sm text-gray-900 dark:text-white font-mono">{{ item.sku || 'ZG011FA' }}</span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <span class="px-3 py-1 inline-flex text-sm rounded-full" 
+                [ngClass]="{
+                  'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300': item.quantity <= 0,
+                  'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300': item.quantity > 0 && item.quantity <= (item.lowStockThreshold || 10)
+                }">
+            {{ item.quantity }}
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <span class="text-sm text-gray-900 dark:text-white">{{ item.lowStockThreshold || '10 (Default)' }}</span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap">
+          <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                [ngClass]="{
+                  'bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300': item.quantity <= 0,
+                  'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300': item.quantity > 0 && item.quantity <= 5,
+                  'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300': item.quantity > 5
+                }">
+            {{ item.quantity <= 0 ? 'Out of Stock' : item.quantity <= 5 ? 'Critical' : 'Low Stock' }}
+          </span>
+        </td>
+        <td class="px-6 py-4 whitespace-nowrap flex items-center space-x-3">
+          <button (click)="openUpdateStockModal(item)" class="text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300" title="Update Stock">
+            <i class="fas fa-plus-circle"></i>
+          </button>
+          <button (click)="openUpdateThresholdModal(item)" class="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300" title="Set Threshold">
+            <i class="fas fa-exclamation-triangle"></i>
+          </button>
+        </td>
+      </tr>
+      
+      <!-- Empty state -->
+      <tr *ngIf="filteredLowStockItems.length === 0">
+        <td colspan="6" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
+          <div class="flex flex-col items-center">
+            <i class="fas fa-check-circle text-5xl text-green-300 dark:text-green-600 mb-4"></i>
+            <p>No low stock items found.</p>
+          </div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</div>
+
+<!-- Warehouse Locations View -->
+<div *ngIf="isWarehouseView && !loading && !error" class="bg-white dark:bg-slate-700 rounded-xl shadow overflow-hidden">
+<div class="px-6 py-5 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
+  <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Warehouse Locations</h3>
+  
+  <!-- Add New Location Button -->
+  <button (click)="openAddLocationModal()" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg flex items-center text-sm transition-colors duration-200">
+    <i class="fas fa-plus mr-2"></i> Add Location
+  </button>
+</div>
+
+<!-- Locations Grid -->
+<div class="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+  <div *ngFor="let location of warehouseLocations" class="bg-gray-50 dark:bg-slate-800 rounded-lg p-4 border border-gray-200 dark:border-slate-600 transition duration-200 hover:shadow-md">
+    <div class="flex justify-between items-start mb-3">
+      <h4 class="text-lg font-medium text-gray-800 dark:text-white">{{ location.name }}</h4>
+      <div class="flex space-x-2">
+        <button (click)="editLocation(location)" class="text-sky-600 dark:text-sky-400 hover:text-sky-800 dark:hover:text-sky-300">
+          <i class="fas fa-edit"></i>
+        </button>
+        <button (click)="confirmDeleteLocation(location)" class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300">
+          <i class="fas fa-trash"></i>
+        </button>
+      </div>
+    </div>
+    
+    <div class="text-sm text-gray-600 dark:text-gray-300 mb-2">
+      <span class="text-gray-500 dark:text-gray-400">Items: </span>
+      <span class="font-medium">{{ getItemCountForLocation(location.name) }}</span>
+    </div>
+    
+    <div class="text-sm text-gray-600 dark:text-gray-300">
+      <span class="text-gray-500 dark:text-gray-400">Code: </span>
+      <span class="font-medium font-mono">{{ location.code }}</span>
+    </div>
+  </div>
+  
+  <!-- Empty state -->
+  <div *ngIf="warehouseLocations.length === 0" class="col-span-full py-10 text-center text-gray-500 dark:text-gray-400">
+    <div class="flex flex-col items-center">
+      <i class="fas fa-warehouse text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
+      <p>No warehouse locations found.</p>
+      <button (click)="openAddLocationModal()" class="mt-4 text-sm text-sky-600 dark:text-sky-400 hover:underline">Add your first location</button>
+    </div>
+  </div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Add Stock Modal for Products -->
+<div *ngIf="showAddStockModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+<!-- Background overlay -->
+<div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
+
+<!-- Modal panel -->
+<div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full animate-modal-in">
+  <div class="bg-white dark:bg-slate-800 px-6 pt-5 pb-4">
+    <div class="sm:flex sm:items-start">
+      <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-sky-100 dark:bg-sky-900/30 sm:mx-0 sm:h-10 sm:w-10">
+        <i class="fas fa-box-open text-sky-600 dark:text-sky-400"></i>
+      </div>
+      <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+          Add Stock to Product
+        </h3>
+        <div class="mt-2">
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            Add inventory stock for <strong>{{ selectedProduct?.name || 'selected product' }}</strong>
+          </p>
+          
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-1">
+              <label for="currentStock" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Stock</label>
+            </div>
+            <div class="bg-gray-100 dark:bg-slate-700 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300">
+              {{ selectedProduct?.inventoryQuantity || '0' }}
             </div>
           </div>
           
-          <!-- Empty state -->
-          <div *ngIf="warehouseLocations.length === 0" class="col-span-full py-10 text-center text-gray-500 dark:text-gray-400">
-            <div class="flex flex-col items-center">
-              <i class="fas fa-warehouse text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
-              <p>No warehouse locations found.</p>
-              <button (click)="openAddLocationModal()" class="mt-4 text-sm text-sky-600 dark:text-sky-400 hover:underline">Add your first location</button>
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-1">
+              <label for="stockAmount" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Quantity to Add
+              </label>
             </div>
+            <input type="number" id="stockAmount" [(ngModel)]="stockChangeAmount" min="1" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Update Stock Modal -->
-  <div *ngIf="showUpdateStockModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <!-- Background overlay -->
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
-      
-      <!-- Modal panel -->
-      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full animate-modal-in">
-        <div class="bg-white dark:bg-slate-800 px-6 pt-5 pb-4">
-          <div class="sm:flex sm:items-start">
-            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-sky-100 dark:bg-sky-900/30 sm:mx-0 sm:h-10 sm:w-10">
-              <i class="fas fa-cubes text-sky-600 dark:text-sky-400"></i>
+          
+          <div class="mb-4" *ngIf="!selectedProduct?.hasInventory">
+            <div class="flex justify-between items-center mb-1">
+              <label for="lowStockThreshold" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Low Stock Threshold
+              </label>
             </div>
-            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-              <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
-                Update Stock
-              </h3>
-              <div class="mt-2">
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  Update inventory stock for <strong>{{ selectedInventory?.product?.name || 'selected product' }}</strong>
-                </p>
-                
-                <div class="mb-4">
-                  <div class="flex justify-between items-center mb-1">
-                    <label for="currentStock" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Stock</label>
-                  </div>
-                  <div class="bg-gray-100 dark:bg-slate-700 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300">
-                    {{ selectedInventory?.quantity }}
-                  </div>
-                </div>
-                
-                <div class="mb-4">
-                  <div class="flex justify-between items-center mb-1">
-                    <label for="updateType" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Update Type</label>
-                  </div>
-                  <select id="updateType" [(ngModel)]="stockUpdateType" 
-                          class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
-                    <option value="add">Add to current stock</option>
-                    <option value="subtract">Subtract from current stock</option>
-                    <option value="set">Set exact value</option>
-                  </select>
-                </div>
-                
-                <div class="mb-4">
-                  <div class="flex justify-between items-center mb-1">
-                    <label for="stockChange" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                      {{ stockUpdateType === 'set' ? 'New Stock Level' : 'Quantity' }}
-                    </label>
-                  </div>
-                  <input type="number" id="stockChange" [(ngModel)]="stockChangeAmount" min="0" 
-                         class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
-                </div>
-                
-                <div class="flex items-center mt-6">
-                  <div class="flex-shrink-0 w-10 h-10">
-                    <i class="fas fa-info-circle text-2xl text-blue-500 dark:text-blue-400"></i>
-                  </div>
-                  <div class="ml-3">
-                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                      {{ stockUpdateType === 'add' ? 'New stock level will be: ' + getNewStockLevel() :
-                         stockUpdateType === 'subtract' ? 'New stock level will be: ' + getNewStockLevel() :
-                         'Current stock level will be replaced with: ' + stockChangeAmount }}
-                    </div>
-                  </div>
-                </div>
+            <input type="number" id="lowStockThreshold" [(ngModel)]="newThreshold" min="1" placeholder="Default: 10" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
+          </div>
+          
+          <div class="mb-4" *ngIf="!selectedProduct?.hasInventory">
+            <div class="flex justify-between items-center mb-1">
+              <label for="warehouseLocation" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Warehouse Location
+              </label>
+            </div>
+            <select id="warehouseLocation" [(ngModel)]="newLocation" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
+              <option value="">-- Select Location --</option>
+              <option *ngFor="let location of warehouseLocations" [value]="location.name">{{ location.name }}</option>
+            </select>
+          </div>
+          
+          <div class="flex items-center mt-6">
+            <div class="flex-shrink-0 w-10 h-10">
+              <i class="fas fa-info-circle text-2xl text-blue-500 dark:text-blue-400"></i>
+            </div>
+            <div class="ml-3">
+              <div class="text-sm text-gray-500 dark:text-gray-400">
+                New stock level will be: {{ (selectedProduct?.inventoryQuantity || 0) + stockChangeAmount }}
               </div>
             </div>
           </div>
         </div>
-        <div class="bg-gray-50 dark:bg-slate-700 px-6 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button" (click)="updateStock()" 
-                  [disabled]="!stockChangeAmount || stockChangeAmount < 0 || isSubmitting"
-                  class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors sm:ml-3 sm:w-auto">
-            <span *ngIf="isSubmitting" class="inline-block mr-2">
-              <i class="fas fa-spinner fa-spin"></i>
-            </span>
-            Update Stock
-          </button>
-          <button type="button" (click)="closeModal()" 
-                  class="mt-3 sm:mt-0 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 sm:w-auto">
-            Cancel
-          </button>
-        </div>
       </div>
     </div>
   </div>
-  
-  <!-- Update Threshold Modal -->
-  <div *ngIf="showUpdateThresholdModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <!-- Background overlay -->
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
-      
-      <!-- Modal panel -->
-      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full animate-modal-in">
-        <div class="bg-white dark:bg-slate-800 px-6 pt-5 pb-4">
-          <div class="sm:flex sm:items-start">
-            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 sm:mx-0 sm:h-10 sm:w-10">
-              <i class="fas fa-exclamation-triangle text-amber-600 dark:text-amber-400"></i>
+  <div class="bg-gray-50 dark:bg-slate-700 px-6 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+    <button type="button" (click)="addProductStock()" 
+            [disabled]="!stockChangeAmount || stockChangeAmount < 1 || isSubmitting || (!newLocation && !selectedProduct?.hasInventory)"
+            class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors sm:ml-3 sm:w-auto">
+      <span *ngIf="isSubmitting" class="inline-block mr-2">
+        <i class="fas fa-spinner fa-spin"></i>
+      </span>
+      Add Stock
+    </button>
+    <button type="button" (click)="closeModal()" 
+            class="mt-3 sm:mt-0 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 sm:w-auto">
+      Cancel
+    </button>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- Update Stock Modal -->
+<div *ngIf="showUpdateStockModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+<!-- Background overlay -->
+<div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
+
+<!-- Modal panel -->
+<div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full animate-modal-in">
+  <div class="bg-white dark:bg-slate-800 px-6 pt-5 pb-4">
+    <div class="sm:flex sm:items-start">
+      <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-sky-100 dark:bg-sky-900/30 sm:mx-0 sm:h-10 sm:w-10">
+        <i class="fas fa-cubes text-sky-600 dark:text-sky-400"></i>
+      </div>
+      <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+          Update Stock
+        </h3>
+        <div class="mt-2">
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            Update inventory stock for <strong>{{ selectedInventory?.product?.name || 'selected product' }}</strong>
+          </p>
+          
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-1">
+              <label for="currentStock" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Stock</label>
             </div>
-            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-              <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
-                Set Low Stock Threshold
-              </h3>
-              <div class="mt-2">
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  Set the low stock threshold for <strong>{{ selectedInventory?.product?.name || 'selected product' }}</strong>
-                </p>
-                
-                <div class="mb-4">
-                  <div class="flex justify-between items-center mb-1">
-                    <label for="currentThreshold" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Threshold</label>
-                  </div>
-                  <div class="bg-gray-100 dark:bg-slate-700 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300">
-                    {{ selectedInventory?.lowStockThreshold || '10 (Default)' }}
-                  </div>
-                </div>
-                
-                <div class="mb-4">
-                  <div class="flex justify-between items-center mb-1">
-                    <label for="newThreshold" class="block text-sm font-medium text-gray-700 dark:text-gray-300">New Threshold</label>
-                  </div>
-                  <input type="number" id="newThreshold" [(ngModel)]="newThreshold" min="1" 
-                         class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
-                </div>
-                
-                <div class="flex items-center mt-6">
-                  <div class="flex-shrink-0 w-10 h-10">
-                    <i class="fas fa-info-circle text-2xl text-blue-500 dark:text-blue-400"></i>
-                  </div>
-                  <div class="ml-3">
-                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                      When stock drops below this threshold, the item will be marked as "Low Stock"
-                    </div>
-                  </div>
-                </div>
+            <div class="bg-gray-100 dark:bg-slate-700 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300">
+              {{ selectedInventory?.quantity }}
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-1">
+              <label for="updateType" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Update Type</label>
+            </div>
+            <select id="updateType" [(ngModel)]="stockUpdateType" 
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
+              <option value="add">Add to current stock</option>
+              <option value="subtract">Subtract from current stock</option>
+              <option value="set">Set exact value</option>
+            </select>
+          </div>
+          
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-1">
+              <label for="stockChange" class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ stockUpdateType === 'set' ? 'New Stock Level' : 'Quantity' }}
+              </label>
+            </div>
+            <input type="number" id="stockChange" [(ngModel)]="stockChangeAmount" min="0" 
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
+          </div>
+          
+          <div class="flex items-center mt-6">
+            <div class="flex-shrink-0 w-10 h-10">
+              <i class="fas fa-info-circle text-2xl text-blue-500 dark:text-blue-400"></i>
+            </div>
+            <div class="ml-3">
+              <div class="text-sm text-gray-500 dark:text-gray-400">
+                {{ stockUpdateType === 'add' ? 'New stock level will be: ' + getNewStockLevel() :
+                   stockUpdateType === 'subtract' ? 'New stock level will be: ' + getNewStockLevel() :
+                   'Current stock level will be replaced with: ' + stockChangeAmount }}
               </div>
             </div>
           </div>
         </div>
-        <div class="bg-gray-50 dark:bg-slate-700 px-6 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button" (click)="updateThreshold()" 
-                  [disabled]="!newThreshold || newThreshold < 1 || isSubmitting"
-                  class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors sm:ml-3 sm:w-auto">
-            <span *ngIf="isSubmitting" class="inline-block mr-2">
-              <i class="fas fa-spinner fa-spin"></i>
-            </span>
-            Set Threshold
-          </button>
-          <button type="button" (click)="closeModal()" 
-                  class="mt-3 sm:mt-0 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 sm:w-auto">
-            Cancel
-          </button>
-        </div>
       </div>
     </div>
   </div>
-  
-  <!-- Update Location Modal -->
-  <div *ngIf="showUpdateLocationModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <!-- Background overlay -->
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
-      
-      <!-- Modal panel -->
-      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full animate-modal-in">
-        <div class="bg-white dark:bg-slate-800 px-6 pt-5 pb-4">
-          <div class="sm:flex sm:items-start">
-            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 sm:mx-0 sm:h-10 sm:w-10">
-              <i class="fas fa-map-marker-alt text-purple-600 dark:text-purple-400"></i>
+  <div class="bg-gray-50 dark:bg-slate-700 px-6 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+    <button type="button" (click)="updateStock()" 
+            [disabled]="!stockChangeAmount || stockChangeAmount < 0 || isSubmitting"
+            class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors sm:ml-3 sm:w-auto">
+      <span *ngIf="isSubmitting" class="inline-block mr-2">
+        <i class="fas fa-spinner fa-spin"></i>
+      </span>
+      Update Stock
+    </button>
+    <button type="button" (click)="closeModal()" 
+            class="mt-3 sm:mt-0 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 sm:w-auto">
+      Cancel
+    </button>
+  </div>
+</div>
+</div>
+</div>
+
+<!-- Update Threshold Modal -->
+<div *ngIf="showUpdateThresholdModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+<div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+<!-- Background overlay -->
+<div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
+
+<!-- Modal panel -->
+<div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full animate-modal-in">
+  <div class="bg-white dark:bg-slate-800 px-6 pt-5 pb-4">
+    <div class="sm:flex sm:items-start">
+      <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/30 sm:mx-0 sm:h-10 sm:w-10">
+        <i class="fas fa-exclamation-triangle text-amber-600 dark:text-amber-400"></i>
+      </div>
+      <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+        <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+          Set Low Stock Threshold
+        </h3>
+        <div class="mt-2">
+          <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            Set the low stock threshold for <strong>{{ selectedInventory?.product?.name || 'selected product' }}</strong>
+          </p>
+          
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-1">
+              <label for="currentThreshold" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Threshold</label>
             </div>
-            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-              <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
-                Update Warehouse Location
-              </h3>
-              <div class="mt-2">
-                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                  Update the warehouse location for <strong>{{ selectedInventory?.product?.name || 'selected product' }}</strong>
-                </p>
-                
-                <div class="mb-4">
-                  <div class="flex justify-between items-center mb-1">
-                    <label for="currentLocation" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Location</label>
-                  </div>
-                  <div class="bg-gray-100 dark:bg-slate-700 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300">
-                    {{ selectedInventory?.warehouseLocation || 'Not specified' }}
-                  </div>
-                </div>
-                
-                <div class="mb-4">
-                  <div class="flex justify-between items-center mb-1">
-                    <label for="newLocation" class="block text-sm font-medium text-gray-700 dark:text-gray-300">New Location</label>
-                  </div>
-                  <select id="newLocation" [(ngModel)]="newLocation" 
-                          class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
-                    <option value="">-- Select Location --</option>
-                    <option *ngFor="let location of warehouseLocations" [value]="location.name">{{ location.name }}</option>
-                  </select>
-                </div>
+            <div class="bg-gray-100 dark:bg-slate-700 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300">
+              {{ selectedInventory?.lowStockThreshold || '10 (Default)' }}
+            </div>
+          </div>
+          
+          <div class="mb-4">
+            <div class="flex justify-between items-center mb-1">
+              <label for="newThreshold" class="block text-sm font-medium text-gray-700 dark:text-gray-300">New Threshold</label>
+            </div>
+            <input type="number" id="newThreshold" [(ngModel)]="newThreshold" min="1" 
+                   class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
+          </div>
+          
+          <div class="flex items-center mt-6">
+            <div class="flex-shrink-0 w-10 h-10">
+              <i class="fas fa-info-circle text-2xl text-blue-500 dark:text-blue-400"></i>
+            </div>
+            <div class="ml-3">
+              <div class="text-sm text-gray-500 dark:text-gray-400">
+                When stock drops below this threshold, the item will be marked as "Low Stock"
               </div>
             </div>
           </div>
         </div>
-        <div class="bg-gray-50 dark:bg-slate-700 px-6 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button" (click)="updateLocation()" 
-                  [disabled]="!newLocation || isSubmitting"
-                  class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors sm:ml-3 sm:w-auto">
-            <span *ngIf="isSubmitting" class="inline-block mr-2">
-              <i class="fas fa-spinner fa-spin"></i>
-            </span>
-            Update Location
-          </button>
-          <button type="button" (click)="closeModal()" 
-                  class="mt-3 sm:mt-0 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 sm:w-auto">
-            Cancel
-          </button>
-        </div>
       </div>
     </div>
   </div>
-  
-  <!-- Add/Edit Location Modal -->
-  <div *ngIf="showAddLocationModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <!-- Background overlay -->
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
-      
-      <!-- Modal panel -->
-      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full animate-modal-in">
-        <div class="bg-white dark:bg-slate-800 px-6 pt-5 pb-4">
-          <div class="sm:flex sm:items-start">
-            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 sm:mx-0 sm:h-10 sm:w-10">
-              <i class="fas fa-warehouse text-green-600 dark:text-green-400"></i>
-            </div>
-            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
-              <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
-                {{ editingLocation ? 'Edit' : 'Add' }} Warehouse Location
-              </h3>
-              <div class="mt-2">
-                <div class="mb-4">
-                  <div class="flex justify-between items-center mb-1">
-                    <label for="locationName" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Location Name</label>
-                  </div>
-                  <input type="text" id="locationName" [(ngModel)]="newLocationData.name" placeholder="e.g. Main Warehouse" 
-                         class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
-                </div>
-                
-                <div class="mb-4">
-                  <div class="flex justify-between items-center mb-1">
-                    <label for="locationCode" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Location Code</label>
-                  </div>
-                  <input type="text" id="locationCode" [(ngModel)]="newLocationData.code" placeholder="e.g. WH-MAIN" 
-                         class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="bg-gray-50 dark:bg-slate-700 px-6 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button" (click)="saveLocation()" 
-                  [disabled]="!newLocationData.name || !newLocationData.code || isSubmitting"
-                  class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors sm:ml-3 sm:w-auto">
-            <span *ngIf="isSubmitting" class="inline-block mr-2">
-              <i class="fas fa-spinner fa-spin"></i>
-            </span>
-            {{ editingLocation ? 'Update' : 'Add' }} Location
-          </button>
-          <button type="button" (click)="closeModal()" 
-                  class="mt-3 sm:mt-0 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 sm:w-auto">
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
+  <div class="bg-gray-50 dark:bg-slate-700 px-6 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+    <button type="button" (click)="updateThreshold()" 
+            [disabled]="!newThreshold || newThreshold < 1 || isSubmitting"
+            class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors sm:ml-3 sm:w-auto">
+      <span *ngIf="isSubmitting" class="inline-block mr-2">
+        <i class="fas fa-spinner fa-spin"></i>
+      </span>
+      Set Threshold
+    </button>
+    <button type="button" (click)="closeModal()" 
+            class="mt-3 sm:mt-0 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 sm:w-auto">
+      Cancel
+    </button>
   </div>
-  
-  <!-- Delete Location Confirmation Modal -->
-  <div *ngIf="showDeleteLocationModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-    <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-      <!-- Background overlay -->
-      <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
-      
-      <!-- Modal panel -->
-      <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full animate-modal-in">
-        <div class="bg-white dark:bg-slate-800 px-6 pt-5 pb-4">
-          <div class="sm:flex sm:items-start">
-            <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
-              <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400"></i>
-            </div>
-            <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-              <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
-                Delete Location
-              </h3>
-              <div class="mt-2">
-                <p class="text-sm text-gray-500 dark:text-gray-400">
-                  Are you sure you want to delete the location <strong>{{ selectedLocation?.name }}</strong>? This action cannot be undone.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="bg-gray-50 dark:bg-slate-700 px-6 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-          <button type="button" (click)="deleteLocation()" 
-                  [disabled]="isSubmitting"
-                  class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors sm:ml-3 sm:w-auto">
-            <span *ngIf="isSubmitting" class="inline-block mr-2">
-              <i class="fas fa-spinner fa-spin"></i>
-            </span>
-            Delete
-          </button>
-          <button type="button" (click)="closeModal()" 
-                  class="mt-3 sm:mt-0 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 sm:w-auto">
-            Cancel
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Custom Animation Styles -->
-  <style>
-    @keyframes modalIn {
-      from { opacity: 0; transform: scale(0.95); }
-      to { opacity: 1; transform: scale(1); }
-    }
+</div>
+</div>
+</div>
+<!-- Update Location Modal -->
+<div *ngIf="showUpdateLocationModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Background overlay -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
     
-    .animate-modal-in {
-      animation: modalIn 0.3s ease-out forwards;
-    }
+    <!-- Modal panel -->
+    <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full animate-modal-in">
+      <div class="bg-white dark:bg-slate-800 px-6 pt-5 pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-purple-100 dark:bg-purple-900/30 sm:mx-0 sm:h-10 sm:w-10">
+            <i class="fas fa-map-marker-alt text-purple-600 dark:text-purple-400"></i>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+              Update Warehouse Location
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                Update the warehouse location for <strong>{{ selectedInventory?.product?.name || 'selected product' }}</strong>
+              </p>
+              
+              <div class="mb-4">
+                <div class="flex justify-between items-center mb-1">
+                  <label for="currentLocation" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Current Location</label>
+                </div>
+                <div class="bg-gray-100 dark:bg-slate-700 px-3 py-2 rounded-md text-gray-700 dark:text-gray-300">
+                  {{ selectedInventory?.warehouseLocation || 'Not specified' }}
+                </div>
+              </div>
+              
+              <div class="mb-4">
+                <div class="flex justify-between items-center mb-1">
+                  <label for="newLocation" class="block text-sm font-medium text-gray-700 dark:text-gray-300">New Location</label>
+                </div>
+                <select id="newLocation" [(ngModel)]="newLocation" 
+                        class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
+                  <option value="">-- Select Location --</option>
+                  <option *ngFor="let location of warehouseLocations" [value]="location.name">{{ location.name }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gray-50 dark:bg-slate-700 px-6 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button type="button" (click)="updateLocation()" 
+                [disabled]="!newLocation || isSubmitting"
+                class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors sm:ml-3 sm:w-auto">
+          <span *ngIf="isSubmitting" class="inline-block mr-2">
+            <i class="fas fa-spinner fa-spin"></i>
+          </span>
+          Update Location
+        </button>
+        <button type="button" (click)="closeModal()" 
+                class="mt-3 sm:mt-0 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 sm:w-auto">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Location Modal -->
+<div *ngIf="showAddLocationModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Background overlay -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
     
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
+    <!-- Modal panel -->
+    <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full animate-modal-in">
+      <div class="bg-white dark:bg-slate-800 px-6 pt-5 pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/30 sm:mx-0 sm:h-10 sm:w-10">
+            <i class="fas fa-warehouse text-green-600 dark:text-green-400"></i>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+              {{ editingLocation ? 'Edit' : 'Add' }} Warehouse Location
+            </h3>
+            <div class="mt-2">
+              <div class="mb-4">
+                <div class="flex justify-between items-center mb-1">
+                  <label for="locationName" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Location Name</label>
+                </div>
+                <input type="text" id="locationName" [(ngModel)]="newLocationData.name" placeholder="e.g. Main Warehouse" 
+                       class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
+              </div>
+              
+              <div class="mb-4">
+                <div class="flex justify-between items-center mb-1">
+                  <label for="locationCode" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Location Code</label>
+                </div>
+                <input type="text" id="locationCode" [(ngModel)]="newLocationData.code" placeholder="e.g. WH-MAIN" 
+                       class="w-full px-3 py-2 border border-gray-300 dark:border-slate-600 rounded-md bg-white dark:bg-slate-800 text-gray-700 dark:text-white focus:outline-none focus:ring-sky-500 focus:border-sky-500">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gray-50 dark:bg-slate-700 px-6 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button type="button" (click)="saveLocation()" 
+                [disabled]="!newLocationData.name || !newLocationData.code || isSubmitting"
+                class="px-4 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors sm:ml-3 sm:w-auto">
+          <span *ngIf="isSubmitting" class="inline-block mr-2">
+            <i class="fas fa-spinner fa-spin"></i>
+          </span>
+          {{ editingLocation ? 'Update' : 'Add' }} Location
+        </button>
+        <button type="button" (click)="closeModal()" 
+                class="mt-3 sm:mt-0 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 sm:w-auto">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Location Confirmation Modal -->
+<div *ngIf="showDeleteLocationModal" class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+  <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+    <!-- Background overlay -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" (click)="closeModal()"></div>
     
-    .animate-fadeIn {
-      animation: fadeIn 0.3s ease-out forwards;
-    }
-  </style>
+    <!-- Modal panel -->
+    <div class="inline-block align-bottom bg-white dark:bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-md sm:w-full animate-modal-in">
+      <div class="bg-white dark:bg-slate-800 px-6 pt-5 pb-4">
+        <div class="sm:flex sm:items-start">
+          <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 sm:mx-0 sm:h-10 sm:w-10">
+            <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400"></i>
+          </div>
+          <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+            <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white" id="modal-title">
+              Delete Location
+            </h3>
+            <div class="mt-2">
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                Are you sure you want to delete the location <strong>{{ selectedLocation?.name }}</strong>? This action cannot be undone.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-gray-50 dark:bg-slate-700 px-6 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+        <button type="button" (click)="deleteLocation()" 
+                [disabled]="isSubmitting"
+                class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors sm:ml-3 sm:w-auto">
+          <span *ngIf="isSubmitting" class="inline-block mr-2">
+            <i class="fas fa-spinner fa-spin"></i>
+          </span>
+          Delete
+        </button>
+        <button type="button" (click)="closeModal()" 
+                class="mt-3 sm:mt-0 px-4 py-2 border border-gray-300 dark:border-slate-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-600 sm:w-auto">
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Custom Animation Styles -->
+<style>
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  .animate-modal-in {
+    animation: modalIn 0.3s ease-out forwards;
+  }
+  
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  
+  .animate-fadeIn {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+</style>

@@ -10,6 +10,26 @@ interface WarehouseLocation {
   code: string;
 }
 
+// Define the Product interface to match what you're getting from the API
+interface Product {
+  productId: number;
+  name: string;
+  price: number;
+  imageUrl?: string;
+  categoryId?: number;
+  categoryName?: string;
+  description?: string;
+  inventoryQuantity?: number;
+  hasInventory?: boolean;
+}
+
+// Define the ProductsResponse interface to match your API response
+interface ProductsResponse {
+  products: Product[];
+  count: number;
+  // Add any other properties that your API returns
+}
+
 @Component({
   selector: 'app-inventory',
   templateUrl: './inventory.component.html',
@@ -17,9 +37,18 @@ interface WarehouseLocation {
 })
 export class InventoryComponent implements OnInit, OnDestroy {
   // View control
-  currentView: string = 'stock';
+  currentView: string = 'products'; // Default to products view
   loading = true;
   error: string | null = null;
+  
+  // Product data
+  products: Product[] = [];
+  filteredProducts: Product[] = [];
+  totalProducts = 0;
+  productSearchQuery = '';
+  currentProductPage = 1;
+  totalProductPages = 1;
+  productPages: number[] = [];
   
   // Inventory data
   inventory: Inventory[] = [];
@@ -40,18 +69,20 @@ export class InventoryComponent implements OnInit, OnDestroy {
   lowStockFilter = 'all'; // 'all', 'outOfStock', 'critical', 'warning'
   
   // Modal controls
+  showAddStockModal = false;
   showUpdateStockModal = false;
   showUpdateThresholdModal = false;
   showUpdateLocationModal = false;
   showAddLocationModal = false;
   showDeleteLocationModal = false;
   selectedInventory: Inventory | null = null;
+  selectedProduct: Product | null = null;
   selectedLocation: WarehouseLocation | null = null;
   
   // Form data
   stockUpdateType = 'add'; // 'add', 'subtract', 'set'
   stockChangeAmount = 0;
-  newThreshold = 0;
+  newThreshold = 10;
   newLocation = '';
   newLocationData: WarehouseLocation = { name: '', code: '' };
   editingLocation = false;
@@ -68,7 +99,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
   ) {}
   
   ngOnInit(): void {
-    this.loadInventory();
+    this.loadProducts();
     this.loadWarehouseLocations();
   }
   
@@ -84,7 +115,11 @@ export class InventoryComponent implements OnInit, OnDestroy {
   changeView(view: string): void {
     this.currentView = view;
     
-    if (view === 'lowStock') {
+    if (view === 'products') {
+      this.loadProducts();
+    } else if (view === 'stock') {
+      this.loadInventory();
+    } else if (view === 'lowStock') {
       this.loadLowStockItems();
     } else if (view === 'warehouse') {
       this.loadWarehouseLocations();
@@ -92,10 +127,93 @@ export class InventoryComponent implements OnInit, OnDestroy {
     
     // Reset pagination when changing views
     this.currentPage = 1;
+    this.currentProductPage = 1;
     this.generatePagesArray();
+    this.generateProductPagesArray();
   }
   
   // Data Loading
+  loadProducts(): void {
+    this.loading = true;
+    this.error = null;
+    
+    const sub = this.productService.getAllProducts().subscribe({
+      next: (response: any) => {
+        // Handle different response formats
+        if (Array.isArray(response)) {
+          this.products = response;
+          this.totalProducts = response.length;
+        } else if (response && response.products && Array.isArray(response.products)) {
+          // If response is an object with products array
+          this.products = response.products;
+          this.totalProducts = response.count || response.products.length;
+        } else {
+          // Fallback for unexpected response format
+          this.products = [];
+          this.totalProducts = 0;
+          console.error('Unexpected product response format:', response);
+        }
+        this.updateProductsWithInventoryData();
+      },
+      error: (err) => {
+        console.error('Error loading products:', err);
+        this.error = 'Failed to load product data. Please try again later.';
+        this.loading = false;
+      }
+    });
+    
+    this.subscriptions.add(sub);
+  }
+  
+  updateProductsWithInventoryData(): void {
+    if (this.products.length === 0) {
+      this.filterProducts();
+      this.calculateTotalProductPages();
+      this.generateProductPagesArray();
+      this.loading = false;
+      return;
+    }
+    
+    const productIds = this.products.map(product => product.productId);
+    
+    const sub = this.inventoryService.getInventoryByProductIds(productIds).subscribe({
+      next: (inventoryItems) => {
+        // Create a mapping of product IDs to inventory data
+        const inventoryMap = new Map<number, Inventory>();
+        inventoryItems.forEach(item => {
+          if (item.product && item.product.productId) {
+            inventoryMap.set(item.product.productId, item);
+          }
+        });
+        
+        // Update products with inventory data
+        this.products = this.products.map(product => {
+          const inventoryItem = inventoryMap.get(product.productId);
+          return {
+            ...product,
+            inventoryQuantity: inventoryItem ? inventoryItem.quantity : 0,
+            hasInventory: !!inventoryItem
+          };
+        });
+        
+        this.filterProducts();
+        this.calculateTotalProductPages();
+        this.generateProductPagesArray();
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading inventory data for products:', err);
+        // Still show products even if we can't get inventory data
+        this.filterProducts();
+        this.calculateTotalProductPages();
+        this.generateProductPagesArray();
+        this.loading = false;
+      }
+    });
+    
+    this.subscriptions.add(sub);
+  }
+  
   loadInventory(): void {
     this.loading = true;
     this.error = null;
@@ -152,6 +270,26 @@ export class InventoryComponent implements OnInit, OnDestroy {
   }
   
   // Filtering Functions
+  searchProducts(): void {
+    this.filterProducts();
+  }
+  
+  filterProducts(): void {
+    if (!this.productSearchQuery) {
+      // Apply pagination to products
+      const startIndex = (this.currentProductPage - 1) * this.itemsPerPage;
+      this.filteredProducts = this.products.slice(startIndex, startIndex + this.itemsPerPage);
+    } else {
+      // Apply search filter
+      const query = this.productSearchQuery.toLowerCase();
+      this.filteredProducts = this.products.filter(product => 
+        product.name.toLowerCase().includes(query) ||
+        (product.description || '').toLowerCase().includes(query) ||
+        (product.categoryName || '').toLowerCase().includes(query)
+      );
+    }
+  }
+  
   searchInventory(): void {
     this.filterInventoryItems();
   }
@@ -190,7 +328,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
     }
   }
   
-  // Pagination
+  // Pagination for inventory
   calculateTotalPages(): void {
     this.totalPages = Math.ceil(this.totalInventoryItems / this.itemsPerPage);
   }
@@ -226,7 +364,51 @@ export class InventoryComponent implements OnInit, OnDestroy {
     }
   }
   
+  // Pagination for products
+  calculateTotalProductPages(): void {
+    this.totalProductPages = Math.ceil(this.totalProducts / this.itemsPerPage);
+  }
+  
+  generateProductPagesArray(): void {
+    this.productPages = [];
+    const startPage = Math.max(1, this.currentProductPage - 2);
+    const endPage = Math.min(this.totalProductPages, this.currentProductPage + 2);
+    
+    for (let i = startPage; i <= endPage; i++) {
+      this.productPages.push(i);
+    }
+  }
+  
+  goToProductPage(page: number): void {
+    if (page !== this.currentProductPage) {
+      this.currentProductPage = page;
+      this.filterProducts();
+    }
+  }
+  
+  previousProductPage(): void {
+    if (this.currentProductPage > 1) {
+      this.currentProductPage--;
+      this.filterProducts();
+    }
+  }
+  
+  nextProductPage(): void {
+    if (this.currentProductPage < this.totalProductPages) {
+      this.currentProductPage++;
+      this.filterProducts();
+    }
+  }
+  
   // Modal Functions
+  openAddStockModal(product: Product): void {
+    this.selectedProduct = product;
+    this.stockChangeAmount = 0;
+    this.newThreshold = 10;
+    this.newLocation = '';
+    this.showAddStockModal = true;
+  }
+  
   openUpdateStockModal(item: Inventory): void {
     this.selectedInventory = item;
     this.stockUpdateType = 'add';
@@ -265,16 +447,95 @@ export class InventoryComponent implements OnInit, OnDestroy {
   }
   
   closeModal(): void {
+    this.showAddStockModal = false;
     this.showUpdateStockModal = false;
     this.showUpdateThresholdModal = false;
     this.showUpdateLocationModal = false;
     this.showAddLocationModal = false;
     this.showDeleteLocationModal = false;
     this.selectedInventory = null;
+    this.selectedProduct = null;
     this.selectedLocation = null;
   }
   
   // API Actions
+  addProductStock(): void {
+    if (!this.selectedProduct || this.stockChangeAmount < 1) return;
+    
+    this.isSubmitting = true;
+    
+    // Handle the case where a product doesn't have inventory yet
+    if (!this.selectedProduct.hasInventory) {
+      // First, we need to create inventory for this product
+      const newInventory: Inventory = {
+        product: {
+          productId: this.selectedProduct.productId,
+          name: this.selectedProduct.name,
+          price: this.selectedProduct.price,
+          imageUrl: this.selectedProduct.imageUrl
+        },
+        quantity: this.stockChangeAmount,
+        lowStockThreshold: this.newThreshold || 10,
+        warehouseLocation: this.newLocation
+      };
+      
+      const sub = this.inventoryService.createInventory(newInventory).subscribe({
+        next: (createdInventory) => {
+          // Update local data
+          if (this.selectedProduct) {
+            this.selectedProduct.inventoryQuantity = this.stockChangeAmount;
+            this.selectedProduct.hasInventory = true;
+          }
+          
+          // Refresh filtered products
+          this.filterProducts();
+          
+          this.isSubmitting = false;
+          this.closeModal();
+          
+          // Optionally, reload inventory data
+          this.loadInventory();
+        },
+        error: (err) => {
+          console.error('Error creating inventory:', err);
+          this.error = 'Failed to create inventory. Please try again.';
+          this.isSubmitting = false;
+        }
+      });
+      
+      this.subscriptions.add(sub);
+    } else {
+      // Update existing inventory
+      const sub = this.inventoryService.updateStock(
+        this.selectedProduct.productId,
+        this.stockChangeAmount
+      ).subscribe({
+        next: (updatedInventory) => {
+          // Update local data
+          if (this.selectedProduct) {
+            this.selectedProduct.inventoryQuantity = (this.selectedProduct.inventoryQuantity || 0) + this.stockChangeAmount;
+          }
+          
+          // Refresh filtered products
+          this.filterProducts();
+          
+          this.isSubmitting = false;
+          this.closeModal();
+          
+          // Optionally, reload inventory data
+          this.loadInventory();
+        },
+        error: (err) => {
+          console.error('Error updating stock:', err);
+          this.error = 'Failed to update stock. Please try again.';
+          this.isSubmitting = false;
+        }
+      });
+      
+      this.subscriptions.add(sub);
+    }
+  }
+  
   updateStock(): void {
     if (!this.selectedInventory || this.stockChangeAmount < 0) return;
     
@@ -314,6 +575,16 @@ export class InventoryComponent implements OnInit, OnDestroy {
         if (lowStockIndex !== -1) {
           this.lowStockItems[lowStockIndex] = updatedInventory;
           this.filterLowStockItems();
+        }
+        
+        // Also update in products if present
+        const productIndex = this.products.findIndex(p => 
+          p.productId === this.selectedInventory?.product?.productId
+        );
+        
+        if (productIndex !== -1) {
+          this.products[productIndex].inventoryQuantity = updatedInventory.quantity;
+          this.filterProducts();
         }
         
         this.isSubmitting = false;
@@ -523,6 +794,10 @@ export class InventoryComponent implements OnInit, OnDestroy {
   }
   
   // View Helpers
+  get isProductView(): boolean {
+    return this.currentView === 'products';
+  }
+  
   get isStockView(): boolean {
     return this.currentView === 'stock';
   }

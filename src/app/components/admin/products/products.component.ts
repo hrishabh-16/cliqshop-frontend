@@ -1018,27 +1018,41 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   // Helper method to find category name by ID - Improved for reliability
   getCategoryName(categoryId: number): string {
-    if (!categoryId) return 'Unknown';
-    
-    // First check if the product has categoryName property
-    if (this.selectedProduct && this.selectedProduct.categoryName) {
-      return this.selectedProduct.categoryName;
+    // Early return for invalid categoryId
+    if (!categoryId || isNaN(categoryId)) {
+        return 'Unknown';
     }
-    
-    // Try to get from category service first (which might have a more complete cache)
-    const categoryName = this.categoryService.getCategoryNameById(categoryId);
-    if (categoryName !== 'Unknown') {
-      return categoryName;
+
+    // Check if the product itself has the categoryName (most reliable source)
+    if (this.selectedProduct?.categoryName) {
+        return this.selectedProduct.categoryName;
     }
-    
-    // Then try to find category by ID in local categories array
-    const category = this.categories.find(c => 
-      (c.categoryId !== undefined && c.categoryId === categoryId) || 
-      (c.id !== undefined && c.id === categoryId)
-    );
-    
-    return category ? category.name : 'Unknown';
-  }
+
+    // Try to get from category service (which might have cached data)
+    try {
+        const categoryName = this.categoryService.getCategoryNameById(categoryId);
+        if (categoryName && categoryName !== 'Unknown') {
+            return categoryName;
+        }
+    } catch (error) {
+        console.warn('Error getting category name from service:', error);
+    }
+
+    // Check local categories array (fallback)
+    if (this.categories?.length) {
+        // Find by both categoryId and id for backward compatibility
+        const category = this.categories.find(c => 
+            c?.categoryId === categoryId || c?.id === categoryId
+        );
+
+        if (category?.name) {
+            return category.name;
+        }
+    }
+
+    // Final fallback - return 'Unknown' if no match found
+    return 'Unknown';
+}
 
   // Format price with currency
   formatPrice(price: number): string {
