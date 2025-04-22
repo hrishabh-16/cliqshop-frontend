@@ -7,8 +7,23 @@ import { Product } from '../../../models/product.model';
 import { ProductService } from '../../../services/product/product.service';
 import { CategoryService } from '../../../services/category/category.service';
 import { forkJoin, Subscription, of, timer } from 'rxjs';
-import { catchError, switchMap, finalize, tap } from 'rxjs/operators';
-
+import { catchError, switchMap, finalize, map, tap } from 'rxjs/operators';
+interface ApiProductResponse {
+  productId: number;
+  name: string;
+  description: string;
+  price: number;
+  imageUrl: string;
+  category?: {
+    categoryId: number;
+    name: string;
+    description: string;
+  };
+  inventory?: any;
+  categoryId?: number;
+  categoryName?: string;
+  [key: string]: any;
+}
 @Component({
   selector: 'app-products',
   templateUrl: './products.component.html',
@@ -120,17 +135,13 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   loadProducts(): void {
-    console.log('Loading products for view:', this.currentView);
     this.loading = true;
     this.error = null;
     
-    if (this.loadingTimeout) {
-      clearTimeout(this.loadingTimeout);
-    }
+    if (this.loadingTimeout) clearTimeout(this.loadingTimeout);
     
     this.loadingTimeout = setTimeout(() => {
       if (this.loading) {
-        console.warn('Loading products operation timed out');
         this.loading = false;
         this.error = 'Loading products timed out. Please try again.';
       }
@@ -138,41 +149,30 @@ export class ProductsComponent implements OnInit, OnDestroy {
     
     if (this.isListView) {
       const productSubscription = timer(0).pipe(
-        switchMap(() => {
-          console.log('Fetching products from API, attempt:', this.loadRetries + 1);
-          return this.productService.getAllProducts(this.currentPage, this.itemsPerPage).pipe(
-            tap(data => {
-              console.log('Products data received:', data);
-            }),
-            catchError(error => {
-              console.error('Error loading products:', error);
-              if (this.loadRetries < 2) {
-                this.loadRetries++;
-                console.log('Retrying product load, attempt:', this.loadRetries + 1);
-                return timer(1000).pipe(
-                  switchMap(() => this.productService.getAllProducts(this.currentPage, this.itemsPerPage))
-                );
-              }
-              throw error;
-            }),
-            finalize(() => {
-              clearTimeout(this.loadingTimeout);
-              this.loadingTimeout = null;
-              this.loading = false;
-              this.loadRetries = 0;
-            })
-          );
-        })
+        switchMap(() => this.productService.getAllProducts(this.currentPage, this.itemsPerPage).pipe(
+          map((response: any) => this.mapApiProducts(response)),
+          catchError(error => {
+            console.error('Error loading products:', error);
+            if (this.loadRetries < 2) {
+              this.loadRetries++;
+              return timer(1000).pipe(
+                switchMap(() => this.productService.getAllProducts(this.currentPage, this.itemsPerPage).pipe(
+                  map((response: any) => this.mapApiProducts(response))
+                ))
+              );
+            }
+            throw error;
+          }),
+          finalize(() => {
+            clearTimeout(this.loadingTimeout);
+            this.loadingTimeout = null;
+            this.loading = false;
+            this.loadRetries = 0;
+          })
+        ))
       ).subscribe({
         next: (data) => {
-          console.log('Products successfully loaded:', data);
-          this.products = data.products.map((product: any) => ({
-            ...product,
-            // Map the nested category data to the flat structure your model expects
-            categoryId: product.category?.categoryId || product.categoryId || 0,
-            categoryName: product.category?.name || product.categoryName || this.getCategoryName(product.category?.categoryId || product.categoryId)
-          }));
-          
+          this.products = data.products;
           this.totalProducts = data.total || data.products.length;
           this.calculateTotalPages();
           this.generatePagesArray();
@@ -187,6 +187,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       this.subscriptions.add(productSubscription);
     } else if (this.isOutOfStockView) {
       const outOfStockSubscription = this.productService.getOutOfStockProducts().pipe(
+        map((products: any) => this.mapApiProducts({products})),
         finalize(() => {
           clearTimeout(this.loadingTimeout);
           this.loadingTimeout = null;
@@ -194,13 +195,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
         })
       ).subscribe({
         next: (products) => {
-          console.log('Out of stock products loaded:', products);
-          this.products = products.map((product: any) => ({
-            ...product,
-            // Map the nested category data to the flat structure your model expects
-            categoryId: product.category?.categoryId || product.categoryId || 0,
-            categoryName: product.category?.name || product.categoryName || this.getCategoryName(product.category?.categoryId || product.categoryId)
-          }));
+          this.products = products;
           this.totalProducts = products.length;
         },
         error: (error) => {
@@ -217,6 +212,37 @@ export class ProductsComponent implements OnInit, OnDestroy {
       this.loading = false;
     }
   }
+  private mapApiProducts(response: any): any {
+    let products: Product[] = [];
+    
+    if (Array.isArray(response)) {
+      products = response.map((item: ApiProductResponse) => this.createProductFromApi(item));
+    } else if (response?.products) {
+      products = response.products.map((item: ApiProductResponse) => this.createProductFromApi(item));
+      return { ...response, products };
+    }
+    
+    return { products, total: products.length };
+  }
+// Create Product instance from API response
+private createProductFromApi(apiProduct: ApiProductResponse): Product {
+  return new Product(
+    apiProduct.productId,
+    apiProduct.name,
+    apiProduct.description,
+    apiProduct.price,
+    apiProduct.imageUrl,
+    apiProduct.category?.categoryId || apiProduct.categoryId || 0,
+    apiProduct.category?.name || apiProduct.categoryName,
+    apiProduct.inventory?.quantity,
+    false, // selected
+    apiProduct['createdAt'] ? new Date(apiProduct['createdAt']) : undefined,
+    apiProduct['updatedAt'] ? new Date(apiProduct['updatedAt']) : undefined,
+    apiProduct['sku'],
+    apiProduct['isActive'],
+    apiProduct['brand']
+  );
+}
 
   calculateTotalPages(): void {
     this.totalPages = Math.max(1, Math.ceil(this.totalProducts / this.itemsPerPage));
@@ -290,27 +316,15 @@ export class ProductsComponent implements OnInit, OnDestroy {
   viewProduct(product: Product): void {
     this.loading = true;
     
-    // Get complete product details including inventory information
     this.productService.getProductById(product.productId).subscribe({
-      next: (detailedProduct) => {
-        console.log('Detailed product loaded:', detailedProduct);
-        
-        // Ensure category name is present
-        if (!detailedProduct.categoryName && detailedProduct.categoryId) {
-          detailedProduct.categoryName = this.getCategoryName(detailedProduct.categoryId);
-        }
-        
-        this.selectedProduct = detailedProduct;
+      next: (apiResponse: unknown) => {
+        const apiProduct = apiResponse as ApiProductResponse;
+        this.selectedProduct = this.createProductFromApi(apiProduct);
         this.showViewModal = true;
         this.loading = false;
       },
       error: (error) => {
         console.error('Error loading product details:', error);
-        // Fallback to using the product we already have if detail fetch fails
-        if (!product.categoryName && product.categoryId) {
-          product.categoryName = this.getCategoryName(product.categoryId);
-        }
-        
         this.selectedProduct = product;
         this.showViewModal = true;
         this.loading = false;
@@ -356,11 +370,6 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   // Open edit product modal
   editProduct(product: Product): void {
-    // Ensure category name is present
-    if (!product.categoryName && product.categoryId) {
-      product.categoryName = this.getCategoryName(product.categoryId);
-    }
-    
     this.selectedProduct = product;
     this.productForm.patchValue({
       name: product.name,
@@ -374,11 +383,6 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   // Open delete confirmation modal
   confirmDelete(product: Product): void {
-    // Ensure category name is present
-    if (!product.categoryName && product.categoryId) {
-      product.categoryName = this.getCategoryName(product.categoryId);
-    }
-    
     this.selectedProduct = product;
     this.showDeleteModal = true;
   }
@@ -515,44 +519,24 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   // Helper method to find category name by ID - Improved for reliability
   getCategoryName(categoryId: number): string {
-    // Early return for invalid categoryId
-    if (!categoryId || isNaN(categoryId)) {
-        return 'Unknown';
-    }
+    if (!categoryId || isNaN(categoryId)) return 'Unknown';
 
-    // First try to find in the current product's category data
-    const currentProduct = this.products.find(p => 
-        p.categoryId === categoryId
+    // Check loaded categories first
+    const category = this.categories.find(c => 
+      c.categoryId === categoryId || c.id === categoryId
     );
-    
-    if (currentProduct?.categoryName) {
-        return currentProduct.categoryName;
-    }
+    if (category?.name) return category.name;
 
-    // Try to get from category service (which might have cached data)
+    // Try category service
     try {
-        const categoryName = this.categoryService.getCategoryNameById(categoryId);
-        if (categoryName && categoryName !== 'Unknown') {
-            return categoryName;
-        }
+      const categoryName = this.categoryService.getCategoryNameById(categoryId);
+      if (categoryName && categoryName !== 'Unknown') return categoryName;
     } catch (error) {
-        console.warn('Error getting category name from service:', error);
+      console.warn('Error getting category name from service:', error);
     }
 
-    // Check local categories array (fallback)
-    if (this.categories?.length) {
-        const category = this.categories.find(c => 
-            c?.categoryId === categoryId || c?.id === categoryId
-        );
-        if (category?.name) {
-            return category.name;
-        }
-    }
-
-    // Final fallback
     return 'Unknown';
-}
-
+  }
   // Format price with currency
   formatPrice(price: number): string {
     return this.productService.formatPrice(price);
