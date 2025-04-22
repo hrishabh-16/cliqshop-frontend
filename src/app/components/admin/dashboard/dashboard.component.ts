@@ -466,6 +466,8 @@ export class DashboardComponent implements OnInit {
   }
 
   goToPage(type: 'products' | 'orders' | 'users' | 'categories', page: number): void {
+    if (page < 1 || page > this.orderPages.length) return;
+  
     if (type === 'products') {
       this.currentProductPage = page;
       
