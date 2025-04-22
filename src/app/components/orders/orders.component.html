@@ -99,8 +99,8 @@
                             </svg>
                             Items in your order
                         </h4>
-                        <div *ngIf="order.orderItems.length > 0" class="space-y-4">
-                            <div *ngFor="let item of order.orderItems" 
+                        <div *ngIf="order.orderItems && order.orderItems.length > 0" class="space-y-4">
+                            <div *ngFor="let item of order.orderItems.slice(0, 3)" 
                                 class="flex items-center p-3 rounded-lg transition-all duration-300 hover:bg-gray-50">
                                 <div class="flex-shrink-0 w-16 h-16 bg-gray-100 rounded-md overflow-hidden shadow-sm">
                                     <img *ngIf="item.product?.imageUrl" [src]="item.product?.imageUrl" 
@@ -119,97 +119,116 @@
                                     <p class="text-sm font-medium text-gray-800">₹{{ ((item.quantity || 1) * (item.price || 0)) | number:'1.2-2' }}</p>
                                 </div>
                             </div>
+                            
+                            <!-- More items indicator -->
+                            <div *ngIf="order.orderItems.length > 3" class="text-center py-2">
+                                <span class="text-sm text-sky-600">+ {{ order.orderItems.length - 3 }} more items</span>
+                            </div>
                         </div>
-                        <div *ngIf="!order.orderItems?.length" class="py-4 text-center text-gray-500">
-                            No items found in this order.
+                        <div *ngIf="!order.orderItems || order.orderItems.length === 0" class="py-4 text-center text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                </svg>
+                                <p>Order details are being loaded...</p>
+                                <button (click)="refreshOrderDetails(order.orderId)" class="mt-2 text-sky-600 hover:underline text-sm">
+                                    Refresh Order Details
+                                </button>
+                            </div>
                         </div>
                     </div>
                     
                     <!-- Order Summary -->
-                   <!-- Order Summary -->
-<div class="bg-gradient-to-r from-white to-gray-50 px-6 py-6 border-t border-gray-200 rounded-b-xl shadow-inner">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      
-      <!-- Shipping Address -->
-      <div>
-        <h4 class="text-base font-semibold text-gray-600 mb-3 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-          Shipping Address
-        </h4>
-  
-        <div *ngIf="order.shippingAddress; else noAddress" class="bg-white p-4 rounded-lg shadow-sm text-sm text-gray-700 space-y-1">
-          <div class="font-medium">
-            <span *ngIf="order.shippingAddress.name">{{ order.shippingAddress.name }}</span>
-            <span *ngIf="!order.shippingAddress.name && order.customer?.name">{{ order.customer?.name }}</span>
-          </div>
-          <div>{{ order.shippingAddress.addressLine1 || 'Address not available' }}</div>
-          <div *ngIf="order.shippingAddress.addressLine2">{{ order.shippingAddress.addressLine2 }}</div>
-          <div>{{ order.shippingAddress.city || '' }}, {{ order.shippingAddress.state || '' }} {{ order.shippingAddress.postalCode || '' }}</div>
-          <div>{{ order.shippingAddress.country || '' }}</div>
-          <div *ngIf="order.shippingAddress.phone" class="flex items-center mt-1 text-gray-600">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-            </svg>
-            {{ order.shippingAddress.phone }}
-          </div>
-        </div>
-        <ng-template #noAddress>
-          <div class="text-sm text-gray-500 bg-white p-4 rounded-lg shadow-sm">No shipping address available</div>
-        </ng-template>
-      </div>
-  
-      <!-- Order Summary & Payment -->
-      <div>
-        <!-- Order Summary -->
-        <h4 class="text-base font-semibold text-gray-600 mb-3 flex items-center">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-          </svg>
-          Order Summary
-        </h4>
-        <div class="bg-white p-4 rounded-lg shadow-sm text-sm space-y-2">
-          <div class="flex justify-between font-medium border-t pt-2">
-            <span class="text-gray-700">Total:</span>
-            <span class="text-gray-900 font-bold">₹{{ order.totalPrice || order.orderTotal | number:'1.2-2' }}</span>
-          </div>
-        </div>
-  
-        <!-- Payment Details -->
-        <div *ngIf="order.paymentStatus || order.paymentMethod" class="mt-4">
-          <h4 class="text-base font-semibold text-gray-600 mb-3 flex items-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-            </svg>
-            Payment Details
-          </h4>
-          <div class="bg-white p-4 rounded-lg shadow-sm text-sm space-y-1">
-            <div *ngIf="order.paymentMethod" class="flex justify-between py-1">
-              <span class="text-gray-600">Method:</span>
-              <span class="text-gray-800">{{ order.paymentMethod }}</span>
-            </div>
-            <div *ngIf="order.paymentStatus" class="flex justify-between py-1">
-              <span class="text-gray-600">Status:</span>
-              <span [ngClass]="{
-                'text-green-600': order.paymentStatus === 'PAID',
-                'text-yellow-600': order.paymentStatus === 'PENDING',
-                'text-red-600': order.paymentStatus === 'FAILED',
-                'text-blue-600': order.paymentStatus === 'REFUNDED'
-              }">{{ order.paymentStatus }}</span>
-            </div>
-            <div *ngIf="order.paymentInfo?.paymentDate" class="flex justify-between py-1">
-              <span class="text-gray-600">Date:</span>
-              <span class="text-gray-800">{{ order.paymentInfo?.paymentDate | date:'medium' }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-    </div>
-  </div>
-  
+                    <div class="bg-gradient-to-r from-white to-gray-50 px-6 py-6 border-t border-gray-200 rounded-b-xl shadow-inner">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          
+                          <!-- Shipping Address -->
+                          <div>
+                            <h4 class="text-base font-semibold text-gray-600 mb-3 flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                              </svg>
+                              Shipping Address
+                            </h4>
+                      
+                            <div *ngIf="order.shippingAddress; else noAddress" class="bg-white p-4 rounded-lg shadow-sm text-sm text-gray-700 space-y-1">
+                              <div class="font-medium">
+                                <span *ngIf="order.shippingAddress.name">{{ order.shippingAddress.name }}</span>
+                                <span *ngIf="!order.shippingAddress.name && order.customer?.name">{{ order.customer?.name }}</span>
+                              </div>
+                              <div>{{ order.shippingAddress.addressLine1 || 'Address not available' }}</div>
+                              <div *ngIf="order.shippingAddress.addressLine2">{{ order.shippingAddress.addressLine2 }}</div>
+                              <div>{{ order.shippingAddress.city || '' }}, {{ order.shippingAddress.state || '' }} {{ order.shippingAddress.postalCode || '' }}</div>
+                              <div>{{ order.shippingAddress.country || '' }}</div>
+                              <div *ngIf="order.shippingAddress.phone" class="flex items-center mt-1 text-gray-600">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                                </svg>
+                                {{ order.shippingAddress.phone }}
+                              </div>
+                            </div>
+                            <ng-template #noAddress>
+                              <div class="text-sm text-gray-500 bg-white p-4 rounded-lg shadow-sm">No shipping address available</div>
+                            </ng-template>
+                          </div>
+                      
+                          <!-- Order Summary & Payment -->
+                          <div>
+                            <!-- Order Summary -->
+                            <h4 class="text-base font-semibold text-gray-600 mb-3 flex items-center">
+                              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                              </svg>
+                              Order Summary
+                            </h4>
+                            <div class="bg-white p-4 rounded-lg shadow-sm text-sm space-y-2">
+                                <div class="flex justify-between py-1">
+                                    <span class="text-gray-700">Subtotal:</span>
+                                    <span class="text-gray-800">₹{{ order.subtotal || 0 | number:'1.2-2' }}</span>
+                                </div>
+                                <div class="flex justify-between py-1">
+                                    <span class="text-gray-700">Tax:</span>
+                                    <span class="text-gray-800">₹{{ order.tax || 0 | number:'1.2-2' }}</span>
+                                </div>
+                              <div class="flex justify-between font-medium border-t pt-2">
+                                <span class="text-gray-700">Total:</span>
+                                <span class="text-gray-900 font-bold">₹{{ order.totalPrice || order.orderTotal | number:'1.2-2' }}</span>
+                              </div>
+                            </div>
+                      
+                            <!-- Payment Details -->
+                            <div *ngIf="order.paymentStatus || order.paymentMethod" class="mt-4">
+                              <h4 class="text-base font-semibold text-gray-600 mb-3 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                                Payment Details
+                              </h4>
+                              <div class="bg-white p-4 rounded-lg shadow-sm text-sm space-y-1">
+                                <div *ngIf="order.paymentMethod" class="flex justify-between py-1">
+                                  <span class="text-gray-600">Method:</span>
+                                  <span class="text-gray-800">{{ order.paymentMethod }}</span>
+                                </div>
+                                <div *ngIf="order.paymentStatus" class="flex justify-between py-1">
+                                  <span class="text-gray-600">Status:</span>
+                                  <span [ngClass]="{
+                                    'text-green-600': order.paymentStatus === 'PAID',
+                                    'text-yellow-600': order.paymentStatus === 'PENDING',
+                                    'text-red-600': order.paymentStatus === 'FAILED',
+                                    'text-blue-600': order.paymentStatus === 'REFUNDED'
+                                  }">{{ order.paymentStatus }}</span>
+                                </div>
+                                <div *ngIf="order.paymentInfo?.paymentDate" class="flex justify-between py-1">
+                                  <span class="text-gray-600">Date:</span>
+                                  <span class="text-gray-800">{{ order.paymentInfo?.paymentDate | date:'medium' }}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                          
+                        </div>
+                    </div>
                     
                     <!-- Order Actions -->
                     <div class="px-6 py-4 border-t border-gray-200 flex flex-wrap justify-between gap-2">

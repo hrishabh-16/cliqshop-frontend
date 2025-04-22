@@ -88,9 +88,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
             // Log order details for debugging
             this.orders.forEach((order, index) => {
               console.log(`Order ${index + 1}:`, order);
-              console.log(`  Status: ${order.orderStatus || order.orderStatus}`);
-              console.log(`  Total: ${order.orderTotal || order.totalPrice}`);
-              console.log(`  Items: ${order.orderItems?.length || order.orderItems?.length || 0}`);
+              console.log(`  Status: ${order.orderStatus || 'unknown'}`);
+              console.log(`  Total: ${order.orderTotal || order.totalPrice || 0}`);
+              console.log(`  Items: ${order.orderItems?.length || 0}`);
             });
             
             // If orders array is empty but we have totalItems, try again
@@ -103,6 +103,9 @@ export class OrdersComponent implements OnInit, OnDestroy {
               }, retryCount * 1000);
               return;
             }
+            
+            // After loading orders, check if any need payment status updates
+            this.checkOrdersPaymentStatus();
             
             if (this.orders.length === 0) {
               this.toastr.info('You have no orders yet');
@@ -133,6 +136,81 @@ export class OrdersComponent implements OnInit, OnDestroy {
     };
     
     attemptLoad();
+  }
+  
+  /**
+   * Check and update payment status for orders that are in pending state
+   */
+  checkOrdersPaymentStatus(): void {
+    if (!this.orders || this.orders.length === 0) return;
+    
+    // Find orders with pending payment status and card payment method
+    const pendingOrders = this.orders.filter(order => 
+      order.paymentStatus === 'PENDING' && 
+      order.paymentMethod === 'card'
+    );
+    
+    if (pendingOrders.length === 0) return;
+    
+    console.log(`Found ${pendingOrders.length} orders with pending payment status to check`);
+    
+    // Check payment status for each pending order
+    pendingOrders.forEach(order => {
+      if (!order.orderId) return;
+      
+      const sub = this.orderService.checkPaymentStatus(order.orderId).subscribe({
+        next: (response) => {
+          console.log(`Payment status check for order ${order.orderId}:`, response);
+          
+          if (response && response.paymentStatus === 'PAID') {
+            // Update the order in our local array
+            const orderIndex = this.orders.findIndex(o => o.orderId === order.orderId);
+            if (orderIndex >= 0) {
+              this.orders[orderIndex].paymentStatus = 'PAID';
+              this.toastr.success(`Payment confirmed for order #${order.orderId}`);
+              
+              // Refresh order items if missing
+              if (!this.orders[orderIndex].orderItems || this.orders[orderIndex].orderItems.length === 0) {
+                this.refreshOrderDetails(order.orderId);
+              }
+            }
+          }
+        },
+        error: (error) => {
+          console.error(`Error checking payment status for order ${order.orderId}:`, error);
+        }
+      });
+      
+      this.subscriptions.push(sub);
+    });
+  }
+  
+  /**
+   * Refresh order details for a specific order
+   */
+  refreshOrderDetails(orderId: number): void {
+    if (!orderId) return;
+    
+    console.log(`Refreshing details for order ${orderId}`);
+    
+    const sub = this.orderService.getOrderById(orderId).subscribe({
+      next: (refreshedOrder) => {
+        console.log(`Refreshed order ${orderId} data:`, refreshedOrder);
+        
+        // Find and update the order in our local array
+        const orderIndex = this.orders.findIndex(o => o.orderId === orderId);
+        if (orderIndex >= 0) {
+          this.orders[orderIndex] = refreshedOrder;
+          this.toastr.success(`Order #${orderId} details refreshed`);
+        }
+      },
+      error: (error) => {
+        console.error(`Error refreshing order ${orderId}:`, error);
+        this.toastr.error(`Failed to refresh order #${orderId} details`);
+      }
+    });
+    
+    this.subscriptions.push(sub);
   }
   
   getPageNumbers(): number[] {
@@ -176,7 +254,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
       return;
     }
     
-    const items = order.orderItems || order.orderItems || [];
+    const items = order.orderItems || [];
     
     if (!items || items.length === 0) {
       this.toastr.warning('Cannot reorder items at this time.');
@@ -291,7 +369,22 @@ export class OrdersComponent implements OnInit, OnDestroy {
           next: (response) => {
             console.log('Order cancelled successfully:', response);
             this.toastr.success('Your order has been cancelled successfully.');
-            this.loadOrders(this.currentPage);
+            
+            // Update the local order status without reloading everything
+            const orderIndex = this.orders.findIndex(o => o.orderId === orderId);
+            if (orderIndex >= 0) {
+              this.orders[orderIndex].orderStatus = 'CANCELLED';
+              
+              // Also update payment status if it was pending
+              if (this.orders[orderIndex].paymentStatus === 'PENDING') {
+                this.orders[orderIndex].paymentStatus = 'FAILED';
+              }
+            } else {
+              // If we can't find the order for some reason, reload all orders
+              this.loadOrders(this.currentPage);
+            }
+            
+            this.isLoading = false;
           },
           error: (error) => {
             console.error('Error cancelling order:', error);
@@ -322,7 +415,7 @@ export class OrdersComponent implements OnInit, OnDestroy {
     }
     
     // Calculate from items if available
-    const items = order.orderItems || order.orderItems || [];
+    const items = order.orderItems || [];
     if (items && items.length > 0) {
       return items.reduce((sum, item) => {
         const price = item.price || 0;
