@@ -4,7 +4,7 @@ import { DashboardService, DashboardStats, Product, Order, Category, User } from
 import { UserService } from '../../../services/user/user.service';
 import { ProductService } from '../../../services/product/product.service';
 import { CategoryService } from '../../../services/category/category.service';
-import { catchError, of } from 'rxjs';
+import { catchError, of, map,switchMap } from 'rxjs';
 
 @Component({
   selector: 'app-dashboard',
@@ -337,57 +337,46 @@ export class DashboardComponent implements OnInit {
   }
 
   
+  // In your component
   loadRecentProducts(): void {
     this.isLoading.products = true;
     
-    // Get all products but disable inventory lookup
     this.productService.getAllProducts().pipe(
-      catchError(error => {
+      catchError((error: any) => {
         console.error('Error loading products:', error);
-        return of({
-          products: [],
-          total: 0,
-          page: 1,
-          limit: 10
-        });
+        return of([] as Product[]);
       })
     ).subscribe({
-      next: (response) => {
-        // Extract products based on response type
-        let allProducts: Product[] = [];
+      next: (response: unknown) => {
+        // Type guard to handle the response
+        let products: Product[] = [];
         
         if (Array.isArray(response)) {
-          allProducts = response;
-        } else if ('products' in response) {
-          allProducts = response.products;
+          products = response as Product[];
+        } else if (response && typeof response === 'object' && 'products' in response) {
+          products = (response as { products: Product[] }).products;
         }
         
-        // Add category names
-        const enhancedProducts = allProducts.map(product => {
-          // Get category name from categoryService to avoid inventory requests
-          const categoryName = product.categoryName || 
-                              (product.categoryId ? this.categoryService.getCategoryNameById(product.categoryId) : 'Unknown');
-          
-          return {
-            ...product,
-            categoryName,
-            // Add a default stockQuantity to avoid inventory requests
-            stockQuantity: product.stockQuantity || 0
-          };
-        });
+        // Map products with proper typing
+        this.recentProducts = products.map((product: any) => ({
+          productId: product.productId,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          imageUrl: product.imageUrl,
+          categoryId: product.category?.categoryId || 0,
+          categoryName: product.category?.name || 'Unknown',
+          stockQuantity: product.stockQuantity || 0
+        }));
         
-        // Calculate total and paginate
-        this.totalProducts = enhancedProducts.length;
-        
-        // Get current page items (5 per page)
+        this.totalProducts = this.recentProducts.length;
         const startIndex = (this.currentProductPage - 1) * this.itemsPerPage;
-        this.recentProducts = enhancedProducts.slice(startIndex, startIndex + this.itemsPerPage);
+        this.recentProducts = this.recentProducts.slice(startIndex, startIndex + this.itemsPerPage);
         
-        // Generate pagination
         this.productPages = this.generatePageNumbers(this.totalProducts, this.itemsPerPage);
         this.isLoading.products = false;
       },
-      error: (error) => {
+      error: (error: any) => {
         console.error('Error processing products:', error);
         this.recentProducts = [];
         this.totalProducts = 0;
@@ -500,9 +489,27 @@ export class DashboardComponent implements OnInit {
           let allProducts: Product[] = [];
         
           if (Array.isArray(response)) {
-            allProducts = response;
+            allProducts = response.map((product: any) => ({
+              productId: product.productId ?? product.id ?? 0,
+              name: product.name,
+              description: product.description,
+              price: product.price,
+              imageUrl: product.imageUrl,
+              categoryId: product.categoryId ?? product.category?.id ?? 0,
+              categoryName: product.categoryName || product.category?.name || (product.categoryId ? this.categoryService.getCategoryNameById(product.categoryId) : 'Unknown'),
+              stockQuantity: product.stockQuantity ?? product.inventory?.quantity ?? 0
+            }));
           } else if ('products' in response) {
-            allProducts = response.products;
+            allProducts = response.products.map((product: any) => ({
+              productId: product.productId ?? product.id ?? 0,
+              name: product.name,
+              description: product.description,
+              price: product.price,
+              imageUrl: product.imageUrl,
+              categoryId: product.categoryId ?? product.category?.id ?? 0,
+              categoryName: product.categoryName || product.category?.name || (product.categoryId ? this.categoryService.getCategoryNameById(product.categoryId) : 'Unknown'),
+              stockQuantity: product.stockQuantity ?? product.inventory?.quantity ?? 0
+            }));
           }
           
           // Add category names

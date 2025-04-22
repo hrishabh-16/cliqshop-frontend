@@ -132,18 +132,24 @@ export class CategoryService {
   }
   
   // Find category name by ID (sync method)
-  getCategoryNameById(id: number): string {
-    if (!id) return 'Unknown';
-    
-    // Convert id to string for comparison to handle both number and string IDs
-    const idStr = id.toString();
-    
-    const category = this.cachedCategories.find(c => 
-      (c.categoryId !== undefined && c.categoryId.toString() === idStr) || 
-      (c.id !== undefined && c.id.toString() === idStr)
-    );
-    return category ? category.name : 'Unknown';
-  }
+// In your CategoryService
+getCategoryNameById(id: number, categories?: Category[]): string {
+  if (!id) return 'Unknown';
+  
+  // Use provided categories or fall back to cached ones
+  const searchCategories = categories || this.cachedCategories;
+  if (!searchCategories || searchCategories.length === 0) return 'Unknown';
+  
+  // Convert id to string for comparison
+  const idStr = id.toString();
+  
+  const category = searchCategories.find(c => 
+    (c.categoryId !== undefined && c.categoryId.toString() === idStr) || 
+    (c.id !== undefined && c.id.toString() === idStr)
+  );
+  
+  return category?.name || 'Unknown';
+}
 
   // Search categories by name
   searchCategories(query: string): Category[] {
