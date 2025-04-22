@@ -1,9 +1,10 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 import { Subscription } from 'rxjs';
+import { map } from 'rxjs/operators';
 import { InventoryService, Inventory } from '../../../services/inventory/inventory.service';
 import { ProductService } from '../../../services/product/product.service';
-
+import { CategoryService } from '../../../services/category/category.service';
 interface WarehouseLocation {
   id?: number;
   name: string;
@@ -95,6 +96,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
   constructor(
     private inventoryService: InventoryService,
     private productService: ProductService,
+    public categoryService: ProductService,
     private router: Router
   ) {}
   
@@ -137,22 +139,27 @@ export class InventoryComponent implements OnInit, OnDestroy {
     this.loading = true;
     this.error = null;
     
-    const sub = this.productService.getAllProducts().subscribe({
-      next: (response: any) => {
+    const sub = this.productService.getAllProducts().pipe(
+      map((response: any): Product[] => {
         // Handle different response formats
+        let products: any[] = [];
         if (Array.isArray(response)) {
-          this.products = response;
-          this.totalProducts = response.length;
-        } else if (response && response.products && Array.isArray(response.products)) {
-          // If response is an object with products array
-          this.products = response.products;
-          this.totalProducts = response.count || response.products.length;
-        } else {
-          // Fallback for unexpected response format
-          this.products = [];
-          this.totalProducts = 0;
-          console.error('Unexpected product response format:', response);
+          products = response;
+        } else if (response?.products) {
+          products = response.products;
         }
+        
+        // Map products to ensure categoryName is set
+        return products.map((product: any) => ({
+          ...product,
+          categoryName: product.category?.name || product.categoryName || 'None',
+          categoryId: product.category?.categoryId || product.categoryId
+        })) as Product[];
+      })
+    ).subscribe({
+      next: (products: Product[]) => {
+        this.products = products;
+        this.totalProducts = products.length;
         this.updateProductsWithInventoryData();
       },
       error: (err) => {
@@ -164,6 +171,27 @@ export class InventoryComponent implements OnInit, OnDestroy {
     
     this.subscriptions.add(sub);
   }
+
+  getCategoryName(categoryId?: number): string {
+    if (!categoryId) return 'None';
+    
+    // First check if we have the category in any loaded product
+    const productWithCategory = this.products.find(p => 
+      p.categoryId === categoryId
+    );
+    if (productWithCategory?.categoryName) return productWithCategory.categoryName;
+    
+    // Then try the category service
+    try {
+      const name = this.categoryService.getCategoryName(categoryId);
+      if (name && name !== 'Unknown') return name;
+    } catch (error) {
+      console.warn('Error getting category name from service:', error);
+    }
+    
+    return 'None';
+  }
+
   
   updateProductsWithInventoryData(): void {
     if (this.products.length === 0) {

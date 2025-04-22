@@ -125,7 +125,9 @@
                 </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
-                <span class="text-sm text-gray-900 dark:text-white">{{ product.categoryName || 'None' }}</span>
+                <span class="text-sm text-gray-900 dark:text-white">
+                  {{ product.categoryName || getCategoryName(product.categoryId) }}
+                </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
                 <button (click)="openAddStockModal(product)" class="px-3 py-1 bg-sky-600 hover:bg-sky-700 text-white text-sm rounded-md transition-colors">
