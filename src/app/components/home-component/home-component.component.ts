@@ -102,6 +102,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             
             // Fallback for featured products if they're empty
             this.checkAndLoadProducts();
+            
+            // Apply category names to products after categories are loaded
+            this.enrichProductsWithCategoryNames();
           } else {
             console.error('Received null or undefined data from API');
             this.loadFallbackData();
@@ -114,9 +117,47 @@ export class HomeComponent implements OnInit, AfterViewChecked {
       });
   }
 
-  getCategoryName(productCategoryId: number): string {
-    const category = this.categories.find(c => c.categoryId === productCategoryId);
-    return category?.name || 'General';
+  // FIXED: Improved getCategoryName method to properly lookup category by ID
+  getCategoryName(categoryId: number): string {
+    if (!categoryId) return 'General';
+    
+    // Look for category by both categoryId and id properties
+    const category = this.categories.find(c => 
+      (c.categoryId !== undefined && c.categoryId === categoryId) || 
+      (c.id !== undefined && c.id === categoryId)
+    );
+    
+    return category ? category.name : 'General';
+  }
+  
+  // NEW: Method to enrich all products with proper category names
+  enrichProductsWithCategoryNames(): void {
+    if (this.categories.length === 0) {
+      console.warn('Cannot enrich products with category names: categories array is empty');
+      return;
+    }
+    
+    console.log('Enriching products with category names...');
+    
+    // Enrich featured products
+    this.featuredProducts = this.featuredProducts.map(product => {
+      const categoryName = this.getCategoryName(product.categoryId);
+      return {
+        ...product,
+        categoryName: categoryName
+      };
+    });
+    
+    // Enrich latest products
+    this.latestProducts = this.latestProducts.map(product => {
+      const categoryName = this.getCategoryName(product.categoryId);
+      return {
+        ...product,
+        categoryName: categoryName
+      };
+    });
+    
+    console.log('Products enriched with category names');
   }
   
   // Check and load products if needed
@@ -134,6 +175,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             console.log('Using mock featured products as fallback');
             this.featuredProducts = this.homeService.getMockProducts(8);
           }
+          
+          // Apply category names to newly loaded products
+          this.enrichProductsWithCategoryNames();
         }
       });
     }
@@ -151,6 +195,9 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             console.log('Using mock latest products as fallback');
             this.latestProducts = this.homeService.getMockProducts(4);
           }
+          
+          // Apply category names to newly loaded products
+          this.enrichProductsWithCategoryNames();
         }
       });
     }
@@ -170,13 +217,20 @@ export class HomeComponent implements OnInit, AfterViewChecked {
           console.log('Using mock categories as fallback');
           this.categories = this.homeService.getMockCategories();
         }
+        
+        // Now that we have categories, load products
+        this.loadFallbackProducts();
       },
       error: (error) => {
         console.error('Failed to load categories:', error);
         this.categories = this.homeService.getMockCategories();
+        this.loadFallbackProducts();
       }
     });
-    
+  }
+  
+  // Separated product loading to ensure categories are loaded first
+  loadFallbackProducts(): void {
     // Load products directly
     this.homeService.getFeaturedProducts().subscribe({
       next: (products) => {
@@ -187,10 +241,14 @@ export class HomeComponent implements OnInit, AfterViewChecked {
           console.log('Using mock products as fallback');
           this.featuredProducts = this.homeService.getMockProducts(8);
         }
+        
+        // Apply category names to products
+        this.enrichProductsWithCategoryNames();
       },
       error: (error) => {
         console.error('Failed to load featured products:', error);
         this.featuredProducts = this.homeService.getMockProducts(8);
+        this.enrichProductsWithCategoryNames();
       }
     });
     
@@ -204,10 +262,14 @@ export class HomeComponent implements OnInit, AfterViewChecked {
           console.log('Using mock latest products as fallback');
           this.latestProducts = this.homeService.getMockProducts(4);
         }
+        
+        // Apply category names to products
+        this.enrichProductsWithCategoryNames();
       },
       error: (error) => {
         console.error('Failed to load latest products:', error);
         this.latestProducts = this.homeService.getMockProducts(4);
+        this.enrichProductsWithCategoryNames();
       }
     });
   }
@@ -279,12 +341,16 @@ export class HomeComponent implements OnInit, AfterViewChecked {
             this.featuredProducts = this.homeService.getMockProducts(4);
           }
           
+          // Apply category names to newly loaded products
+          this.enrichProductsWithCategoryNames();
+          
           this.isLoading = false;
           this.showSearchBar = false; // Hide search bar after search
         },
         error: (error) => {
           console.error('Error searching products:', error);
           this.featuredProducts = this.homeService.getMockProducts(4);
+          this.enrichProductsWithCategoryNames();
           this.isLoading = false;
         }
       });

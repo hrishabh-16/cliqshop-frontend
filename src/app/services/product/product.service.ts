@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of, forkJoin, throwError } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { map, switchMap, catchError, tap, retry, timeout } from 'rxjs/operators';
 import { CategoryService } from '../category/category.service';
 import { Product } from '../../models/product.model';
@@ -31,13 +31,14 @@ export class ProductService {
 
   constructor(
     private http: HttpClient,
+    
     private categoryService: CategoryService
   ) {
     console.log('ProductService initialized with API URL:', this.apiUrl);
     
     // Pre-load categories when service is initialized
     this.loadCategories();
-    
+    this.loadCategories();
     // Test the API connection
     this.testApiConnection();
   }
@@ -88,16 +89,16 @@ export class ProductService {
     this.categoryService.getAllCategories().subscribe({
       next: (categories) => {
         this.categories = categories;
-        console.log('ProductService loaded categories:', categories);
+        console.log('ProductDetailService loaded categories:', categories);
       },
       error: (error) => {
-        console.error('Error loading categories in ProductService:', error);
+        console.error('Error loading categories in ProductDetailService:', error);
       }
     });
   }
-
+  
   // Get all products with pagination
-  getAllProducts(page: number = 1, limit: number = 100): Observable<ProductsResponse> {
+  getAllProducts(page: number = 1, limit: number = 100): Observable<ProductsResponse | Product[]> {
     const params = new HttpParams()
       .set('page', page.toString())
       .set('limit', limit.toString());
@@ -195,7 +196,7 @@ export class ProductService {
     );
   }
 
-  // Add category names to products
+  // Add category names to products - FIXED IMPLEMENTATION
   private enrichProductsWithCategoryNames(products: Product[]): Product[] {
     if (!Array.isArray(products)) {
       console.warn('Products is not an array:', products);
@@ -210,23 +211,19 @@ export class ProductService {
       }
       
       const categoryId = product.categoryId;
-      
-      // First try to use categoryService for name lookup (more reliable)
       let categoryName = 'Unknown';
-      if (categoryId) {
-        categoryName = this.categoryService.getCategoryNameById(categoryId);
-      }
       
-      // If that failed, try local cache
-      if (categoryName === 'Unknown') {
-        // Find matching category by checking both id and categoryId
+      // Try to find the matching category by ID, considering both categoryId and id fields
+      if (categoryId !== undefined && categoryId !== null) {
         const category = this.categories.find(c => 
-          c && ((c.categoryId !== undefined && c.categoryId === categoryId) || 
-                (c.id !== undefined && c.id === categoryId))
+          (c.categoryId !== undefined && c.categoryId === categoryId) || 
+          (c.id !== undefined && c.id === categoryId)
         );
         
         if (category) {
           categoryName = category.name;
+        } else {
+          console.warn(`Category not found for product ${product.name} with categoryId ${categoryId}`);
         }
       }
       
@@ -265,12 +262,10 @@ export class ProductService {
       switchMap(product => {
         // Enhance product with category info
         const categoryId = product.categoryId;
+        let categoryName = 'Unknown';
         
-        // Try to get category name from service first
-        let categoryName = this.categoryService.getCategoryNameById(categoryId);
-        
-        // If that failed, try our local cache
-        if (categoryName === 'Unknown') {
+        // Try to find the category from our local cache
+        if (categoryId !== undefined && categoryId !== null) {
           const category = this.categories.find(c => 
             (c.categoryId !== undefined && c.categoryId === categoryId) || 
             (c.id !== undefined && c.id === categoryId)
@@ -278,6 +273,8 @@ export class ProductService {
           
           if (category) {
             categoryName = category.name;
+          } else {
+            console.warn(`Category not found for product ${product.name} with categoryId ${categoryId}`);
           }
         }
         
@@ -316,12 +313,10 @@ export class ProductService {
       switchMap(() => this.http.post<Product>(`${this.apiUrl}/admin/products`, product)),
       map(newProduct => {
         const categoryId = newProduct.categoryId;
+        let categoryName = 'Unknown';
         
-        // Try category service first
-        let categoryName = this.categoryService.getCategoryNameById(categoryId);
-        
-        // Fall back to local cache if needed
-        if (categoryName === 'Unknown') {
+        // Find category from local cache
+        if (categoryId !== undefined && categoryId !== null) {
           const category = this.categories.find(c => 
             (c.categoryId !== undefined && c.categoryId === categoryId) || 
             (c.id !== undefined && c.id === categoryId)
@@ -346,12 +341,10 @@ export class ProductService {
       switchMap(() => this.http.put<Product>(`${this.apiUrl}/admin/products/${id}`, product)),
       map(updatedProduct => {
         const categoryId = updatedProduct.categoryId;
+        let categoryName = 'Unknown';
         
-        // Try category service first
-        let categoryName = this.categoryService.getCategoryNameById(categoryId);
-        
-        // Fall back to local cache if needed
-        if (categoryName === 'Unknown') {
+        // Find category from local cache
+        if (categoryId !== undefined && categoryId !== null) {
           const category = this.categories.find(c => 
             (c.categoryId !== undefined && c.categoryId === categoryId) || 
             (c.id !== undefined && c.id === categoryId)
@@ -375,7 +368,7 @@ export class ProductService {
     return this.http.delete<void>(`${this.apiUrl}/admin/products/${id}`);
   }
 
-  // Get products by category
+  // Get products by category - FIXED
   getProductsByCategory(categoryId: number): Observable<Product[]> {
     console.log(`Fetching products for category ID: ${categoryId}`);
     return this.ensureCategoriesLoaded().pipe(
@@ -383,8 +376,13 @@ export class ProductService {
         .pipe(
           catchError(error => {
             console.error(`Error fetching products for category ${categoryId}:`, error);
-            // Return an empty array on error instead of failing
-            return of([]);
+            // Try to filter products from all products as a fallback
+            return this.getAllProducts().pipe(
+              map((response: any) => {
+                const products = Array.isArray(response) ? response : response.products;
+                return products.filter((p: Product) => p.categoryId === categoryId);
+              })
+            );
           })
         )
       ),
@@ -414,9 +412,10 @@ export class ProductService {
     // This would typically call a specific endpoint for out of stock products
     // For now, we'll simulate by filtering all products
     return this.getAllProducts(1, 100).pipe(
-      map(response => {
+      map((response: any) => {
         // Filter products that are out of stock
-        return response.products.filter(product => product.stockQuantity === 0);
+        const products = Array.isArray(response) ? response : response.products;
+        return products.filter((product: Product) => product.stockQuantity === 0);
       })
     );
   }
@@ -435,17 +434,10 @@ export class ProductService {
     }).format(price);
   }
 
-  // Helper method to find category name by ID
+  // Helper method to find category name by ID - FIXED IMPLEMENTATION
   getCategoryName(categoryId: number): string {
     if (!categoryId) return 'Unknown';
     
-    // Try category service first (more reliable)
-    const serviceResult = this.categoryService.getCategoryNameById(categoryId);
-    if (serviceResult !== 'Unknown') {
-      return serviceResult;
-    }
-    
-    // Fall back to local cache
     const category = this.categories.find(c => 
       (c.categoryId !== undefined && c.categoryId === categoryId) || 
       (c.id !== undefined && c.id === categoryId)
@@ -453,4 +445,6 @@ export class ProductService {
     
     return category ? category.name : 'Unknown';
   }
+
+  
 }

@@ -9,7 +9,7 @@ import { AuthService } from '../../services/auth/auth.service';
 import { HttpClient } from '@angular/common/http';
 
 @Component({
-  standalone:false,
+  standalone: false,
   selector: 'app-products',
   templateUrl: './products.component.html',
   styleUrls: ['./products.component.css']
@@ -52,7 +52,6 @@ export class ProductsComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCategories();
-    this.loadProducts();
 
     // Check for query parameters (category selection, search, etc.)
     this.route.queryParams.subscribe(params => {
@@ -66,6 +65,9 @@ export class ProductsComponent implements OnInit {
       if (search) {
         this.searchQuery = search;
       }
+      
+      // Load products after processing query params
+      this.loadProducts();
     });
   }
 
@@ -92,6 +94,34 @@ export class ProductsComponent implements OnInit {
 
   loadProducts(): void {
     this.isLoading = true;
+    
+    // If a category is selected, load products for that category
+    if (this.selectedCategories.length === 1) {
+      const categoryId = this.selectedCategories[0];
+      console.log('Loading products for category:', categoryId);
+      
+      this.productService.getProductsByCategory(categoryId).subscribe({
+        next: (products) => {
+          this.allProducts = products;
+          this.totalPages = Math.ceil(this.allProducts.length / this.itemsPerPage);
+          this.applyFilters();
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error loading products for category:', error);
+          this.isLoading = false;
+          
+          // Fallback to loading all products if category-specific request fails
+          this.loadAllProducts();
+        }
+      });
+    } else {
+      // Load all products if no category is selected
+      this.loadAllProducts();
+    }
+  }
+  
+  loadAllProducts(): void {
     this.productService.getAllProducts().subscribe({
       next: (response) => {
         if (Array.isArray(response)) {
@@ -147,13 +177,21 @@ export class ProductsComponent implements OnInit {
   }
 
   toggleCategory(categoryId: number): void {
+    console.log('Toggling category:', categoryId);
     const index = this.selectedCategories.indexOf(categoryId);
+    
     if (index > -1) {
+      // Remove the category
       this.selectedCategories.splice(index, 1);
     } else {
+      // Add the category
       this.selectedCategories.push(categoryId);
     }
-    this.applyFilters();
+    
+    console.log('Selected categories after toggle:', this.selectedCategories);
+    
+    // Load products based on the updated category selection
+    this.loadProducts();
     
     // Update URL with category parameter if there's only one selected
     if (this.selectedCategories.length === 1) {
@@ -173,10 +211,12 @@ export class ProductsComponent implements OnInit {
   }
 
   applyFilters(): void {
+    console.log('Applying filters with products:', this.allProducts.length);
     let filtered = [...this.allProducts];
     
-    // Filter by category
-    if (this.selectedCategories.length > 0) {
+    // Filter by category - only needed if we load all products first
+    if (this.selectedCategories.length > 0 && !this.route.snapshot.queryParams['category']) {
+      console.log('Filtering by categories:', this.selectedCategories);
       filtered = filtered.filter(product => 
         this.selectedCategories.includes(product.categoryId)
       );
@@ -207,6 +247,8 @@ export class ProductsComponent implements OnInit {
     this.totalPages = Math.ceil(filtered.length / this.itemsPerPage);
     const startIndex = (this.currentPage - 1) * this.itemsPerPage;
     this.filteredProducts = filtered.slice(startIndex, startIndex + this.itemsPerPage);
+    
+    console.log('Filtered products count:', this.filteredProducts.length);
   }
   
   applySorting(products: Product[]): void {

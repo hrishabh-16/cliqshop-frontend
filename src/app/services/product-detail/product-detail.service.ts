@@ -11,13 +11,26 @@ import { CategoryService } from '../category/category.service';
 })
 export class ProductDetailService {
   private apiUrl = 'http://localhost:9000/api';
+  public categories: any[] = [];
 
   constructor(
     private http: HttpClient,
     private productService: ProductService,
     private categoryService: CategoryService
-  ) { }
-
+  ) {
+    this.loadCategories();
+  }
+  private loadCategories(): void {
+    this.categoryService.getAllCategories().subscribe({
+      next: (categories) => {
+        this.categories = categories;
+        console.log('ProductDetailService loaded categories:', categories);
+      },
+      error: (error) => {
+        console.error('Error loading categories in ProductDetailService:', error);
+      }
+    });
+  }
   /**
    * Get detailed product information by ID
    * This service extends the basic product service by providing additional
