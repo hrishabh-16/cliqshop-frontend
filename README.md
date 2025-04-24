@@ -216,5 +216,13 @@ cliqshop-frontend/
 - Update the API URL in your service files to match your backend server.
 - Configure any required API settings in your service files.
 
+## 📸 Screenshots
+
+### Customer Interface
+![Home Page](https://i.imgur.com/m8t9w1j.png)
+
+### Admin Interface
+![Admin Dashboard](https://i.imgur.com/4KEAXw7.png)
+
 ## **Contact**
 For questions or support, reach out via [hrishabhgautam480@gmail.com] or raise an issue on the repository.
