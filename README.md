@@ -1,59 +1,220 @@
-# CliqshopFrontend
+# CliQshop Frontend
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 19.2.1.
 
-## Development server
+## 📌 Project Overview
 
-To start a local development server, run:
+CliQshop is a modern e-commerce platform built with Angular. The frontend provides a responsive and intuitive interface for both customers and administrators. This repository contains the frontend application which interfaces with the [CliQshop Backend](https://github.com/hrishabh-16/cliqshop-backend.git).
 
-```bash
-ng serve
+## ✨ Features
+
+### Customer Features
+- **Product Browsing**: Browse products by categories with search and filter capabilities
+- **User Authentication**: Secure login/registration with JWT authentication
+- **Shopping Cart**: Add/remove products with real-time cart updates
+- **Checkout Process**: Streamlined multi-step checkout with address management
+- **Payment Integration**: Secure payments using Stripe
+- **Order Management**: View order history and track current orders
+- **User Profile**: Update personal information and manage addresses
+
+
+### Admin Features
+- **Dashboard**: Analytics overview with Recents Products, Users , Orders and Categories 
+- **Product Management**: Add, edit, delete products and manage products
+- **Category Management**: Create and organize product categories
+- **Inventory Management**: Add, edit, delete products and manage inventory including Low stock Management and Warehouse Management
+- **Order Processing**: View, update, and manage customer orders
+- **User Management**: View and manage user accounts
+- **Reporting**: Analytics overview with sales and inventory metrics using charts
+
+## 🧩 Components
+
+### Customer Side Components
+- **Home**: Landing page showcasing featured products
+- **Products**: Product listing with filters and search
+- **Product Detail**: Detailed product information and add to cart functionality
+- **Cart**: Shopping cart management
+- **Categories**: Browse products by category
+- **Checkout**: Multi-step checkout process
+- **Order Confirmation**: Order success page
+- **Profile**: User profile management
+- **Login/Register**: User authentication forms
+
+### Admin Side Components
+- **Dashboard**: Admin analytics dashboard
+- **Inventory**: Inventory management interface
+- **Orders**: Order processing and management
+- **Categories**: Category management
+- **Products**: Product management
+- **Users**: User account management
+- **Reports**: Sales and inventory reports
+
+## 🏗️ Project Structure
+
+```
+cliqshop-frontend/
+├── .angular/           # Angular configuration
+├── node_modules/       # Dependencies
+├── src/                # Source files
+│   ├── app/            # Application code
+│   │   ├── components/ # Reusable components
+│   │   │   ├── admin/  # Admin-specific components
+│   │   │   │   ├── categories/    # Categories management
+│   │   │   │   ├── dashboard/     # Admin dashboard
+│   │   │   │   ├── inventory/     # Inventory management
+│   │   │   │   ├── orders/        # Order management
+│   │   │   │   ├── products/      # Product management
+│   │   │   │   ├── profile/       # Admin profile
+│   │   │   │   ├── reports/       # Report generation
+│   │   │   │   └── users/         # User management
+│   │   │   ├── auth/              # Authentication components
+│   │   │   ├── cart/              # Shopping cart
+│   │   │   ├── categories/        # Category browsing
+│   │   │   ├── checkout/          # Checkout process
+│   │   │   ├── home-component/    # Home page
+│   │   │   ├── order-confirmation/ # Order confirmation
+│   │   │   ├── orders/            # Order history
+│   │   │   ├── payment/           # Payment processing
+│   │   │   ├── product-detail/    # Product details
+│   │   │   ├── products/          # Product listings
+│   │   │   └── user-profile/      # User profile
+│   │   ├── guards/                # Route guards
+│   │   │   ├── admin/             # Admin route guards
+│   │   │   └── auth/              # Authentication guards
+│   │   ├── interceptors/          # HTTP interceptors
+│   │   │   ├── auth/              # Auth interceptors
+│   │   │   └── error/             # Error handling
+│   │   ├── models/                # Data models
+│   │   └── services/              # API services
+│   │       ├── admin/             # Admin services
+│   │       ├── auth/              # Auth services
+│   │       ├── cart/              # Cart services
+│   │       └── ...                # Other services
+│   ├── assets/         # Static assets
+│   ├── styles.css      # Global styles
+│   ├── main.ts         # Main entry point
+│   └── index.html      # Main HTML file
+├── package.json        # Dependencies and scripts
+├── angular.json        # Angular project configuration
+├── tailwind.config.js  # Tailwind CSS configuration
+├── tsconfig.json       # TypeScript configuration
+└── README.md           # Project documentation
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+## 📦 Modules
 
-## Code scaffolding
+- **AppModule**: Core application module
+- **AuthModule**: Authentication module for login/register features
+- **AdminModule**: Admin dashboard and management features
+- **OrdersModule**: Order processing and management
+- **ProductsModule**: Product browsing and management
+- **SharedModule**: Shared components, directives, and pipes
+- **CartModule**: Shopping cart functionality
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+## 🛠️ Technology Stack
 
-```bash
-ng generate component component-name
-```
+- **Angular 19**: Frontend framework
+- **Angular Material**: UI component library
+- **TailwindCSS 4**: Utility-first CSS framework
+- **Chart.js**: Data visualization for admin dashboard
+- **RxJS**: Reactive extensions for JavaScript
+- **JWT Authentication**: Secure user authentication
+- **FontAwesome**: Icon library
+- **NgxToastr**: Toast notifications
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+## 💳 Stripe Payment Integration
 
-```bash
-ng generate --help
-```
+### Prerequisites
+- Node.js v20+ installed
+- Stripe account
+- Backend repository cloned and running
 
-## Building
+### Integration Steps
 
-To build the project run:
+1. **Install Stripe CLI (Windows)**
+   ```bash
+   # Download the Stripe CLI for Windows
+   curl -O https://github.com/stripe/stripe-cli/releases/download/v1.26.1/stripe_1.26.1_windows_x86_64.zip
+   # Extract the ZIP file
+   # Add the extracted directory to your PATH Environment Variables
+   # Open the extracted `stripe.exe` file in command prompt
+   ```
 
-```bash
-ng build
-```
+2. **Login to Stripe**
+   ```bash
+   stripe login
+   # This will open your browser and ask you to authenticate. After success, your local CLI will be connected to your Stripe account.
+   ```
+3. **Add your Stripe Secret and publishable key**
+- The Stripe CLI will output a secret and publishable key. Add this secret to your backend's `application.properties`:
+     ```properties
+     stripe.api.secretKey=<sk_test_your_key_here>
+     stripe.api.publishableKey=<pk_test_your_key_here>
+     ```
+4. **Install Stripe NPM package**
+   ```bash
+   npm install @stripe/stripe-js @stripe/stripe-angular --save
+   ```
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+5. **Setup Stripe webhook for local testing**
+   ```bash
+   # start the webhook listener
+   stripe listen --forward-to http://localhost:8080/api/webhook
+   ```
 
-## Running unit tests
+6. **Add your  webhook secret key**
+- The Stripe CLI will output a webhook secret. Add this secret to your backend's `application.properties`:
+     ```properties
+     stripe.webhook.secret=<whsec_your_webhook_secret_here>
+     ```
 
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
 
-```bash
-ng test
-```
 
-## Running end-to-end tests
 
-For end-to-end (e2e) testing, run:
 
-```bash
-ng e2e
-```
+7. **Implement Stripe in the checkout component**
+   - Initialize Stripe in your payment component
+   - Create payment intent through your backend API
+   - Handle successful payments and redirect to confirmation page
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+## 🚀 Running the Application
 
-## Additional Resources
+### Prerequisites
+- Node.js (v20 or later)
+- npm (v10 or later)
+- Angular CLI (v19)
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/hrishabh-16/cliqshop-frontend.git
+   cd cliqshop-frontend
+   ```
+
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+
+3. **Initialize Tailwind CSS (if not already initialized)**
+   ```bash
+   npm run tailwind:init
+   ```
+
+4. **Run the development server**
+   ```bash
+   ng serve
+   ```
+   The application will be available at `http://localhost:4200`.
+
+5. **Build for production**
+   ```bash
+   ng build
+   ```
+
+### Configuration
+- Update the API URL in your service files to match your backend server.
+- Configure any required API settings in your service files.
+
+## **Contact**
+For questions or support, reach out via [hrishabhgautam480@gmail.com] or raise an issue on the repository.
