@@ -152,7 +152,7 @@ cliqshop-frontend/
      ```
 4. **Install Stripe NPM package**
    ```bash
-   npm install @stripe/stripe-js @stripe/stripe-angular --save
+   npm install @stripe/stripe-js --save
    ```
 
 5. **Setup Stripe webhook for local testing**
