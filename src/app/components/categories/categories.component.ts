@@ -5,7 +5,7 @@ import { CategoryService } from '../../services/category/category.service';
 
 @Component({
   selector: 'app-categories',
-  standalone: false,
+  standalone:false,
   templateUrl: './categories.component.html',
   styleUrls: ['./categories.component.css']
 })
@@ -15,8 +15,6 @@ export class CategoriesComponent implements OnInit {
   filteredCategories: Category[] = [];
   searchQuery: string = '';
   showScrollTop: boolean = false;
-  categoriesLoaded: boolean = false; // Flag to track if categories have been loaded
-  showAddCategoryModal: boolean = false; // Flag to control add category modal visibility
 
   constructor(
     private categoryService: CategoryService,
@@ -36,37 +34,21 @@ export class CategoriesComponent implements OnInit {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-
-
-// Update your ngOnInit or loadCategories method to include:
-loadCategories(): void {
-  this.isLoading = true;
-  this.categoryService.getAllCategories(false).subscribe({
-    next: (categories) => {
-      this.categories = categories || [];
-      this.filteredCategories = [...this.categories];
-      this.isLoading = false;
-      this.categoriesLoaded = true; // Mark as loaded even if empty
-    },
-    error: (error) => {
-      console.error('Error loading categories:', error);
-      this.isLoading = false;
-      this.categoriesLoaded = true; // Mark as loaded even on error
-      this.categories = [];
-      this.filteredCategories = [];
-    },
-    complete: () => {
-      this.isLoading = false;
-      this.categoriesLoaded = true;
-    }
-  });
-}
-
-// If you have an openAddCategoryModal method, check that it's not waiting for categories:
-openAddCategoryModal(): void {
-  // Just open the modal directly without checking isLoading
-  this.showAddCategoryModal = true;
-}
+  loadCategories(): void {
+    this.isLoading = true;
+    this.categoryService.getAllCategories(false).subscribe({
+      next: (categories) => {
+        this.categories = categories;
+        this.filteredCategories = [...categories];
+        this.isLoading = false;
+        console.log('Categories loaded:', categories);
+      },
+      error: (error) => {
+        console.error('Error loading categories:', error);
+        this.isLoading = false;
+      }
+    });
+  }
 
   searchCategories(): void {
     if (!this.searchQuery.trim()) {

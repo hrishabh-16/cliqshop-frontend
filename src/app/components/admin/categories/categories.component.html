@@ -42,8 +42,8 @@
       </div>
     </div>
 
-    <!-- Loading Spinner -->
-    <div *ngIf="loading" class="flex justify-center items-center h-64">
+    <!-- Loading Spinner - Only show if loading is true AND not showing add form -->
+    <div *ngIf="loading && !showAddForm" class="flex justify-center items-center h-64">
       <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600"></div>
     </div>
 
@@ -118,7 +118,7 @@
       </div>
     </div>
 
-    <!-- Categories List View -->
+    <!-- Categories List View - Show when not loading, not showing add form, no error -->
     <div *ngIf="!showAddForm && !loading && !error" class="bg-white dark:bg-slate-700 rounded-xl shadow overflow-hidden animate-fadeIn">
       <div class="px-6 py-5 border-b border-gray-200 dark:border-slate-600 flex justify-between items-center">
         <h3 class="text-lg font-semibold text-gray-800 dark:text-white">All Categories List</h3>
@@ -206,13 +206,17 @@
               </td>
             </tr>
             
-            <!-- Empty state -->
+            <!-- Empty state - Improved styling for better visibility -->
             <tr *ngIf="categories.length === 0">
-              <td colspan="6" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
-                <div class="flex flex-col items-center">
-                  <i class="fas fa-folder-open text-5xl text-gray-300 dark:text-gray-600 mb-4"></i>
-                  <p>No categories found.</p>
-                  <button (click)="toggleAddForm()" class="mt-4 text-sm text-sky-600 dark:text-sky-400 hover:underline">Add your first category</button>
+              <td colspan="6" class="px-6 py-16 text-center">
+                <div class="flex flex-col items-center bg-gray-50 dark:bg-slate-800/50 py-10 px-6 rounded-lg">
+                  <i class="fas fa-folder-open text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
+                  <p class="text-lg text-gray-500 dark:text-gray-400 mb-2">No categories found.</p>
+                  <p class="text-sm text-gray-400 dark:text-gray-500 mb-6">Your product categories will appear here once created.</p>
+                  <button (click)="toggleAddForm()" 
+                          class="px-6 py-2 bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors flex items-center">
+                    <i class="fas fa-plus mr-2"></i> Add your first category
+                  </button>
                 </div>
               </td>
             </tr>

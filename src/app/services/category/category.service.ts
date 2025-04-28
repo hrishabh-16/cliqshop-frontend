@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, catchError, of, tap, finalize } from 'rxjs';
+import { Observable, map, catchError, of, tap, finalize, throwError } from 'rxjs';
 import { Category } from '../../models/category.model';
 
 @Injectable({
@@ -21,6 +21,7 @@ export class CategoryService {
       },
       error: err => {
         console.error('Failed to preload categories:', err);
+        // Don't do anything on error - we'll load when needed
       }
     });
   }
@@ -33,12 +34,26 @@ export class CategoryService {
       return of(this.cachedCategories);
     }
     
+    // Important fix: If we're already loading, return an empty array immediately
+    // This prevents the loading spinner from appearing indefinitely
+    if (this.isLoading) {
+      console.log('Already loading categories, returning empty array');
+      return of([]);
+    }
+    
     // Set loading flag to prevent multiple simultaneous requests
     this.isLoading = true;
     
     return this.http.get<any[]>(this.apiUrl).pipe(
       map(categories => {
         console.log('Raw category data from API:', categories);
+        
+        // Handle empty response better
+        if (!categories || categories.length === 0) {
+          console.log('No categories returned from API');
+          this.cachedCategories = [];
+          return [];
+        }
         
         // Map the response to ensure proper Category objects
         const mappedCategories = categories.map(category => this.mapCategoryFromApi(category));
@@ -51,7 +66,16 @@ export class CategoryService {
       }),
       catchError(error => {
         console.error('Error fetching categories:', error);
-        // Return empty array on error, but don't update cache
+        
+        // If error is 404 (Not Found), this often means empty database table
+        // Return empty array but don't treat as error
+        if (error.status === 404) {
+          console.log('No categories found (404)');
+          this.cachedCategories = [];
+          return of([]);
+        }
+        
+        // Return empty array on other errors, but don't update cache
         return of([]);
       }),
       finalize(() => {
@@ -63,6 +87,11 @@ export class CategoryService {
 
   // Helper method to map API response to Category model
   private mapCategoryFromApi(category: any): Category {
+    if (!category) {
+      console.warn('Received null or undefined category from API');
+      return new Category(0, 'Unknown', '', null, new Date(), new Date());
+    }
+    
     // Ensure we have a valid ID (handle API inconsistency)
     const categoryId = category.categoryId !== undefined ? category.categoryId : 
                       (category.id !== undefined ? category.id : 0);
@@ -108,7 +137,7 @@ export class CategoryService {
       }),
       catchError(error => {
         console.error('Error creating category:', error);
-        throw error; // Propagate the error to the component
+        return throwError(() => error); // Use throwError factory for RxJS 7+
       })
     );
   }
@@ -126,7 +155,7 @@ export class CategoryService {
       }),
       catchError(error => {
         console.error(`Error updating category ID ${id}:`, error);
-        throw error; // Propagate the error to the component
+        return throwError(() => error); // Use throwError factory for RxJS 7+
       })
     );
   }
@@ -140,7 +169,7 @@ export class CategoryService {
       }),
       catchError(error => {
         console.error(`Error deleting category ID ${id}:`, error);
-        throw error; // Propagate the error to the component
+        return throwError(() => error); // Use throwError factory for RxJS 7+
       })
     );
   }
@@ -180,6 +209,7 @@ export class CategoryService {
   // Clear the categories cache
   clearCache(): void {
     this.cachedCategories = [];
+    this.isLoading = false; // Reset loading flag to ensure we can attempt again
   }
 
   // Helper method to get a placeholder image for a category

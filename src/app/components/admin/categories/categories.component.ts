@@ -60,6 +60,8 @@ export class CategoriesComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['view'] === 'add') {
         this.showAddForm = true;
+        // Important fix: If we're trying to add a category, stop showing the loading spinner
+        this.loading = false;
       }
     });
     
@@ -70,9 +72,25 @@ export class CategoriesComponent implements OnInit {
     this.loading = true;
     this.error = null;
     
-    this.categoryService.getAllCategories(false).subscribe({
+    this.categoryService.getAllCategories(false).pipe(
+      // Add a finalize to ensure loading is set to false no matter what
+      finalize(() => {
+        // Only set loading to false if we're not showing the add form
+        if (!this.showAddForm) {
+          this.loading = false;
+        }
+      })
+    ).subscribe({
       next: (categories) => {
         console.log('Categories loaded:', categories);
+        
+        // If there are no categories, set loading to false and return early
+        if (categories.length === 0) {
+          this.categories = [];
+          this.loading = false;
+          return;
+        }
+        
         // For each category, get statistics (product count, min price, total stock)
         const observables = categories.map(category => this.getCategoryStats(category));
         
@@ -200,6 +218,9 @@ export class CategoriesComponent implements OnInit {
   toggleAddForm(): void {
     this.showAddForm = !this.showAddForm;
     if (this.showAddForm) {
+      // Stop showing loading spinner when opening add form
+      this.loading = false;
+      
       // Update URL to reflect that we're in add mode
       this.router.navigate([], {
         relativeTo: this.route,
