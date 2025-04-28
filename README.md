@@ -96,7 +96,6 @@ cliqshop-frontend/
 ├── package.json        # Dependencies and scripts
 ├── angular.json        # Angular project configuration
 ├── tailwind.config.js  # Tailwind CSS configuration
-├── Dockerfile          # Docker image configuration
 ├── tsconfig.json       # TypeScript configuration
 └── README.md           # Project documentation
 ```
@@ -121,8 +120,6 @@ cliqshop-frontend/
 - **JWT Authentication**: Secure user authentication
 - **FontAwesome**: Icon library
 - **NgxToastr**: Toast notifications
-- **Docker**: Containerization platform
-- **Nginx**: Web server for Docker deployment
 
 ## 💳 Stripe Payment Integration
 
@@ -181,14 +178,12 @@ cliqshop-frontend/
 
 ## 🚀 Running the Application
 
-### Option 1: Standard Setup
-
-#### Prerequisites
+### Prerequisites
 - Node.js (v20 or later)
 - npm (v10 or later)
 - Angular CLI (v19)
 
-#### Installation
+### Installation
 
 1. **Clone the repository**
    ```bash
@@ -216,45 +211,6 @@ cliqshop-frontend/
    ```bash
    ng build
    ```
-
-### Option 2: Docker Deployment
-
-#### Prerequisites
-- Docker 20.10+ and Docker Compose V2+
-- Git
-
-#### Running with Docker
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/hrishabh-16/cliqshop-frontend.git
-   cd cliqshop-frontend
-   ```
-
-2. **Build the Docker image**
-   ```bash
-   docker build -t cliqshop-frontend:latest .
-   ```
-
-3. **Running the frontend with Docker Compose**
-   
-   For a complete application stack that includes the backend and database, please refer to the [CliQshop Backend repository](https://github.com/hrishabh-16/cliqshop-backend) for the Docker Compose configuration.
-
-#### Docker Container Details
-
-The Docker configuration includes:
-
-1. **Build stage**:
-   - Uses Node.js 20.18.3 as the base image
-   - Installs all dependencies
-   - Adjusts Angular budget configuration for larger builds
-   - Builds the production Angular application
-
-2. **Runtime stage**:
-   - Uses Nginx Alpine as the base image
-   - Configures Nginx to serve the Angular application
-   - Sets up API proxying to the backend service
-   - Listens on port 4200
 
 ### Configuration
 - Update the API URL in your service files to match your backend server.

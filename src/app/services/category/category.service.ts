@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, map, catchError, of, tap, finalize } from 'rxjs';
+import { Observable, map, catchError, of, tap } from 'rxjs';
 import { Category } from '../../models/category.model';
 
 @Injectable({
@@ -11,30 +11,21 @@ export class CategoryService {
   
   // Cache categories to avoid multiple requests
   private cachedCategories: Category[] = [];
-  private isLoading: boolean = false;
 
   constructor(private http: HttpClient) {
-    // Pre-load categories on service initialization but don't block UI
-    this.getAllCategories().subscribe({
-      next: categories => {
-        console.log('Preloaded categories:', categories);
-      },
-      error: err => {
-        console.error('Failed to preload categories:', err);
-      }
+    // Pre-load categories on service initialization
+    this.getAllCategories().subscribe(categories => {
+      console.log('Preloaded categories:', categories);
     });
   }
 
   // Get all categories from backend or cache
   getAllCategories(useCache: boolean = true): Observable<Category[]> {
     // Return cached categories if available and requested
-    if (useCache && this.cachedCategories.length > 0 && !this.isLoading) {
+    if (useCache && this.cachedCategories.length > 0) {
       console.log('Returning cached categories:', this.cachedCategories);
       return of(this.cachedCategories);
     }
-    
-    // Set loading flag to prevent multiple simultaneous requests
-    this.isLoading = true;
     
     return this.http.get<any[]>(this.apiUrl).pipe(
       map(categories => {
@@ -51,12 +42,7 @@ export class CategoryService {
       }),
       catchError(error => {
         console.error('Error fetching categories:', error);
-        // Return empty array on error, but don't update cache
-        return of([]);
-      }),
-      finalize(() => {
-        // Always reset loading state when operation completes
-        this.isLoading = false;
+        return of([]); // Return empty array on error
       })
     );
   }
@@ -146,23 +132,24 @@ export class CategoryService {
   }
   
   // Find category name by ID (sync method)
-  getCategoryNameById(id: number, categories?: Category[]): string {
-    if (!id) return 'Unknown';
-    
-    // Use provided categories or fall back to cached ones
-    const searchCategories = categories || this.cachedCategories;
-    if (!searchCategories || searchCategories.length === 0) return 'Unknown';
-    
-    // Convert id to string for comparison
-    const idStr = id.toString();
-    
-    const category = searchCategories.find(c => 
-      (c.categoryId !== undefined && c.categoryId.toString() === idStr) || 
-      (c.id !== undefined && c.id.toString() === idStr)
-    );
-    
-    return category?.name || 'Unknown';
-  }
+// In your CategoryService
+getCategoryNameById(id: number, categories?: Category[]): string {
+  if (!id) return 'Unknown';
+  
+  // Use provided categories or fall back to cached ones
+  const searchCategories = categories || this.cachedCategories;
+  if (!searchCategories || searchCategories.length === 0) return 'Unknown';
+  
+  // Convert id to string for comparison
+  const idStr = id.toString();
+  
+  const category = searchCategories.find(c => 
+    (c.categoryId !== undefined && c.categoryId.toString() === idStr) || 
+    (c.id !== undefined && c.id.toString() === idStr)
+  );
+  
+  return category?.name || 'Unknown';
+}
 
   // Search categories by name
   searchCategories(query: string): Category[] {
