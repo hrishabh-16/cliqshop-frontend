@@ -1,11 +1,11 @@
 <!-- Header -->
 <app-header></app-header>
 
-<!-- Loading Spinner -->
-<div *ngIf="isLoading" class="fixed inset-0 flex items-center justify-center bg-white bg-opacity-75 z-50">
+<!-- Loading Spinner - Only show when initially loading -->
+<div *ngIf="isLoading && !categoriesLoaded" class="fixed inset-0 flex items-center justify-center bg-white bg-opacity-75 z-50">
   <app-loading-spinner></app-loading-spinner>
 </div>
-
+<div *ngIf="showAddCategoryModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
 <!-- Main Content -->
 <main class="bg-gradient-to-b from-sky-50 to-white min-h-screen">
   <div class="container mx-auto px-4 py-8">
@@ -40,13 +40,14 @@
     </div>
 
     <!-- No Categories Found Message -->
-    <div *ngIf="filteredCategories.length === 0 && !isLoading" class="bg-white rounded-xl shadow-md p-8 text-center">
+    <div *ngIf="filteredCategories.length === 0 && categoriesLoaded && !isLoading" class="bg-white rounded-xl shadow-md p-8 text-center">
       <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
       <h3 class="text-xl font-bold text-gray-700 mb-2">No Categories Found</h3>
-      <p class="text-gray-500 mb-4">Try adjusting your search criteria</p>
-      <button (click)="resetSearch()" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg transition-colors">
+      <p *ngIf="searchQuery" class="text-gray-500 mb-4">Try adjusting your search criteria</p>
+      <p *ngIf="!searchQuery" class="text-gray-500 mb-4">There are no categories available at the moment</p>
+      <button (click)="resetSearch()" *ngIf="searchQuery" class="bg-sky-600 hover:bg-sky-700 text-white px-4 py-2 rounded-lg transition-colors">
         Reset Search
       </button>
     </div>
@@ -93,6 +94,7 @@
     </button>
   </div>
 </main>
+</div>
 
 <!-- Custom CSS for Animations -->
 <style>
