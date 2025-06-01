@@ -233,7 +233,7 @@ cliqshop-frontend/
 
 2. **Build the Docker image**
    ```bash
-   docker build -t cliqshop-frontend:latest .
+   docker build -t cliqshop-frontend .
    ```
 
 3. **Running the frontend with Docker Compose**
