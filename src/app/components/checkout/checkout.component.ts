@@ -219,7 +219,7 @@ private updatePaymentStatusAndClearCart(orderId: number, sessionId: string | nul
               console.error('All payment status update methods failed:', forceError);
               
               // Even if all payment status updates fail, still clear cart and redirect
-              this.showNotification('There was an issue confirming your payment. Your order is being processed.', 'warning');
+              // this.showNotification('There was an issue confirming your payment. Your order is being processed.', 'warning');
               this.clearCartAndRedirect(user.userId, orderId);
               
               // Store information about the failed payment status update to retry later
