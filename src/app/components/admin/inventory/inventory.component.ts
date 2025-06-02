@@ -425,7 +425,8 @@ export class InventoryComponent implements OnInit, OnDestroy {
       { id: 2, name: 'East Wing', code: 'WH-EAST' },
       { id: 3, name: 'West Wing', code: 'WH-WEST' },
       { id: 4, name: 'Storage Room A', code: 'SR-A' },
-      { id: 5, name: 'Storage Room B', code: 'SR-B' }
+      { id: 5, name: 'Storage Room B', code: 'SR-B' },
+      { id: 6, name: 'Bangalore HUB', code: 'BLR-HUB-A' }
     ];
   }
   
