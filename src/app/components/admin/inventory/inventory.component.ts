@@ -1,10 +1,12 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { Subscription, interval } from 'rxjs';
+import { map, switchMap, takeWhile, catchError } from 'rxjs/operators';
 import { InventoryService, Inventory } from '../../../services/inventory/inventory.service';
 import { ProductService } from '../../../services/product/product.service';
 import { CategoryService } from '../../../services/category/category.service';
+import { of } from 'rxjs';
+
 interface WarehouseLocation {
   id?: number;
   name: string;
@@ -91,6 +93,9 @@ export class InventoryComponent implements OnInit, OnDestroy {
   // Submission state
   isSubmitting = false;
   
+  // NEW: Real-time inventory tracking
+  private inventoryUpdateSubscription?: Subscription;
+  private autoRefreshSubscription?: Subscription;
   private subscriptions = new Subscription();
   
   constructor(
@@ -103,10 +108,137 @@ export class InventoryComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadProducts();
     this.loadWarehouseLocations();
+    
+    // NEW: Subscribe to real-time inventory updates
+    this.subscribeToInventoryUpdates();
+    
+    // NEW: Start auto-refresh every 30 seconds
+    this.startAutoRefresh();
   }
   
   ngOnDestroy(): void {
     this.subscriptions.unsubscribe();
+    if (this.inventoryUpdateSubscription) {
+      this.inventoryUpdateSubscription.unsubscribe();
+    }
+    if (this.autoRefreshSubscription) {
+      this.autoRefreshSubscription.unsubscribe();
+    }
+  }
+  
+  // NEW: Subscribe to inventory updates for real-time changes
+  private subscribeToInventoryUpdates(): void {
+    this.inventoryUpdateSubscription = this.inventoryService.getInventoryUpdates().subscribe(updates => {
+      if (updates.length > 0) {
+        console.log('Real-time inventory updates received:', updates);
+        
+        // Update products list
+        updates.forEach(update => {
+          const productIndex = this.products.findIndex(p => p.productId === update.productId);
+          if (productIndex >= 0) {
+            this.products[productIndex].inventoryQuantity = update.quantity;
+          }
+          
+          // Update inventory list
+          const inventoryIndex = this.inventory.findIndex(i => 
+            i.product?.productId === update.productId
+          );
+          if (inventoryIndex >= 0) {
+            this.inventory[inventoryIndex].quantity = update.quantity;
+          }
+          
+          // Update low stock items
+          const lowStockIndex = this.lowStockItems.findIndex(i => 
+            i.product?.productId === update.productId
+          );
+          if (lowStockIndex >= 0) {
+            this.lowStockItems[lowStockIndex].quantity = update.quantity;
+          }
+        });
+        
+        // Refresh filtered lists
+        this.filterProducts();
+        this.filterInventoryItems();
+        this.filterLowStockItems();
+        
+        // Show notification
+        this.showNotification(`${updates.length} inventory item(s) updated`, 'info');
+      }
+    });
+  }
+  
+  // NEW: Auto-refresh inventory data every 30 seconds
+  private startAutoRefresh(): void {
+    this.autoRefreshSubscription = interval(30000).pipe(
+      takeWhile(() => true), // Keep running
+      switchMap(() => {
+        // Only refresh if we're on the stock or low stock view
+        if (this.currentView === 'stock') {
+          return this.inventoryService.getAllInventory();
+        } else if (this.currentView === 'lowStock') {
+          return this.inventoryService.getLowStockItems();
+        }
+        return of(null);
+      }),
+      catchError(error => {
+        console.error('Error during auto-refresh:', error);
+        return of(null);
+      })
+    ).subscribe(data => {
+      if (data) {
+        if (this.currentView === 'stock') {
+          const currentInventory = this.inventory;
+          this.inventory = data;
+          
+          // Check for changes and notify
+          const changes = this.detectInventoryChanges(currentInventory, data);
+          if (changes.length > 0) {
+            console.log(`Auto-refresh detected ${changes.length} inventory changes`);
+          }
+          
+          this.filterInventoryItems();
+        } else if (this.currentView === 'lowStock') {
+          this.lowStockItems = data;
+          this.filterLowStockItems();
+        }
+      }
+    });
+  }
+  
+  // NEW: Detect changes in inventory data
+  private detectInventoryChanges(oldInventory: Inventory[], newInventory: Inventory[]): any[] {
+    const changes: any[] = [];
+    
+    newInventory.forEach(newItem => {
+      const oldItem = oldInventory.find(old => 
+        old.product?.productId === newItem.product?.productId
+      );
+      
+      if (oldItem && oldItem.quantity !== newItem.quantity) {
+        changes.push({
+          productId: newItem.product?.productId,
+          productName: newItem.product?.name,
+          oldQuantity: oldItem.quantity,
+          newQuantity: newItem.quantity
+        });
+      }
+    });
+    
+    return changes;
+  }
+  
+  // NEW: Manual refresh button
+  refreshInventoryData(): void {
+    console.log('Manually refreshing inventory data...');
+    this.showNotification('Refreshing inventory data...', 'info');
+    
+    if (this.currentView === 'products') {
+      this.loadProducts();
+    } else if (this.currentView === 'stock') {
+      this.loadInventory();
+    } else if (this.currentView === 'lowStock') {
+      this.loadLowStockItems();
+    }
   }
   
   // Navigation
@@ -486,7 +618,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
     this.selectedLocation = null;
   }
   
-  // API Actions
+  // API Actions - Enhanced with real-time updates
   addProductStock(): void {
     if (!this.selectedProduct || this.stockChangeAmount < 1) return;
     
@@ -521,6 +653,9 @@ export class InventoryComponent implements OnInit, OnDestroy {
           this.isSubmitting = false;
           this.closeModal();
           
+          // Show success notification
+          this.showNotification(`Successfully added ${this.stockChangeAmount} items to inventory`, 'success');
+          
           // Optionally, reload inventory data
           this.loadInventory();
         },
@@ -528,6 +663,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
           console.error('Error creating inventory:', err);
           this.error = 'Failed to create inventory. Please try again.';
           this.isSubmitting = false;
+          this.showNotification('Failed to create inventory', 'error');
         }
       });
       
@@ -550,6 +686,9 @@ export class InventoryComponent implements OnInit, OnDestroy {
           this.isSubmitting = false;
           this.closeModal();
           
+          // Show success notification
+          this.showNotification(`Successfully added ${this.stockChangeAmount} items to inventory`, 'success');
+          
           // Optionally, reload inventory data
           this.loadInventory();
         },
@@ -557,6 +696,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
           console.error('Error updating stock:', err);
           this.error = 'Failed to update stock. Please try again.';
           this.isSubmitting = false;
+          this.showNotification('Failed to update stock', 'error');
         }
       });
       
@@ -617,11 +757,15 @@ export class InventoryComponent implements OnInit, OnDestroy {
         
         this.isSubmitting = false;
         this.closeModal();
+        
+        // Show success notification
+        this.showNotification(`Successfully updated stock to ${updatedInventory.quantity}`, 'success');
       },
       error: (err) => {
         console.error('Error updating stock:', err);
         this.error = 'Failed to update stock. Please try again.';
         this.isSubmitting = false;
+        this.showNotification('Failed to update stock', 'error');
       }
     });
     
@@ -661,11 +805,15 @@ export class InventoryComponent implements OnInit, OnDestroy {
         
         this.isSubmitting = false;
         this.closeModal();
+        
+        // Show success notification
+        this.showNotification(`Successfully updated threshold to ${this.newThreshold}`, 'success');
       },
       error: (err) => {
         console.error('Error updating threshold:', err);
         this.error = 'Failed to update threshold. Please try again.';
         this.isSubmitting = false;
+        this.showNotification('Failed to update threshold', 'error');
       }
     });
     
@@ -705,11 +853,15 @@ export class InventoryComponent implements OnInit, OnDestroy {
         
         this.isSubmitting = false;
         this.closeModal();
+        
+        // Show success notification
+        this.showNotification(`Successfully updated location to ${this.newLocation}`, 'success');
       },
       error: (err) => {
         console.error('Error updating location:', err);
         this.error = 'Failed to update warehouse location. Please try again.';
         this.isSubmitting = false;
+        this.showNotification('Failed to update location', 'error');
       }
     });
     
@@ -737,6 +889,7 @@ export class InventoryComponent implements OnInit, OnDestroy {
       setTimeout(() => {
         this.isSubmitting = false;
         this.closeModal();
+        this.showNotification('Location updated successfully', 'success');
       }, 500);
     } else {
       // Add new location (mock implementation)
@@ -752,89 +905,135 @@ export class InventoryComponent implements OnInit, OnDestroy {
       setTimeout(() => {
         this.isSubmitting = false;
         this.closeModal();
+        this.showNotification('Location added successfully', 'success');
       }, 500);
     }
   }
   
   deleteLocation(): void {
-    if (!this.selectedLocation) return;
-    
-    this.isSubmitting = true;
-    
-    // Check if any inventory items are using this location
-    const itemsUsingLocation = this.inventory.filter(item => 
-      item.warehouseLocation === this.selectedLocation?.name
-    );
-    
-    if (itemsUsingLocation.length > 0) {
-      this.error = `Cannot delete location. It is currently used by ${itemsUsingLocation.length} inventory items.`;
-      this.isSubmitting = false;
-      return;
-    }
-    
-    // Remove location (mock implementation)
-    this.warehouseLocations = this.warehouseLocations.filter(loc => 
-      loc.id !== this.selectedLocation?.id
-    );
-    
-    // In a real application, you would call an API here
-    setTimeout(() => {
-      this.isSubmitting = false;
-      this.closeModal();
-      this.error = null;
-    }, 500);
-  }
-  
-  // Helper Functions
-  formatDate(date: string | undefined): string {
-    if (!date) return 'N/A';
-    
-    try {
-      const dateObj = new Date(date);
-      return dateObj.toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-    } catch (e) {
-      return 'Invalid Date';
-    }
-  }
-  
-  getNewStockLevel(): number {
-    if (!this.selectedInventory) return 0;
-    
-    const currentLevel = this.selectedInventory.quantity || 0;
-    
-    if (this.stockUpdateType === 'add') {
-      return currentLevel + this.stockChangeAmount;
-    } else if (this.stockUpdateType === 'subtract') {
-      return Math.max(0, currentLevel - this.stockChangeAmount);
-    } else {
-      return this.stockChangeAmount;
-    }
-  }
-  
-  getItemCountForLocation(locationName: string): number {
-    return this.inventory.filter(item => item.warehouseLocation === locationName).length;
-  }
-  
-  // View Helpers
-  get isProductView(): boolean {
-    return this.currentView === 'products';
-  }
-  
-  get isStockView(): boolean {
-    return this.currentView === 'stock';
-  }
-  
-  get isLowStockView(): boolean {
-    return this.currentView === 'lowStock';
-  }
-  
-  get isWarehouseView(): boolean {
-    return this.currentView === 'warehouse';
-  }
+   if (!this.selectedLocation) return;
+   
+   this.isSubmitting = true;
+   
+   // Check if any inventory items are using this location
+   const itemsUsingLocation = this.inventory.filter(item => 
+     item.warehouseLocation === this.selectedLocation?.name
+   );
+   
+   if (itemsUsingLocation.length > 0) {
+     this.error = `Cannot delete location. It is currently used by ${itemsUsingLocation.length} inventory items.`;
+     this.isSubmitting = false;
+     this.showNotification(`Cannot delete location - in use by ${itemsUsingLocation.length} items`, 'error');
+     return;
+   }
+   
+   // Remove location (mock implementation)
+   this.warehouseLocations = this.warehouseLocations.filter(loc => 
+     loc.id !== this.selectedLocation?.id
+   );
+   
+   // In a real application, you would call an API here
+   setTimeout(() => {
+     this.isSubmitting = false;
+     this.closeModal();
+     this.error = null;
+     this.showNotification('Location deleted successfully', 'success');
+   }, 500);
+ }
+ 
+ // Helper Functions
+ formatDate(date: string | undefined): string {
+   if (!date) return 'N/A';
+   
+   try {
+     const dateObj = new Date(date);
+     return dateObj.toLocaleDateString('en-US', {
+       year: 'numeric',
+       month: 'short',
+       day: 'numeric',
+       hour: '2-digit',
+       minute: '2-digit'
+     });
+   } catch (e) {
+     return 'Invalid Date';
+   }
+ }
+ 
+ getNewStockLevel(): number {
+   if (!this.selectedInventory) return 0;
+   
+   const currentLevel = this.selectedInventory.quantity || 0;
+   
+   if (this.stockUpdateType === 'add') {
+     return currentLevel + this.stockChangeAmount;
+   } else if (this.stockUpdateType === 'subtract') {
+     return Math.max(0, currentLevel - this.stockChangeAmount);
+   } else {
+     return this.stockChangeAmount;
+   }
+ }
+ 
+ getItemCountForLocation(locationName: string): number {
+   return this.inventory.filter(item => item.warehouseLocation === locationName).length;
+ }
+ 
+ // NEW: Show notification helper
+ private showNotification(message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success'): void {
+   // Create a temporary notification element
+   const notification = document.createElement('div');
+   
+   let bgColor = 'bg-green-500';
+   let icon = '✓';
+   
+   switch (type) {
+     case 'error':
+       bgColor = 'bg-red-500';
+       icon = '✗';
+       break;
+     case 'warning':
+       bgColor = 'bg-yellow-500';
+       icon = '⚠';
+       break;
+     case 'info':
+       bgColor = 'bg-blue-500';
+       icon = 'ℹ';
+       break;
+     default:
+       bgColor = 'bg-green-500';
+       icon = '✓';
+   }
+   
+   notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300`;
+   notification.style.zIndex = '9999';
+   notification.innerHTML = `<span class="mr-2">${icon}</span>${message}`;
+   
+   document.body.appendChild(notification);
+   
+   // Remove after 4 seconds
+   setTimeout(() => {
+     notification.style.opacity = '0';
+     setTimeout(() => {
+       if (document.body.contains(notification)) {
+         document.body.removeChild(notification);
+       }
+     }, 300);
+   }, 4000);
+ }
+ 
+ // View Helpers
+ get isProductView(): boolean {
+   return this.currentView === 'products';
+ }
+ 
+ get isStockView(): boolean {
+   return this.currentView === 'stock';
+ }
+ 
+ get isLowStockView(): boolean {
+   return this.currentView === 'lowStock';
+ }
+ 
+ get isWarehouseView(): boolean {
+   return this.currentView === 'warehouse';
+ }
 }

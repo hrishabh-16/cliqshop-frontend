@@ -1,10 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs';
-import { catchError, tap, retry, timeout, map } from 'rxjs/operators';
+import { Observable, throwError, of, forkJoin } from 'rxjs';
+import { catchError, tap, retry, timeout, map, switchMap } from 'rxjs/operators';
 import { Order, OrderResponse } from '../../models/order.model';
 import { Address } from '../../models/address.model';
 import { AuthService } from '../auth/auth.service';
+import { InventoryService } from '../inventory/inventory.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,7 +15,8 @@ export class OrderService {
 
   constructor(
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private inventoryService: InventoryService // NEW: Inject inventory service
   ) {}
 
   getOrderById(orderId: number): Observable<Order> {
@@ -254,20 +256,53 @@ export class OrderService {
     );
   }
 
+  // NEW: Enhanced cancel order with inventory restoration
   cancelOrder(orderId: number, userId: number): Observable<any> {
     const headers = new HttpHeaders().set('Content-Type', 'application/json');
     
-    // Use body instead of params for better compatibility
-    const payload = { userId: userId };
-    
-    return this.http.put<any>(
-      `${this.apiUrl}/orders/${orderId}/cancel`, 
-      payload,
-      { headers }
-    ).pipe(
-      timeout(10000),
-      retry(1),
-      tap(() => console.log(`Cancelled order: ${orderId}`)),
+    // First get the order details to know what inventory to restore
+    return this.getOrderById(orderId).pipe(
+      switchMap(order => {
+        // Use body instead of params for better compatibility
+        const payload = { userId: userId };
+        
+        return this.http.put<any>(
+          `${this.apiUrl}/orders/${orderId}/cancel`, 
+          payload,
+          { headers }
+        ).pipe(
+          timeout(10000),
+          retry(1),
+          tap(() => console.log(`Cancelled order: ${orderId}`)),
+          // After successful cancellation, restore inventory
+          switchMap(cancelResult => {
+            if (order && order.orderItems && order.orderItems.length > 0) {
+              console.log('Restoring inventory for cancelled order...');
+              
+              const inventoryRestores = order.orderItems.map(item => ({
+                productId: item.productId || (item.product?.productId || 0),
+                quantity: item.quantity || 1
+              }));
+              
+              return this.inventoryService.restoreInventoryForCancelledOrder(inventoryRestores).pipe(
+                tap(inventoryResults => {
+                  console.log('Inventory restored successfully:', inventoryResults);
+                }),
+                catchError(inventoryError => {
+                  console.error('Error restoring inventory (order still cancelled):', inventoryError);
+                  // Don't fail the cancellation if inventory restore fails
+                  return of([]);
+                }),
+                // Always return the original cancel result
+                switchMap(() => of(cancelResult))
+              );
+            } else {
+              // No items to restore, just return the cancel result
+              return of(cancelResult);
+            }
+          })
+        );
+      }),
       catchError(this.handleError)
     );
   }
@@ -290,112 +325,111 @@ export class OrderService {
   }
 
   // Helper method to process and normalize order data
-  // Helper method to process and normalize order data
-private processOrderData(order: any): Order {
-  if (!order) return {} as Order;
+  private processOrderData(order: any): Order {
+    if (!order) return {} as Order;
 
-  console.log('Raw order data to process:', JSON.stringify(order));
+    console.log('Raw order data to process:', JSON.stringify(order));
 
-  // Check for different property names in the API response
-  const orderItems = order.orderItems || order.items || [];
-  const orderStatus = order.orderStatus || order.status || 'PENDING';
-  const paymentStatus = order.paymentStatus || (order.payment ? order.payment.status : 'PENDING');
-  
-  // Look for order items in different possible locations in the response
-  let processedItems = [];
-  if (Array.isArray(orderItems) && orderItems.length > 0) {
-    processedItems = orderItems.map((item: any) => ({
-      orderItemId: item.orderItemId || item.id || 0,
-      orderId: item.orderId || order.orderId || 0,
-      productId: item.productId || (item.product ? item.product.productId || item.product.id : 0),
-      quantity: item.quantity || 1,
-      price: item.price || (item.product ? item.product.price : 0) || 0,
-      product: item.product || null
-    }));
-  } else if (order.cart && Array.isArray(order.cart.items)) {
-    // Some APIs return items inside a cart object
-    processedItems = order.cart.items.map((item: any) => ({
-      orderItemId: item.id || 0,
-      orderId: order.orderId || 0,
-      productId: item.productId || (item.product ? item.product.productId || item.product.id : 0),
-      quantity: item.quantity || 1,
-      price: item.price || (item.product ? item.product.price : 0) || 0,
-      product: item.product || null
-    }));
+    // Check for different property names in the API response
+    const orderItems = order.orderItems || order.items || [];
+    const orderStatus = order.orderStatus || order.status || 'PENDING';
+    const paymentStatus = order.paymentStatus || (order.payment ? order.payment.status : 'PENDING');
+    
+    // Look for order items in different possible locations in the response
+    let processedItems = [];
+    if (Array.isArray(orderItems) && orderItems.length > 0) {
+      processedItems = orderItems.map((item: any) => ({
+        orderItemId: item.orderItemId || item.id || 0,
+        orderId: item.orderId || order.orderId || 0,
+        productId: item.productId || (item.product ? item.product.productId || item.product.id : 0),
+        quantity: item.quantity || 1,
+        price: item.price || (item.product ? item.product.price : 0) || 0,
+        product: item.product || null
+      }));
+    } else if (order.cart && Array.isArray(order.cart.items)) {
+      // Some APIs return items inside a cart object
+      processedItems = order.cart.items.map((item: any) => ({
+        orderItemId: item.id || 0,
+        orderId: order.orderId || 0,
+        productId: item.productId || (item.product ? item.product.productId || item.product.id : 0),
+        quantity: item.quantity || 1,
+        price: item.price || (item.product ? item.product.price : 0) || 0,
+        product: item.product || null
+      }));
+    }
+
+    console.log('Processed items:', processedItems);
+
+    // Handle missing or empty fields
+    const processedOrder: Order = {
+      ...order,
+      orderId: order.orderId || order.id || 0,
+      userId: order.userId || (order.user ? order.user.userId || order.user.id : 0) || 0,
+      orderDate: order.orderDate || order.createdAt || new Date().toISOString(),
+      orderItems: processedItems,
+      orderTotal: this.parseNumber(order.orderTotal || order.totalAmount),
+      totalPrice: this.parseNumber(order.totalPrice || order.orderTotal || order.total || order.totalAmount),
+      subtotal: this.parseNumber(order.subtotal || order.subTotal || (processedItems.length ? 
+        processedItems.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) : 0)),
+      tax: this.parseNumber(order.tax || order.taxAmount || (order.totalPrice * 0.18)),
+      shippingCost: this.parseNumber(order.shippingCost || order.shipping || order.shippingAmount || 0),
+      discount: this.parseNumber(order.discount || order.discountAmount || 0),
+      orderStatus: orderStatus,
+      paymentStatus: paymentStatus,
+      paymentMethod: order.paymentMethod || (order.payment ? order.payment.method : '') || '',
+      shippingMethod: order.shippingMethod || order.shipping?.method || 'standard'
+    };
+
+    // Calculate subtotal if it's zero but we have items
+    if (processedOrder.subtotal === 0 && processedItems.length > 0) {
+      processedOrder.subtotal = processedItems.reduce(
+        (sum: number, item: { price: number; quantity: number }) => sum + ((item.price || 0) * (item.quantity || 1)), 
+        0
+      );
+    }
+
+    // If total price is available but subtotal is not, estimate it
+    if (processedOrder.totalPrice > 0 && processedOrder.subtotal === 0) {
+      // Approximate: Total = Subtotal + Tax + Shipping - Discount
+      // So: Subtotal = Total - Tax - Shipping + Discount
+      processedOrder.subtotal = processedOrder.totalPrice - processedOrder.tax - 
+                                processedOrder.shippingCost + processedOrder.discount;
+    }
+
+    // Handle missing shipping/billing address
+    if (!order.shippingAddress) {
+      processedOrder.shippingAddress = {
+        addressId: 0,
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: '',
+        isDefault: false,
+        addressType: 'SHIPPING',
+        userId: processedOrder.userId
+      } as Address;
+    }
+    
+    if (!order.billingAddress) {
+      processedOrder.billingAddress = order.shippingAddress || {
+        addressId: 0,
+        addressLine1: '',
+        addressLine2: '',
+        city: '',
+        state: '',
+        postalCode: '',
+        country: '',
+        isDefault: false,
+        addressType: 'BILLING',
+        userId: processedOrder.userId
+      } as Address;
+    }
+
+    console.log('Fully processed order:', processedOrder);
+    return processedOrder;
   }
-
-  console.log('Processed items:', processedItems);
-
-  // Handle missing or empty fields
-  const processedOrder: Order = {
-    ...order,
-    orderId: order.orderId || order.id || 0,
-    userId: order.userId || (order.user ? order.user.userId || order.user.id : 0) || 0,
-    orderDate: order.orderDate || order.createdAt || new Date().toISOString(),
-    orderItems: processedItems,
-    orderTotal: this.parseNumber(order.orderTotal || order.totalAmount),
-    totalPrice: this.parseNumber(order.totalPrice || order.orderTotal || order.total || order.totalAmount),
-    subtotal: this.parseNumber(order.subtotal || order.subTotal || (processedItems.length ? 
-      processedItems.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0) : 0)),
-    tax: this.parseNumber(order.tax || order.taxAmount || (order.totalPrice * 0.18)),
-    shippingCost: this.parseNumber(order.shippingCost || order.shipping || order.shippingAmount || 0),
-    discount: this.parseNumber(order.discount || order.discountAmount || 0),
-    orderStatus: orderStatus,
-    paymentStatus: paymentStatus,
-    paymentMethod: order.paymentMethod || (order.payment ? order.payment.method : '') || '',
-    shippingMethod: order.shippingMethod || order.shipping?.method || 'standard'
-  };
-
-  // Calculate subtotal if it's zero but we have items
-  if (processedOrder.subtotal === 0 && processedItems.length > 0) {
-    processedOrder.subtotal = processedItems.reduce(
-      (sum: number, item: { price: number; quantity: number }) => sum + ((item.price || 0) * (item.quantity || 1)), 
-      0
-    );
-  }
-
-  // If total price is available but subtotal is not, estimate it
-  if (processedOrder.totalPrice > 0 && processedOrder.subtotal === 0) {
-    // Approximate: Total = Subtotal + Tax + Shipping - Discount
-    // So: Subtotal = Total - Tax - Shipping + Discount
-    processedOrder.subtotal = processedOrder.totalPrice - processedOrder.tax - 
-                              processedOrder.shippingCost + processedOrder.discount;
-  }
-
-  // Handle missing shipping/billing address
-  if (!order.shippingAddress) {
-    processedOrder.shippingAddress = {
-      addressId: 0,
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      postalCode: '',
-      country: '',
-      isDefault: false,
-      addressType: 'SHIPPING',
-      userId: processedOrder.userId
-    } as Address;
-  }
-  
-  if (!order.billingAddress) {
-    processedOrder.billingAddress = order.shippingAddress || {
-      addressId: 0,
-      addressLine1: '',
-      addressLine2: '',
-      city: '',
-      state: '',
-      postalCode: '',
-      country: '',
-      isDefault: false,
-      addressType: 'BILLING',
-      userId: processedOrder.userId
-    } as Address;
-  }
-
-  console.log('Fully processed order:', processedOrder);
-  return processedOrder;
-}
 
   // Helper to safely parse numeric values
   private parseNumber(value: any): number {

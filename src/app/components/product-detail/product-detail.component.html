@@ -105,16 +105,26 @@
               <div *ngIf="getDiscountPercentage() > 0" class="ml-2 text-emerald-600 text-sm font-medium">Save ₹{{ (product.price * getDiscountPercentage()/100).toFixed(2) }}</div>
             </div>
             
-            <!-- Stock Status -->
-            <div class="mt-2">
+            <!-- Stock Status with Real-time Updates -->
+            <div class="mt-2 flex items-center justify-between">
               <div *ngIf="product.stockQuantity !== undefined" 
-                   [ngClass]="{'text-emerald-600 bg-emerald-100': product.stockQuantity > 0, 'text-rose-600 bg-rose-100': product.stockQuantity === 0}"
-                   class="inline-block text-sm font-medium px-2 py-1 rounded-full">
-                <span *ngIf="product.stockQuantity > 0" class="flex items-center">
+                   [ngClass]="{
+                     'text-emerald-600 bg-emerald-100': product.stockQuantity > 5, 
+                     'text-rose-600 bg-rose-100': product.stockQuantity === 0,
+                     'text-amber-600 bg-amber-100': product.stockQuantity > 0 && product.stockQuantity <= 5
+                   }"
+                   class="inline-block text-sm font-medium px-2 py-1 rounded-full transition-all duration-300">
+                <span *ngIf="product.stockQuantity > 5" class="flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
                   </svg>
                   In Stock ({{ product.stockQuantity }} available)
+                </span>
+                <span *ngIf="product.stockQuantity > 0 && product.stockQuantity <= 5" class="flex items-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.99-.833-2.598 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  Low Stock ({{ product.stockQuantity }} left)
                 </span>
                 <span *ngIf="product.stockQuantity === 0" class="flex items-center">
                   <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -123,6 +133,16 @@
                   Out of Stock
                 </span>
               </div>
+              
+              <!-- NEW: Real-time inventory refresh button -->
+              <button (click)="refreshInventory()" 
+                      class="text-xs text-sky-600 hover:text-sky-800 flex items-center transition-colors duration-200"
+                      title="Refresh stock information">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Refresh
+              </button>
             </div>
           </div>
           
@@ -141,7 +161,7 @@
                 class="px-4 py-2 bg-gray-100 hover:bg-gray-200 transition-colors">
                 -
               </button>
-              <input type="number" [(ngModel)]="quantity" min="1"
+              <input type="number" [(ngModel)]="quantity" min="1" [max]="product.stockQuantity || 0"
                 class="w-full px-2 py-2 text-center border-none focus:outline-none focus:ring-0">
               <button (click)="increaseQuantity()"
                 [disabled]="!isProductInStock() || quantity >= (product.stockQuantity || 0)"
@@ -152,14 +172,15 @@
             </div>
           
             <button (click)="addToCart()"
-              [disabled]="!isProductInStock()"
-              [ngClass]="{'opacity-50 cursor-not-allowed': !isProductInStock()}"
+              [disabled]="!isProductInStock() || quantity > (product.stockQuantity || 0)"
+              [ngClass]="{'opacity-50 cursor-not-allowed': !isProductInStock() || quantity > (product.stockQuantity || 0)}"
               class="flex-1 bg-sky-600 hover:bg-sky-700 text-white font-medium py-2 px-6 rounded-lg transition-colors flex items-center justify-center">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              Add to Cart
+              <span *ngIf="isProductInStock()">Add to Cart</span>
+              <span *ngIf="!isProductInStock()">Out of Stock</span>
             </button>
           
             <button class="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
@@ -169,6 +190,19 @@
                   d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
               </svg>
             </button>
+          </div>
+
+          <!-- NEW: Stock Warning for Low Inventory -->
+          <div *ngIf="product.stockQuantity !== undefined && product.stockQuantity > 0 && product.stockQuantity <= 5" 
+               class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+            <div class="flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.99-.833-2.598 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <span class="text-amber-800 text-sm font-medium">
+                Hurry! Only {{ product.stockQuantity }} left in stock
+              </span>
+            </div>
           </div>
           
           <!-- Product Metadata -->
@@ -242,6 +276,15 @@
               <li>Category: {{ product.categoryName }}</li>
               <li *ngIf="product.sku">SKU: {{ product.sku }}</li>
               <li *ngIf="product.brand">Brand: {{ product.brand }}</li>
+              <li>Stock Status: 
+                <span [ngClass]="{
+                  'text-emerald-600': product.stockQuantity !== undefined && product.stockQuantity > 5,
+                  'text-amber-600': product.stockQuantity !== undefined && product.stockQuantity > 0 && product.stockQuantity <= 5,
+                  'text-rose-600': product.stockQuantity !== undefined && product.stockQuantity === 0
+                }">
+                  {{ product.stockQuantity === undefined ? 'Unknown' : (product.stockQuantity > 5 ? 'In Stock' : product.stockQuantity > 0 ? 'Low Stock' : 'Out of Stock') }}
+                </span>
+              </li>
             </ul>
           </div>
         </div>
@@ -280,85 +323,95 @@
           </div>
         </div>
         
-        <!-- Shipping & Returns Tab -->
-        <div *ngIf="activeTab === 'shipping'" class="animate-fadeIn">
-          <h3 class="text-lg font-bold text-gray-900 mb-4">Shipping & Returns</h3>
-          <div class="prose max-w-none text-gray-700">
-            <h4 class="text-md font-semibold text-gray-900 mb-2">Shipping Policy</h4>
-            <p>We offer free shipping on all orders over ₹999. Standard delivery takes 3-5 business days.</p>
-            
-            <h4 class="text-md font-semibold text-gray-900 mt-4 mb-2">Return Policy</h4>
-            <p>We accept returns within 30 days of delivery. Items must be unused and in their original packaging.</p>
-            
-            <h4 class="text-md font-semibold text-gray-900 mt-4 mb-2">Warranty</h4>
-            <p>All products come with a standard manufacturer's warranty. Please contact our customer service for details.</p>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-    <!-- Related Products -->
-    <div *ngIf="product && relatedProducts.length > 0" class="mt-12">
-      <h2 class="text-2xl font-bold text-sky-900 mb-6">Related Products</h2>
-      
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <!-- Related Product Card -->
-        <div *ngFor="let relatedProduct of relatedProducts" 
-             class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer"
-             [routerLink]="['/products', relatedProduct.productId]">
-          <!-- Sale badge -->
-          <div *ngIf="getRelatedProductDiscountPercentage(relatedProduct) > 0" class="absolute top-3 left-3 bg-rose-500 text-white text-xs font-bold uppercase px-3 py-1.5 rounded-full z-10 shadow-sm">
-            {{ getRelatedProductDiscountPercentage(relatedProduct) }}% Off
-          </div>
-          
-          <div class="relative overflow-hidden">
-            <img [src]="relatedProduct.imageUrl" 
-                 alt="{{ relatedProduct.name }}" 
-                 class="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110">
-          </div>
-          
-          <div class="p-4">
-            <h3 class="text-md font-semibold mb-1 text-sky-900 truncate group-hover:text-sky-600 transition-colors">{{ relatedProduct.name }}</h3>
-            <p class="text-gray-600 text-sm mb-2 truncate">{{ relatedProduct.categoryName }}</p>
-            
-            <div class="flex items-center justify-between">
-              <div>
-                <span *ngIf="getRelatedProductDiscountPercentage(relatedProduct) > 0" class="text-gray-400 line-through text-sm">₹{{ relatedProduct.price.toFixed(2) }}</span>
-                <span class="text-lg font-bold text-sky-800">₹{{ (relatedProduct.price * (1 - getRelatedProductDiscountPercentage(relatedProduct)/100)).toFixed(2) }}</span>
-              </div>
-              
-              <!-- Stock status -->
-              <div *ngIf="relatedProduct.stockQuantity !== undefined" 
-                   [ngClass]="{'text-emerald-600 bg-emerald-100': relatedProduct.stockQuantity > 0, 'text-rose-600 bg-rose-100': relatedProduct.stockQuantity === 0}"
-                   class="text-xs font-medium px-2 py-1 rounded-full">
-                <span *ngIf="relatedProduct.stockQuantity > 0" class="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                  </svg>
-                  In Stock
-                </span>
-                <span *ngIf="relatedProduct.stockQuantity === 0" class="flex items-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                  Out of Stock
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
+       <!-- Shipping & Returns Tab -->
+       <div *ngIf="activeTab === 'shipping'" class="animate-fadeIn">
+         <h3 class="text-lg font-bold text-gray-900 mb-4">Shipping & Returns</h3>
+         <div class="prose max-w-none text-gray-700">
+           <h4 class="text-md font-semibold text-gray-900 mb-2">Shipping Policy</h4>
+           <p>We offer free shipping on all orders over ₹999. Standard delivery takes 3-5 business days.</p>
+           
+           <h4 class="text-md font-semibold text-gray-900 mt-4 mb-2">Return Policy</h4>
+           <p>We accept returns within 30 days of delivery. Items must be unused and in their original packaging.</p>
+           
+           <h4 class="text-md font-semibold text-gray-900 mt-4 mb-2">Warranty</h4>
+           <p>All products come with a standard manufacturer's warranty. Please contact our customer service for details.</p>
+         </div>
+       </div>
+     </div>
+   </div>
+   
+   <!-- Related Products -->
+   <div *ngIf="product && relatedProducts.length > 0" class="mt-12">
+     <h2 class="text-2xl font-bold text-sky-900 mb-6">Related Products</h2>
+     
+     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+       <!-- Related Product Card -->
+       <div *ngFor="let relatedProduct of relatedProducts" 
+            class="bg-white rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 group cursor-pointer"
+            [routerLink]="['/products', relatedProduct.productId]">
+         <!-- Sale badge -->
+         <div *ngIf="getRelatedProductDiscountPercentage(relatedProduct) > 0" class="absolute top-3 left-3 bg-rose-500 text-white text-xs font-bold uppercase px-3 py-1.5 rounded-full z-10 shadow-sm">
+           {{ getRelatedProductDiscountPercentage(relatedProduct) }}% Off
+         </div>
+         
+         <div class="relative overflow-hidden">
+           <img [src]="relatedProduct.imageUrl" 
+                alt="{{ relatedProduct.name }}" 
+                class="w-full h-48 object-cover transition-transform duration-500 group-hover:scale-110">
+         </div>
+         
+         <div class="p-4">
+           <h3 class="text-md font-semibold mb-1 text-sky-900 truncate group-hover:text-sky-600 transition-colors">{{ relatedProduct.name }}</h3>
+           <p class="text-gray-600 text-sm mb-2 truncate">{{ relatedProduct.categoryName }}</p>
+           
+           <div class="flex items-center justify-between">
+             <div>
+               <span *ngIf="getRelatedProductDiscountPercentage(relatedProduct) > 0" class="text-gray-400 line-through text-sm">₹{{ relatedProduct.price.toFixed(2) }}</span>
+               <span class="text-lg font-bold text-sky-800">₹{{ (relatedProduct.price * (1 - getRelatedProductDiscountPercentage(relatedProduct)/100)).toFixed(2) }}</span>
+             </div>
+             
+             <!-- Stock status -->
+             <div *ngIf="relatedProduct.stockQuantity !== undefined" 
+                  [ngClass]="{
+                    'text-emerald-600 bg-emerald-100': relatedProduct.stockQuantity > 5, 
+                    'text-rose-600 bg-rose-100': relatedProduct.stockQuantity === 0,
+                    'text-amber-600 bg-amber-100': relatedProduct.stockQuantity > 0 && relatedProduct.stockQuantity <= 5
+                  }"
+                  class="text-xs font-medium px-2 py-1 rounded-full">
+               <span *ngIf="relatedProduct.stockQuantity > 5" class="flex items-center">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                 </svg>
+                 In Stock
+               </span>
+               <span *ngIf="relatedProduct.stockQuantity > 0 && relatedProduct.stockQuantity <= 5" class="flex items-center">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.99-.833-2.598 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                 </svg>
+                 Low Stock
+               </span>
+               <span *ngIf="relatedProduct.stockQuantity === 0" class="flex items-center">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                 </svg>
+                 Out of Stock
+               </span>
+             </div>
+           </div>
+         </div>
+       </div>
+     </div>
+   </div>
+ </div>
 </main>
 
 <!-- Back To Top Button -->
 <button (click)="scrollToTop()" 
-        class="fixed right-6 bottom-6 bg-sky-600 text-white p-3 rounded-full shadow-lg hover:bg-sky-700 transition-all duration-300 z-50 transform hover:scale-110"
-        [ngClass]="{'opacity-100': showScrollTop, 'opacity-0': !showScrollTop, 'invisible': !showScrollTop}">
-  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l7-7 7 7M5 19l7-7 7 7" />
-  </svg>
+       class="fixed right-6 bottom-6 bg-sky-600 text-white p-3 rounded-full shadow-lg hover:bg-sky-700 transition-all duration-300 z-50 transform hover:scale-110"
+       [ngClass]="{'opacity-100': showScrollTop, 'opacity-0': !showScrollTop, 'invisible': !showScrollTop}">
+ <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 11l7-7 7 7M5 19l7-7 7 7" />
+ </svg>
 </button>
 
 <!-- Footer -->
@@ -366,18 +419,134 @@
 
 <!-- Custom CSS for Animations -->
 <style>
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  .animate-fadeIn {
-    animation: fadeIn 0.3s ease-out;
-  }
+ @keyframes fadeIn {
+   from {
+     opacity: 0;
+     transform: translateY(10px);
+   }
+   to {
+     opacity: 1;
+     transform: translateY(0);
+   }
+ }
+ 
+ .animate-fadeIn {
+   animation: fadeIn 0.3s ease-out;
+ }
+
+ /* Pulse animation for low stock warnings */
+ @keyframes pulse {
+   0%, 100% {
+     opacity: 1;
+   }
+   50% {
+     opacity: .5;
+   }
+ }
+ 
+ .animate-pulse {
+   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+ }
+
+ /* Smooth transitions for stock status changes */
+ .transition-all {
+   transition: all 0.3s ease;
+ }
+
+ /* Custom scrollbar for webkit browsers */
+ ::-webkit-scrollbar {
+   width: 8px;
+ }
+
+ ::-webkit-scrollbar-track {
+   background: #f1f1f1;
+ }
+
+ ::-webkit-scrollbar-thumb {
+   background: #c1c1c1;
+   border-radius: 4px;
+ }
+
+ ::-webkit-scrollbar-thumb:hover {
+   background: #a1a1a1;
+ }
+
+ /* Hover effects for interactive elements */
+ .group:hover .group-hover\:scale-110 {
+   transform: scale(1.1);
+ }
+
+ .group:hover .group-hover\:text-sky-600 {
+   color: #0284c7;
+ }
+
+ /* Focus styles for accessibility */
+ button:focus,
+ input:focus {
+   outline: 2px solid #0284c7;
+   outline-offset: 2px;
+ }
+
+ /* Loading animation */
+ .animate-spin {
+   animation: spin 1s linear infinite;
+ }
+
+ @keyframes spin {
+   from {
+     transform: rotate(0deg);
+   }
+   to {
+     transform: rotate(360deg);
+   }
+ }
+
+ /* Stock indicator animations */
+ .stock-indicator {
+   transition: all 0.3s ease-in-out;
+ }
+
+ .stock-indicator:hover {
+   transform: scale(1.05);
+ }
+
+ /* Real-time update highlight */
+ .stock-updated {
+   animation: highlight 1s ease-in-out;
+ }
+
+ @keyframes highlight {
+   0% {
+     background-color: #fef3c7;
+   }
+   100% {
+     background-color: transparent;
+   }
+ }
+
+ /* Responsive adjustments */
+ @media (max-width: 640px) {
+   .container {
+     padding-left: 1rem;
+     padding-right: 1rem;
+   }
+   
+   .grid {
+     gap: 1rem;
+   }
+ }
+
+ /* Print styles */
+ @media print {
+   .fixed,
+   app-header,
+   app-footer,
+   button {
+     display: none !important;
+   }
+   
+   .bg-gradient-to-b {
+     background: white !important;
+   }
+ }
 </style>

@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpErrorResponse, HttpParams, HttpHeaders } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs';
-import { catchError, tap, retry, timeout } from 'rxjs/operators';
+import { Observable, throwError, of, forkJoin } from 'rxjs';
+import { catchError, tap, retry, timeout, switchMap } from 'rxjs/operators';
 import { AuthService } from '../auth/auth.service';
+import { InventoryService } from '../inventory/inventory.service';
 import { Address } from '../../models/address.model';
 import { Order, OrderRequest } from '../../models/order.model';
 
@@ -14,7 +15,8 @@ export class CheckoutService {
   
   constructor(
     private http: HttpClient,
-    private authService: AuthService
+    private authService: AuthService,
+    private inventoryService: InventoryService // NEW: Inject inventory service
   ) { }
 
   getUserAddresses(userId: number): Observable<Address[]> {
@@ -115,6 +117,35 @@ export class CheckoutService {
     ).pipe(
       timeout(15000),
       tap(order => console.log('Order placed successfully:', order)),
+      // NEW: After order is placed, decrement inventory
+      switchMap(order => {
+        if (order && order.orderItems && order.orderItems.length > 0) {
+          console.log('Decrementing inventory for placed order...');
+          
+          // Extract product IDs and quantities from order items
+          const inventoryUpdates = order.orderItems.map(item => ({
+            productId: item.productId || (item.product?.productId || 0),
+            quantity: item.quantity || 1
+          }));
+          
+          // Decrement inventory and return the original order
+          return this.inventoryService.decrementInventoryForOrder(inventoryUpdates).pipe(
+            tap(inventoryResults => {
+              console.log('Inventory decremented successfully:', inventoryResults);
+            }),
+            catchError(inventoryError => {
+              console.error('Error decrementing inventory (order still placed):', inventoryError);
+              // Don't fail the order if inventory update fails
+              return of([]);
+            }),
+            // Always return the original order
+            switchMap(() => of(order))
+          );
+        } else {
+          // No items to decrement, just return the order
+          return of(order);
+        }
+      }),
       catchError(error => {
         console.error('Error placing order:', error);
         
@@ -173,20 +204,53 @@ export class CheckoutService {
     );
   }
 
+  // NEW: Enhanced cancel order with inventory restoration
   cancelOrder(orderId: number, userId: number): Observable<any> {
     const headers = new HttpHeaders().set('Content-Type', 'application/json');
     
-    // Try to use body instead of params, as some backends may expect this format
-    const payload = { userId: userId };
-    
-    return this.http.put<any>(
-      `${this.apiUrl}/orders/${orderId}/cancel`,
-      payload,
-      { headers }
-    ).pipe(
-      timeout(10000),
-      retry(1),
-      tap(() => console.log(`Cancelled order: ${orderId}`)),
+    // First get the order details to know what inventory to restore
+    return this.getOrderById(orderId).pipe(
+      switchMap(order => {
+        // Try to use body instead of params, as some backends may expect this format
+        const payload = { userId: userId };
+        
+        return this.http.put<any>(
+          `${this.apiUrl}/orders/${orderId}/cancel`,
+          payload,
+          { headers }
+        ).pipe(
+          timeout(10000),
+          retry(1),
+          tap(() => console.log(`Cancelled order: ${orderId}`)),
+          // After successful cancellation, restore inventory
+          switchMap(cancelResult => {
+            if (order && order.orderItems && order.orderItems.length > 0) {
+              console.log('Restoring inventory for cancelled order...');
+              
+              const inventoryRestores = order.orderItems.map(item => ({
+                productId: item.productId || (item.product?.productId || 0),
+                quantity: item.quantity || 1
+              }));
+              
+              return this.inventoryService.restoreInventoryForCancelledOrder(inventoryRestores).pipe(
+                tap(inventoryResults => {
+                  console.log('Inventory restored successfully:', inventoryResults);
+                }),
+                catchError(inventoryError => {
+                  console.error('Error restoring inventory (order still cancelled):', inventoryError);
+                  // Don't fail the cancellation if inventory restore fails
+                  return of([]);
+                }),
+                // Always return the original cancel result
+                switchMap(() => of(cancelResult))
+              );
+            } else {
+              // No items to restore, just return the cancel result
+              return of(cancelResult);
+            }
+          })
+        );
+      }),
       catchError(this.handleError)
     );
   }
